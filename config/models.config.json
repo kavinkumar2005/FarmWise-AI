@@ -1,4 +1,4 @@
-{
+﻿{
   "routerWeights": {
     "capabilityFit": 0.35,
     "expectedConfidence": 0.35,
@@ -51,7 +51,7 @@
       "avgLatencyMs": 350
     },
     "gemini-flash": {
-      "id": "gemini-1.5-flash",
+      "id": "gemini-3.6-flash",
       "provider": "google",
       "type": "proprietary",
       "tier": "fast-multimodal",
@@ -63,7 +63,7 @@
       "avgLatencyMs": 1200
     },
     "gemini-pro": {
-      "id": "gemini-1.5-pro",
+      "id": "gemini-3.6-flash",
       "provider": "google",
       "type": "proprietary",
       "tier": "advanced-multimodal",

@@ -1,4 +1,4 @@
-﻿import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { IModelClient, ModelPromptParams, ModelResponse } from './interfaces.js';
 import costsConfig from '../../../../config/costs.config.json';
 import * as fs from 'fs';
@@ -30,7 +30,7 @@ export class GeminiClient implements IModelClient {
 
   async invoke(params: ModelPromptParams): Promise<ModelResponse> {
     const start = Date.now();
-    const modelId = params.modelId || 'gemini-1.5-flash';
+    const modelId = params.modelId || 'gemini-3.6-flash';
     const inputTokens = Math.max(20, Math.ceil((params.prompt.length + (params.systemPrompt?.length || 0)) / 4));
     const imageCount = params.images?.length || 0;
     const rates = (costsConfig.rates as any)[modelId] || { inputPer1k: 0.000075, outputPer1k: 0.0003, perImage: 0.00002 };
