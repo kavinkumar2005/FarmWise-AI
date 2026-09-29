@@ -16,9 +16,10 @@ import {
   Shield,
   Compass
 } from 'lucide-react';
-import { FarmerRequest, normalizeTamilNumerals } from '@farmwise/agent-core';
+import { FarmerRequest, normalizeTamilNumerals, NormalizedSpeechResult } from '@farmwise/agent-core';
 import { Language, PresetScenario } from '../../types/ui.js';
 import { PRESET_SCENARIOS } from '../../data/presets.js';
+import { VoiceInputModal } from '../voice/VoiceInputModal.js';
 
 interface SubmissionWizardProps {
   lang: Language;
@@ -105,21 +106,20 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
     }
   };
 
-  // Toggle Voice Recording Simulator
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+
+  // Toggle Voice Input Modal
   const handleToggleVoice = () => {
-    if (isRecording) {
-      setIsRecording(false);
-    } else {
-      setIsRecording(true);
-      // Simulate real-time speech transcription
-      setTimeout(() => {
-        if (lang === 'ta') {
-          setRawQuery('நெல் பயிரில் இலை சுருட்டு புழு தாக்குதல் உள்ளது, என்ன மருந்து அடிக்கலாம்? வானிலை சாதகமாக உள்ளதா?');
-        } else {
-          setRawQuery('There is leaf folder infestation in my paddy crop. What pesticide should I spray and is the 48h weather suitable?');
-        }
-        setIsRecording(false);
-      }, 2500);
+    setIsVoiceModalOpen(true);
+  };
+
+  const handleApplyTranscription = (result: NormalizedSpeechResult) => {
+    setRawQuery(result.normalizedText);
+    if (result.detectedSurveyNumber) {
+      handleSurveyChange(result.detectedSurveyNumber);
+    }
+    if (result.detectedVillage) {
+      setVillage(result.detectedVillage);
     }
   };
 
@@ -718,6 +718,14 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
           )}
         </div>
       </div>
+
+      {/* Interactive Bilingual Voice Input Modal */}
+      <VoiceInputModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        lang={lang}
+        onApplyTranscription={handleApplyTranscription}
+      />
     </div>
   );
 };

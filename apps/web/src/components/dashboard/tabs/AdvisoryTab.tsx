@@ -1,19 +1,15 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   CloudSun,
   Wind,
   Droplets,
   Thermometer,
-  Volume2,
-  VolumeX,
-  CheckCircle2,
-  AlertCircle,
   FlaskConical,
-  Clock,
-  Sparkles
+  Clock
 } from 'lucide-react';
 import { FinalResult } from '@farmwise/agent-core';
 import { Language } from '../../../types/ui.js';
+import { VoiceNarrator } from '../../voice/VoiceNarrator.js';
 
 interface AdvisoryTabProps {
   result: FinalResult;
@@ -22,7 +18,6 @@ interface AdvisoryTabProps {
 
 export const AdvisoryTab: React.FC<AdvisoryTabProps> = ({ result, lang }) => {
   const { weather, recommendations, cropAssessment } = result;
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   const sprayFeasible = !weather.agronomicAlerts.some(
     a => a.toLowerCase().includes('rain') || a.toLowerCase().includes('wind')
@@ -42,31 +37,14 @@ export const AdvisoryTab: React.FC<AdvisoryTabProps> = ({ result, lang }) => {
       ? Math.max(weather.forecast7Day[0].rainProbPct, weather.forecast7Day[1]?.rainProbPct || 0)
       : 15;
 
-  // Audio Speech Synthesis for Farmer Read-Aloud
-  const handleToggleSpeech = () => {
-    if ('speechSynthesis' in window) {
-      if (isPlayingAudio) {
-        window.speechSynthesis.cancel();
-        setIsPlayingAudio(false);
-      } else {
-        const textToSpeak =
-          lang === 'ta'
-            ? `${cropAssessment.cropName || 'பயிர்'} ஆலோசனை. ${recommendations
-                .map(r => `${r.title}. ${r.description}`)
-                .join('. ')}. வானிலை: ${sprayRecommendation}`
-            : `${cropAssessment.cropName || 'Crop'} advisory. ${recommendations
-                .map(r => `${r.title}. ${r.description}`)
-                .join('. ')}. Weather: ${sprayRecommendation}`;
-
-        const utterance = new SpeechSynthesisUtterance(textToSpeak);
-        utterance.lang = lang === 'ta' ? 'ta-IN' : 'en-IN';
-        utterance.onend = () => setIsPlayingAudio(false);
-        utterance.onerror = () => setIsPlayingAudio(false);
-        setIsPlayingAudio(true);
-        window.speechSynthesis.speak(utterance);
-      }
-    }
-  };
+  const advisorySummaryText =
+    lang === 'ta'
+      ? `${cropAssessment.cropName || 'பயிர்'} பாதுகாப்பு ஆலோசனை. ${recommendations
+          .map(r => `${r.title}. ${r.description}`)
+          .join(' ')} வானிலை எச்சரிக்கை: ${sprayRecommendation}`
+      : `${cropAssessment.cropName || 'Crop'} protection advisory. ${recommendations
+          .map(r => `${r.title}. ${r.description}`)
+          .join(' ')} Weather risk assessment: ${sprayRecommendation}`;
 
   return (
     <div className="space-y-6">
@@ -119,25 +97,14 @@ export const AdvisoryTab: React.FC<AdvisoryTabProps> = ({ result, lang }) => {
             </p>
           </div>
         </div>
-
-        {/* Read-Aloud Voice Button */}
-        <button
-          type="button"
-          onClick={handleToggleSpeech}
-          className={`px-4 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center space-x-2 shadow-sm ${
-            isPlayingAudio
-              ? 'bg-red-600 text-white animate-pulse'
-              : 'bg-[#2E7D32] hover:bg-[#388E3C] text-white'
-          }`}
-        >
-          {isPlayingAudio ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4 text-[#FFC72C]" />}
-          <span>
-            {isPlayingAudio
-              ? lang === 'en' ? 'Stop Audio' : 'நிறுத்துக'
-              : lang === 'en' ? 'Listen to Advisory' : 'குரல் வழியே கேட்க'}
-          </span>
-        </button>
       </div>
+
+      {/* Voice Narrator Player */}
+      <VoiceNarrator
+        text={advisorySummaryText}
+        lang={lang}
+        title={lang === 'ta' ? 'அறிக்கையை குரல் வழியே கேட்க (Tamil Read-Aloud)' : 'Listen to Agronomic Advisory (Bilingual TTS)'}
+      />
 
       {/* Live Open-Meteo Weather Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
