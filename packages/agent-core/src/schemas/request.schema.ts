@@ -14,19 +14,19 @@ export const FarmerRequestSchema = z.object({
   farmerName: z.string().optional(),
   language: z.enum(['en', 'ta', 'auto']).default('auto'),
   rawQuery: z.string().min(1),
-  district: z.string().min(1),
-  taluk: z.string().min(1),
-  village: z.string().min(1),
-  surveyNumber: z.string().min(1), // e.g. '1342', '202/55', '387'
+  district: z.string().default(''),
+  taluk: z.string().default(''),
+  village: z.string().default(''),
+  surveyNumber: z.string().default(''), // e.g. '1342', '202/55', '387'
   subdivision: z.string().optional(),
   coordinates: z.object({
     latitude: z.number().min(-90).max(90),
     longitude: z.number().min(-180).max(180)
   }).optional(),
   attachments: z.object({
-    fieldPhotoUrl: z.string().url().optional(),
+    fieldPhotoUrl: z.string().optional(),
     fieldPhotoKey: z.string().optional(),
-    landDocUrl: z.string().url().optional(),
+    landDocUrl: z.string().optional(),
     landDocKey: z.string().optional(),
     sowingDate: z.string().optional(),
     soilType: z.string().optional(),

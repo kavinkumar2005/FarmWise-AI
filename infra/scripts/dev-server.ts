@@ -6,6 +6,12 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   
+  // Read body for POST / PUT requests
+  let rawBody = '';
+  for await (const chunk of req) {
+    rawBody += chunk;
+  }
+
   // Transform standard Node HTTP request into Lambda API Gateway proxy event
   const event = {
     rawPath: url.pathname,
@@ -19,7 +25,8 @@ const server = http.createServer(async (req, res) => {
       requestId: 'dev-' + Math.random().toString(36).substring(7)
     },
     queryStringParameters: Object.fromEntries(url.searchParams.entries()),
-    headers: req.headers
+    headers: req.headers,
+    body: rawBody || undefined
   };
 
   try {
@@ -39,6 +46,7 @@ server.listen(PORT, () => {
   console.log(` FarmwiseAI Local Dev API Gateway Simulation          `);
   console.log(` Running on: http://localhost:${PORT}                  `);
   console.log(` Health endpoint: http://localhost:${PORT}/health      `);
+  console.log(` Orchestrate: http://localhost:${PORT}/api/orchestrate `);
   console.log(` Region target: ap-south-1 (Mumbai)                   `);
   console.log(`======================================================\n`);
 });

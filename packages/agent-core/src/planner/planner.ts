@@ -1,6 +1,16 @@
-import { randomUUID } from 'crypto';
 import { FarmerRequest } from '../schemas/request.schema.js';
 import { Plan, PlanStep, PlanSchema } from '../schemas/plan.schema.js';
+
+function generateUUID(): string {
+  if (typeof globalThis !== 'undefined' && globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 export class PlannerAgent {
   /**
@@ -31,7 +41,7 @@ export class PlannerAgent {
 
     if (missingInfo.length > 0) {
       return PlanSchema.parse({
-        planId: randomUUID(),
+        planId: generateUUID(),
         summary: 'Request requires additional information from the farmer before planning execution.',
         steps: [],
         missingInfo,
@@ -162,7 +172,7 @@ export class PlannerAgent {
     const draftedBy = isComplex ? 'claude-3-5-sonnet-20241022' : 'mistral.ministral-8b-instruct';
 
     return PlanSchema.parse({
-      planId: randomUUID(),
+      planId: generateUUID(),
       summary: `Dynamic ${steps.length}-step execution plan synthesized for ${request.district} / ${request.village} (Survey: ${request.surveyNumber}).`,
       steps,
       missingInfo: [],

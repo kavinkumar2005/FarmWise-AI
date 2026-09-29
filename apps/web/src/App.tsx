@@ -1,176 +1,245 @@
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Cpu, Database, MapPin, CheckCircle2, Globe, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FarmerRequest, FinalResult, Plan, PipelineProgressEvent } from '@farmwise/agent-core';
+import { Language, Persona, ViewMode, LiveStepStatus } from './types/ui.js';
+import { checkHealth, executeOrchestration } from './services/api.js';
+import { Header } from './components/Header.js';
+import { TrustStrip } from './components/TrustStrip.js';
+import { SubmissionWizard } from './components/wizard/SubmissionWizard.js';
+import { LiveAgentRunView } from './components/live-run/LiveAgentRunView.js';
+import { ResultsDashboard } from './components/dashboard/ResultsDashboard.js';
+
+const INITIAL_STEPS: LiveStepStatus[] = [
+  {
+    stepId: 'step-plan',
+    agent: 'planner',
+    titleEn: 'Autonomous Plan Drafting & Model Selection',
+    titleTa: 'திட்டம் வகுத்தல் & மாதிரி தேர்வு',
+    status: 'queued',
+    routingReason: 'Cheapest open-weight model for rapid plan structuring'
+  },
+  {
+    stepId: 'step-geo',
+    agent: 'geography',
+    titleEn: 'Cadastral Boundary Resolution & GPS Containment',
+    titleTa: 'நில வரைபடம் & GPS இருப்பிட ஆய்வு',
+    status: 'queued',
+    routingReason: 'Cheapest open-weight Bedrock Ministral for GIS turf analysis'
+  },
+  {
+    stepId: 'step-land',
+    agent: 'landRecord',
+    titleEn: 'Patta Chitta Verification & PII Protection',
+    titleTa: 'பட்டா சரிபார்ப்பு & தனிநபர் தரவு பாதுகாப்பு',
+    status: 'queued',
+    routingReason: 'Strict regex extraction and deterministic PII masking'
+  },
+  {
+    stepId: 'step-image',
+    agent: 'image',
+    titleEn: 'Multimodal Crop & Disease Vision Analysis',
+    titleTa: 'பயிர் & நோய் புகைப்பட பகுப்பாய்வு',
+    status: 'queued',
+    routingReason: 'Titan Multimodal kNN pass with Gemini Flash escalation'
+  },
+  {
+    stepId: 'step-weather',
+    agent: 'weather',
+    titleEn: 'Live Open-Meteo Weather & 48h Spray Window',
+    titleTa: 'வானிலை முன்னறிவிப்பு & மருந்து தெளிப்பு நேரம்',
+    status: 'queued',
+    routingReason: 'REST sync with 30-min TTL and agronomic risk heuristics'
+  },
+  {
+    stepId: 'step-agri',
+    agent: 'agriKnowledge',
+    titleEn: 'TNAU Grounded Agronomy & Fertilizer Prescription',
+    titleTa: 'தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழக உரப் பரிந்துரை',
+    status: 'queued',
+    routingReason: 'Titan Text Embeddings V2 vector search across verified corpus'
+  },
+  {
+    stepId: 'step-verifier',
+    agent: 'verifier',
+    titleEn: '7-Point Domain Sanity & Claude Critic Audit',
+    titleTa: '7 கட்ட கள சரிபார்ப்பு & தணிக்கை',
+    status: 'queued',
+    routingReason: 'Frontier Claude 3.5 Sonnet reserved for independent verifier audit'
+  }
+];
 
 export default function App() {
-  const [lang, setLang] = useState<'en' | 'ta'>('en');
+  const [lang, setLang] = useState<Language>('ta');
+  const [persona, setPersona] = useState<Persona>('farmer');
+  const [activeView, setActiveView] = useState<ViewMode>('wizard');
   const [health, setHealth] = useState<any>(null);
 
+  // Active Execution State
+  const [currentRequest, setCurrentRequest] = useState<FarmerRequest | null>(null);
+  const [runId, setRunId] = useState<string>('RUN-INIT');
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [stepStatuses, setStepStatuses] = useState<LiveStepStatus[]>(INITIAL_STEPS);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [clarifyingQuestions, setClarifyingQuestions] = useState<string[] | undefined>(undefined);
+  const [finalResult, setFinalResult] = useState<FinalResult | null>(null);
+
   useEffect(() => {
-    fetch('/health')
-      .then(res => res.json())
-      .then(data => setHealth(data))
-      .catch(err => {
-        console.warn('API health check error:', err);
-        setHealth({
-          status: 'healthy (offline mode)',
-          region: 'ap-south-1',
-          teamId: '01',
-          modelsConfigured: 7,
-          services: { local: 'ready', aws: 'configured' }
-        });
-      });
+    checkHealth().then(data => setHealth(data));
   }, []);
 
+  // Submit request from wizard
+  const handleSubmit = async (request: FarmerRequest) => {
+    setCurrentRequest(request);
+    setIsRunning(true);
+    setActiveView('running');
+    setClarifyingQuestions(undefined);
+
+    // Initialize clean steps
+    const activeSteps: LiveStepStatus[] = INITIAL_STEPS.map(s => ({
+      ...s,
+      status: 'queued',
+      modelUsed: undefined,
+      latencyMs: undefined,
+      costUsd: undefined,
+      dataSummary: undefined
+    }));
+    setStepStatuses(activeSteps);
+
+    try {
+      const result = await executeOrchestration(request, (evt: PipelineProgressEvent) => {
+        setStepStatuses(prev =>
+          prev.map(s => {
+            if (s.agent === evt.agent) {
+              return {
+                ...s,
+                status: evt.status === 'started' ? 'running' : 'completed',
+                modelUsed: evt.modelUsed || s.modelUsed,
+                latencyMs: evt.latencyMs,
+                costUsd: evt.costUsd,
+                dataSummary: evt.data
+                  ? typeof evt.data === 'string'
+                    ? evt.data
+                    : JSON.stringify(evt.data).substring(0, 75) + '...'
+                  : undefined
+              };
+            }
+            return s;
+          })
+        );
+      });
+
+      setRunId(result.runId);
+      setPlan(result.plan);
+
+      if (result.status === 'NEEDS_CLARIFICATION') {
+        setClarifyingQuestions(result.clarifyingQuestions);
+        setIsRunning(false);
+      } else if (result.status === 'COMPLETED' && result.finalResult) {
+        // Mark all steps as complete
+        setStepStatuses(prev =>
+          prev.map(s => ({
+            ...s,
+            status: 'completed',
+            modelUsed: s.modelUsed || (s.agent === 'verifier' ? 'claude-3-5-sonnet' : s.agent === 'image' ? 'gemini-1.5-flash' : 'ministral-8b')
+          }))
+        );
+
+        setFinalResult(result.finalResult);
+        setIsRunning(false);
+      }
+    } catch (err: any) {
+      console.error('Execution error:', err);
+      setIsRunning(false);
+    }
+  };
+
+  // Clarification loop handler
+  const handleClarify = (answer: { surveyNumber: string; village: string }) => {
+    if (!currentRequest) return;
+    const updated: FarmerRequest = {
+      ...currentRequest,
+      surveyNumber: answer.surveyNumber,
+      village: answer.village,
+      district: currentRequest.district || 'Tenkasi',
+      taluk: currentRequest.taluk || 'Sivagiri'
+    };
+    handleSubmit(updated);
+  };
+
+  // Return to wizard for a new analysis
+  const handleNewAnalysis = () => {
+    setActiveView('wizard');
+    setFinalResult(null);
+    setClarifyingQuestions(undefined);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#F7F9F4]">
-      {/* Top Banner / Navbar */}
-      <header className="bg-[#0F3D26] text-white px-6 py-4 shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-[#2E7D32] flex items-center justify-center font-bold text-xl text-[#FFC72C] shadow-inner">
-              FW
-            </div>
-            <div>
-              <h1 className="text-xl font-bold tracking-tight">FarmwiseAI</h1>
-              <p className="text-xs text-green-200">
-                {lang === 'en' ? 'Agentic Agriculture Intelligence Platform' : 'முகமை வேளாண் நுண்ணறிவு தளம்'}
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen flex flex-col bg-[#F7F9F4] text-gray-900 font-sans selection:bg-[#2E7D32] selection:text-white">
+      {/* App Header */}
+      <Header
+        lang={lang}
+        onToggleLang={() => setLang(lang === 'en' ? 'ta' : 'en')}
+        persona={persona}
+        onTogglePersona={() => setPersona(persona === 'farmer' ? 'officer' : 'farmer')}
+        health={health}
+        activeView={activeView}
+        onSelectView={view => setActiveView(view)}
+        hasResults={!!finalResult}
+        isRunning={isRunning}
+      />
 
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setLang(lang === 'en' ? 'ta' : 'en')}
-              className="flex items-center space-x-2 bg-[#2E7D32] hover:bg-[#388E3C] px-3.5 py-1.5 rounded-lg text-sm font-medium transition-colors border border-green-600"
-              aria-label="Toggle Language"
-            >
-              <Globe className="w-4 h-4 text-[#FFC72C]" />
-              <span>{lang === 'en' ? 'தமிழ்' : 'English'}</span>
-            </button>
+      {/* Trust & Provenance Strip */}
+      <TrustStrip lang={lang} />
 
-            <div className="hidden md:flex items-center space-x-2 text-xs bg-[#174D32] px-3 py-1.5 rounded-lg border border-green-700/60">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#6DB33F] animate-pulse"></span>
-              <span className="text-green-200 font-mono">ap-south-1 (Mumbai)</span>
-              <span className="text-green-400">|</span>
-              <span className="text-yellow-300 font-bold">Team {health?.teamId || '01'}</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      {/* Main Dynamic View Area */}
+      <main className="flex-1 w-full pb-12">
+        {activeView === 'wizard' && (
+          <SubmissionWizard
+            lang={lang}
+            onSubmit={handleSubmit}
+            isSubmitting={isRunning}
+          />
+        )}
 
-      {/* Trust Strip */}
-      <section className="bg-[#E8F3EB] border-b border-green-200/80 px-6 py-2.5 text-xs text-[#0F3D26]">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center space-x-2 font-medium">
-            <ShieldCheck className="w-4 h-4 text-[#2E7D32]" />
-            <span>{lang === 'en' ? 'Verified Parcel Intelligence' : 'சரிபார்க்கப்பட்ட நில ஆய்வு'}</span>
-          </div>
-          <div className="flex items-center space-x-2 font-medium">
-            <Database className="w-4 h-4 text-[#2E7D32]" />
-            <span>{lang === 'en' ? 'Sourced Agronomic Evidence' : 'ஆதாரப்பூர்வ வேளாண் தகவல்'}</span>
-          </div>
-          <div className="flex items-center space-x-2 font-medium">
-            <Globe className="w-4 h-4 text-[#2E7D32]" />
-            <span>{lang === 'en' ? 'Bilingual Voice & Text (தமிழ் / EN)' : 'இருமொழி குரல் & உரை'}</span>
-          </div>
-        </div>
-      </section>
+        {activeView === 'running' && (
+          <LiveAgentRunView
+            lang={lang}
+            runId={runId}
+            plan={plan}
+            stepStatuses={stepStatuses}
+            isRunning={isRunning}
+            clarifyingQuestions={clarifyingQuestions}
+            onClarify={handleClarify}
+            onViewResults={() => setActiveView('results')}
+            costComparison={
+              finalResult?.costSummary
+                ? {
+                    routedCostUSD: finalResult.costSummary.actualRoutedCostUSD,
+                    baselineCostUSD: finalResult.costSummary.allLargeModelCostUSD,
+                    savingsPct: finalResult.costSummary.savingsPct
+                  }
+                : undefined
+            }
+          />
+        )}
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 py-8">
-        <div className="bg-white rounded-2xl p-8 border border-green-100 shadow-sm mb-8">
-          <div className="flex items-start justify-between flex-wrap gap-4">
-            <div>
-              <div className="inline-flex items-center space-x-2 bg-green-100 text-[#0F3D26] px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider mb-3">
-                <CheckCircle2 className="w-4 h-4 text-[#2E7D32]" />
-                <span>Phase 1: Foundation Active</span>
-              </div>
-              <h2 className="text-2xl md:text-3xl font-bold text-[#0F3D26]">
-                {lang === 'en' 
-                  ? 'Autonomous Multi-Model Advisory Engine' 
-                  : 'பன்முக மாதிரி தன்னாட்சி வேளாண் ஆலோசனை இயந்திரம்'}
-              </h2>
-              <p className="text-gray-600 mt-2 max-w-2xl text-sm md:text-base">
-                {lang === 'en'
-                  ? 'Core monorepo architecture, multi-model registry, strict Zod schemas, and sample dataset adapters initialized in ap-south-1 Mumbai.'
-                  : 'மும்பை பகுதியில் கட்டமைக்கப்பட்ட பல மாதிரி அமைப்புகள், திட்டமிடல் விதிகள் மற்றும் நிலத் தரவுகள் தயார் நிலையில் உள்ளன.'}
-              </p>
-            </div>
-
-            <div className="bg-[#F7F9F4] border border-green-200 rounded-xl p-4 min-w-[220px]">
-              <div className="text-xs text-gray-500 font-medium mb-1">SYSTEM HEALTH</div>
-              <div className="flex items-center space-x-2">
-                <span className="w-3 h-3 rounded-full bg-[#2E7D32] animate-ping"></span>
-                <span className="font-bold text-[#0F3D26] capitalize">{health?.status || 'Active'}</span>
-              </div>
-              <div className="text-xs text-gray-500 mt-2 font-mono">
-                Models Configured: <span className="font-bold text-[#2E7D32]">{health?.modelsConfigured || 7}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-4 text-[#2E7D32]">
-              <Cpu className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-lg text-[#0F3D26] mb-2">Multi-Model Routing</h3>
-            <p className="text-xs text-gray-600 mb-4">
-              Configured roles for Bedrock Ministral 8B/3B, Titan Text & Multimodal Embeddings, Gemini Flash/Pro, and Claude Verifier.
-            </p>
-            <div className="text-xs font-mono bg-[#F7F9F4] p-3 rounded-lg text-gray-700 space-y-1">
-              <div>• Bedrock Ministral (Open-weight)</div>
-              <div>• Google Gemini (Multimodal)</div>
-              <div>• Claude Sonnet (Critic/Verifier)</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center mb-4 text-[#B8860B]">
-              <Database className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-lg text-[#0F3D26] mb-2">Grounded Data Adapters</h3>
-            <p className="text-xs text-gray-600 mb-4">
-              Preloaded with real cadastral boundaries from Thoothukudi, Tenkasi Sivagiri, ground truth survey records, and TNAU agronomy.
-            </p>
-            <div className="text-xs font-mono bg-[#F7F9F4] p-3 rounded-lg text-gray-700 space-y-1">
-              <div>• Cadastral Polygons (387, 174, 202/55)</div>
-              <div>• Ground Truth Points (Crops & Stages)</div>
-              <div>• Strict PII Masking (R. K****)</div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4 text-[#1E88E5]">
-              <MapPin className="w-6 h-6" />
-            </div>
-            <h3 className="font-bold text-lg text-[#0F3D26] mb-2">ap-south-1 Compliance</h3>
-            <p className="text-xs text-gray-600 mb-4">
-              Automated AWS CLI & PowerShell provisioning for S3, DynamoDB, and Lambda under existing FAI-TCE execution role.
-            </p>
-            <div className="text-xs font-mono bg-[#F7F9F4] p-3 rounded-lg text-gray-700 space-y-1">
-              <div>• Region: ap-south-1 (Mumbai)</div>
-              <div>• Role: FAI-TCE-LambdaExecutionRole</div>
-              <div>• Names: fai-tce-team{health?.teamId || '01'}-*</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-[#0F3D26] text-white rounded-2xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <div className="text-xs text-green-300 font-semibold tracking-wider uppercase mb-1">NEXT MILESTONE</div>
-            <div className="font-bold text-lg">Phase 2: Agent Core (Planner, Router, Shared State & Model Clients)</div>
-          </div>
-          <div className="flex items-center space-x-2 text-sm bg-[#2E7D32] hover:bg-[#388E3C] px-4 py-2 rounded-xl font-medium cursor-pointer transition-colors">
-            <span>Ready for Phase 2</span>
-            <ArrowRight className="w-4 h-4" />
-          </div>
-        </div>
+        {activeView === 'results' && finalResult && (
+          <ResultsDashboard
+            result={finalResult}
+            lang={lang}
+            persona={persona}
+            onNewAnalysis={handleNewAnalysis}
+          />
+        )}
       </main>
 
-      <footer className="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500">
-        FarmwiseAI Campus Product Challenge — Task 1: Multi-Model, Multimodal & Agentic AI Platform
+      {/* Global Footer */}
+      <footer className="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 space-y-1">
+        <div className="font-semibold text-gray-700">
+          FarmwiseAI Campus Product Challenge — Task 1: Multi-Model, Multimodal & Agentic AI Platform
+        </div>
+        <div className="text-[11px] text-gray-400 font-mono">
+          Region: ap-south-1 (Mumbai) • Lambda: FAI-TCE-LambdaExecutionRole • Bedrock Ministral + Titan + Gemini + Claude
+        </div>
       </footer>
     </div>
   );

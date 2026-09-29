@@ -1,4 +1,4 @@
-import { HealthResponseSchema } from '@farmwise/agent-core';
+import { HealthResponseSchema, OrchestrationPipeline, FarmerRequestSchema } from '@farmwise/agent-core';
 import teamConfig from '../../../config/team.json';
 import modelsConfig from '../../../config/models.config.json';
 
@@ -8,6 +8,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
 };
+
+const pipeline = new OrchestrationPipeline();
 
 export async function handleHealth() {
   const modelsCount = Object.keys(modelsConfig.models || {}).length;
@@ -36,6 +38,36 @@ export async function handleHealth() {
   };
 }
 
+export async function handleOrchestrate(event: any) {
+  try {
+    const rawBody = event.isBase64Encoded
+      ? Buffer.from(event.body, 'base64').toString('utf8')
+      : event.body;
+
+    const body = typeof rawBody === 'string' ? JSON.parse(rawBody) : (rawBody || {});
+    const request = FarmerRequestSchema.parse(body);
+
+    const result = await pipeline.execute(request);
+
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify(result)
+    };
+  } catch (err: any) {
+    console.error('Orchestration error in api-gateway:', err);
+    return {
+      statusCode: err.name === 'ZodError' ? 400 : 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: err.name || 'OrchestrationError',
+        message: err.message,
+        details: err.issues || undefined
+      })
+    };
+  }
+}
+
 export async function handler(event: any) {
   const method = (event.requestContext?.http?.method || event.httpMethod || 'GET').toUpperCase();
   const path = event.rawPath || event.path || '/';
@@ -59,6 +91,14 @@ export async function handler(event: any) {
   // Route: /health or /api/health
   if (path === '/health' || path === '/api/health' || path.endsWith('/health')) {
     return handleHealth();
+  }
+
+  // Route: /orchestrate or /api/orchestrate
+  if (
+    (method === 'POST') &&
+    (path === '/orchestrate' || path === '/api/orchestrate' || path.endsWith('/orchestrate'))
+  ) {
+    return handleOrchestrate(event);
   }
 
   // Fallback 404

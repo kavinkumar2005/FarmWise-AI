@@ -20,3 +20,4 @@ export * from './agent/agri-knowledge-agent.js';
 export * from './agent/verifier-agent.js';
 export * from './geo/turf-utils.js';
 export * from './orchestrator/result-integrator.js';
+export * from './orchestrator/pipeline.js';
