@@ -1,5 +1,5 @@
 import React from 'react';
-import { Globe, UserCheck, ShieldAlert, Sparkles, Activity, FileCheck, Layers } from 'lucide-react';
+import { Globe, UserCheck, ShieldAlert, Sparkles, Activity, FileCheck, Layers, Zap } from 'lucide-react';
 import { Language, Persona, ViewMode } from '../types/ui.js';
 
 interface HeaderProps {
@@ -91,6 +91,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <FileCheck className="w-3.5 h-3.5 text-[#FFC72C]" />
             <span>{lang === 'en' ? 'Verified Results' : 'முடிவுகள்'}</span>
+          </button>
+
+          <button
+            onClick={() => onSelectView('admin')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+              activeView === 'admin'
+                ? 'bg-amber-600 text-white shadow'
+                : 'text-yellow-200 hover:text-white hover:bg-green-800/40'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-[#FFC72C]" />
+            <span>{lang === 'en' ? 'Admin & Benchmarks' : 'நிர்வாகம் & தரமதிப்பீடு'}</span>
           </button>
         </div>
 

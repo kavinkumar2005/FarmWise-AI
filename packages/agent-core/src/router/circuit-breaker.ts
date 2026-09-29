@@ -6,12 +6,24 @@ export interface CircuitBreakerConfig {
   halfOpenMaxAttempts?: number;
 }
 
+export interface CircuitBreakerTelemetry {
+  name: string;
+  state: CircuitState;
+  failureCount: number;
+  successCount: number;
+  lastFailureTime: number | null;
+  failureThreshold: number;
+  resetTimeoutMs: number;
+  isSimulatedFailure: boolean;
+}
+
 export class CircuitBreaker {
   public readonly name: string;
   private state: CircuitState = 'CLOSED';
   private failureCount: number = 0;
   private successCount: number = 0;
   private lastFailureTime: number = 0;
+  private isSimulated: boolean = false;
 
   private readonly failureThreshold: number;
   private readonly resetTimeoutMs: number;
@@ -25,6 +37,9 @@ export class CircuitBreaker {
   }
 
   getState(): CircuitState {
+    if (this.isSimulated) {
+      return 'OPEN';
+    }
     if (this.state === 'OPEN') {
       const now = Date.now();
       if (now - this.lastFailureTime > this.resetTimeoutMs) {
@@ -41,6 +56,7 @@ export class CircuitBreaker {
   }
 
   recordSuccess(): void {
+    if (this.isSimulated) return;
     if (this.state === 'HALF_OPEN') {
       this.successCount++;
       if (this.successCount >= this.halfOpenMaxAttempts) {
@@ -65,9 +81,34 @@ export class CircuitBreaker {
     this.lastFailureTime = Date.now();
   }
 
+  simulateFailure(enabled: boolean = true): void {
+    this.isSimulated = enabled;
+    if (enabled) {
+      this.state = 'OPEN';
+      this.lastFailureTime = Date.now();
+      this.failureCount = this.failureThreshold;
+    } else {
+      this.reset();
+    }
+  }
+
   reset(): void {
+    this.isSimulated = false;
     this.state = 'CLOSED';
     this.failureCount = 0;
     this.successCount = 0;
+  }
+
+  getTelemetry(): CircuitBreakerTelemetry {
+    return {
+      name: this.name,
+      state: this.getState(),
+      failureCount: this.failureCount,
+      successCount: this.successCount,
+      lastFailureTime: this.lastFailureTime > 0 ? this.lastFailureTime : null,
+      failureThreshold: this.failureThreshold,
+      resetTimeoutMs: this.resetTimeoutMs,
+      isSimulatedFailure: this.isSimulated
+    };
   }
 }

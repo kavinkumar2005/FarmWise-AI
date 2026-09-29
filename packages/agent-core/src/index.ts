@@ -31,3 +31,4 @@ export * from './rag/vector-store.js';
 export * from './chatbot/hallucination-verifier.js';
 export * from './chatbot/agri-chatbot.js';
 export * from './eval/evaluation-harness.js';
+export * from './eval/cost-calculator.js';

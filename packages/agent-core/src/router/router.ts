@@ -1,5 +1,5 @@
 import { PlanStep } from '../schemas/plan.schema.js';
-import { CircuitBreaker } from './circuit-breaker.js';
+import { CircuitBreaker, CircuitBreakerTelemetry } from './circuit-breaker.js';
 import modelsConfig from '../../../../config/models.config.json';
 import thresholdsConfig from '../../../../config/thresholds.json';
 
@@ -188,5 +188,26 @@ export class ModelRouter {
       isFallback: true,
       originalModel: currentModel
     };
+  }
+
+  getAllCircuitBreakersTelemetry(): CircuitBreakerTelemetry[] {
+    const list: CircuitBreakerTelemetry[] = [];
+    for (const cb of this.circuitBreakers.values()) {
+      list.push(cb.getTelemetry());
+    }
+    return list;
+  }
+
+  simulateFailure(modelKey: string, enabled: boolean = true): void {
+    const cb = this.circuitBreakers.get(modelKey);
+    if (cb) {
+      cb.simulateFailure(enabled);
+    }
+  }
+
+  resetAllCircuitBreakers(): void {
+    for (const cb of this.circuitBreakers.values()) {
+      cb.reset();
+    }
   }
 }

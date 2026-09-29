@@ -8,6 +8,7 @@ import { SubmissionWizard } from './components/wizard/SubmissionWizard.js';
 import { LiveAgentRunView } from './components/live-run/LiveAgentRunView.js';
 import { ResultsDashboard } from './components/dashboard/ResultsDashboard.js';
 import { AgriChatDrawer } from './components/chat/AgriChatDrawer.js';
+import { AdminDashboard } from './components/admin/AdminDashboard.js';
 
 const INITIAL_STEPS: LiveStepStatus[] = [
   {
@@ -230,6 +231,10 @@ export default function App() {
             persona={persona}
             onNewAnalysis={handleNewAnalysis}
           />
+        )}
+
+        {activeView === 'admin' && (
+          <AdminDashboard lang={lang} />
         )}
       </main>
 

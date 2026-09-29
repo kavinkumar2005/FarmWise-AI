@@ -2,7 +2,7 @@ import { FarmerRequest, FinalResult, Plan } from '@farmwise/agent-core';
 
 export type Language = 'en' | 'ta';
 export type Persona = 'farmer' | 'officer';
-export type ViewMode = 'wizard' | 'running' | 'results';
+export type ViewMode = 'wizard' | 'running' | 'results' | 'admin';
 export type DashboardTab = 'summary' | 'map' | 'advisory' | 'evidence' | 'costs' | 'report';
 
 export interface PresetScenario {
