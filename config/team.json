@@ -1,29 +1,29 @@
 {
-  "teamId": "01",
+  "teamId": "06",
   "region": "ap-south-1",
   "roleName": "FAI-TCE-LambdaExecutionRole",
   "roleArn": "arn:aws:iam::100247989552:role/FAI-TCE-LambdaExecutionRole",
-  "resourcePrefix": "fai-tce-team01",
+  "resourcePrefix": "fai-tce-team06",
   "budgetLimitUSD": 100,
   "buckets": {
-    "uploads": "fai-tce-team01-uploads",
-    "geodata": "fai-tce-team01-geodata",
-    "advisory": "fai-tce-team01-advisory",
-    "reports": "fai-tce-team01-reports"
+    "uploads": "fai-tce-team06-uploads",
+    "geodata": "fai-tce-team06-geodata",
+    "advisory": "fai-tce-team06-advisory",
+    "reports": "fai-tce-team06-reports"
   },
   "tables": {
-    "runs": "fai-tce-team01-runs",
-    "parcels": "fai-tce-team01-parcels",
-    "landrecords": "fai-tce-team01-landrecords",
-    "refimages": "fai-tce-team01-refimages",
-    "advisoryChunks": "fai-tce-team01-advisory-chunks",
-    "chats": "fai-tce-team01-chats",
-    "cache": "fai-tce-team01-cache"
+    "runs": "fai-tce-team06-runs",
+    "parcels": "fai-tce-team06-parcels",
+    "landrecords": "fai-tce-team06-landrecords",
+    "refimages": "fai-tce-team06-refimages",
+    "advisoryChunks": "fai-tce-team06-advisory-chunks",
+    "chats": "fai-tce-team06-chats",
+    "cache": "fai-tce-team06-cache"
   },
   "lambdas": {
-    "apiGatewayHandler": "fai-tce-team01-api-gateway-handler",
-    "orchestrator": "fai-tce-team01-orchestrator",
-    "chatbot": "fai-tce-team01-chatbot",
-    "reportGenerator": "fai-tce-team01-report-generator"
+    "apiGatewayHandler": "fai-tce-team06-api-gateway-handler",
+    "orchestrator": "fai-tce-team06-orchestrator",
+    "chatbot": "fai-tce-team06-chatbot",
+    "reportGenerator": "fai-tce-team06-report-generator"
   }
 }

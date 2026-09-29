@@ -665,7 +665,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ lang }) => {
                 </div>
                 <div className="flex justify-between p-2 rounded bg-gray-50 border border-gray-100">
                   <span className="font-semibold text-gray-600">Resource Naming Prefix:</span>
-                  <span className="font-mono text-amber-700 font-bold">fai-tce-team01-*</span>
+                  <span className="font-mono text-amber-700 font-bold">fai-tce-team06-*</span>
                 </div>
                 <div className="flex justify-between p-2 rounded bg-gray-50 border border-gray-100">
                   <span className="font-semibold text-gray-600">S3 Access Control:</span>

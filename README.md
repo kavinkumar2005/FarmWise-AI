@@ -1,7 +1,7 @@
 # 🌾 FarmwiseAI: Agentic Agriculture Intelligence Platform
 
 > **FarmwiseAI Campus Product Challenge — Task 1: Multi-Model, Multimodal & Agentic AI System**  
-> **Team Resource Prefix:** `fai-tce-team01-*` | **AWS Region:** `ap-south-1` (Mumbai) Only | **Execution Role:** `FAI-TCE-LambdaExecutionRole`  
+> **Team Resource Prefix:** `fai-tce-team06-*` | **AWS Region:** `ap-south-1` (Mumbai) Only | **Execution Role:** `FAI-TCE-LambdaExecutionRole`  
 > **Status:** Production-Ready • 16 Test Suites Passing (80 / 80 Tests) • 100% Type-Safe Monorepo
 
 ---
@@ -98,7 +98,7 @@ Our automated benchmark suite (`EvaluationHarness`) evaluates 7 golden benchmark
 | :--- | :--- | :--- | :--- |
 | **Region** | `ap-south-1` (Mumbai) ONLY | Enforced strictly in all configs & deployment scripts. Zero cross-region inference profiles. | `config/team.json`, `test/phase1.test.ts` |
 | **IAM Execution Role** | `FAI-TCE-LambdaExecutionRole` | Reuses existing event role. No roles or IAM users created. | `scripts/deploy.sh` |
-| **Resource Naming** | `fai-tce-team01-*` | Enforced for S3, Lambdas, DynamoDB tables, and API Gateway. | `config/team.json` |
+| **Resource Naming** | `fai-tce-team06-*` | Enforced for S3, Lambdas, DynamoDB tables, and API Gateway. | `config/team.json` |
 | **Permitted Services** | S3, Lambda, API Gateway, DynamoDB, Bedrock, CloudWatch | **Zero forbidden services instantiated** (0 EC2, 0 RDS, 0 OpenSearch, 0 Cognito, 0 Transcribe, 0 Textract). | Monitored in Admin Dashboard |
 | **S3 Access** | Must remain private | Bucket ACLs disabled, Block Public Access enabled. Presigned URLs used for client uploads. | `packages/agent-core/src/adapters/s3.ts` |
 | **PII Protection** | Personal data masked by default | Farmer and owner names displayed as `R. K****` in farmer view; full view restricted to authenticated officer view. | `ResultsDashboard.tsx`, `ReportTab.tsx` |
@@ -134,7 +134,21 @@ npm run build
 ```bash
 npm run dev
 ```
-Open **[http://localhost:5173](http://localhost:5173)** in your browser.
+Open **[http://localhost:3000](http://localhost:3000)** (or `http://localhost:5173`) in your browser.
+
+### 5. Deploying to AWS (ap-south-1 Mumbai)
+To deploy microservices to AWS using Team 06 event credentials:
+1. Configure `.env.deploy` (copied from `.env.example`) with your active AWS session tokens.
+2. Run the deployment script for your operating system:
+```powershell
+# Windows (PowerShell)
+.\infra\scripts\deploy.ps1
+```
+```bash
+# Linux / macOS / AWS CloudShell
+bash infra/scripts/deploy.sh
+```
+*Creates strictly private S3 buckets (`fai-tce-team06-*`), PAY_PER_REQUEST DynamoDB tables, bundles the microservices with esbuild, and deploys using `arn:aws:iam::100247989552:role/FAI-TCE-LambdaExecutionRole` in region `ap-south-1`.*
 
 ---
 
