@@ -4,7 +4,7 @@ import { StepResultSchema } from './step-result.schema.js';
 import { VerificationResultSchema } from './verification.schema.js';
 
 export const FinalResultSchema = z.object({
-  runId: z.string().uuid(),
+  runId: z.string().min(1),
   timestamp: z.string(),
   status: z.enum(['COMPLETED', 'NEEDS_INPUT', 'FAILED']),
   parcel: z.object({

@@ -10,7 +10,7 @@ export const ProvenanceSourceSchema = z.enum([
 export type ProvenanceSource = z.infer<typeof ProvenanceSourceSchema>;
 
 export const FarmerRequestSchema = z.object({
-  requestId: z.string().uuid(),
+  requestId: z.string().min(1),
   farmerName: z.string().optional(),
   language: z.enum(['en', 'ta', 'auto']).default('auto'),
   rawQuery: z.string().min(1),

@@ -24,7 +24,7 @@ export const PlanStepSchema = z.object({
 export type PlanStep = z.infer<typeof PlanStepSchema>;
 
 export const PlanSchema = z.object({
-  planId: z.string().uuid(),
+  planId: z.string().min(1),
   summary: z.string(),
   steps: z.array(PlanStepSchema),
   missingInfo: z.array(z.string()).default([]),
