@@ -7,6 +7,7 @@ import { TrustStrip } from './components/TrustStrip.js';
 import { SubmissionWizard } from './components/wizard/SubmissionWizard.js';
 import { LiveAgentRunView } from './components/live-run/LiveAgentRunView.js';
 import { ResultsDashboard } from './components/dashboard/ResultsDashboard.js';
+import { AgriChatDrawer } from './components/chat/AgriChatDrawer.js';
 
 const INITIAL_STEPS: LiveStepStatus[] = [
   {
@@ -241,6 +242,13 @@ export default function App() {
           Region: ap-south-1 (Mumbai) • Lambda: FAI-TCE-LambdaExecutionRole • Bedrock Ministral + Titan + Gemini + Claude
         </div>
       </footer>
+
+      {/* Persistent Floating Agri AI Chat Drawer */}
+      <AgriChatDrawer
+        currentResult={finalResult}
+        lang={lang}
+        persona={persona}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { HealthResponseSchema, OrchestrationPipeline, FarmerRequestSchema } from '@farmwise/agent-core';
 import { handler as reportHandler } from '../../report-generator/src/index.js';
+import { handler as chatHandler } from '../../chatbot/src/index.js';
 import teamConfig from '../../../config/team.json';
 import modelsConfig from '../../../config/models.config.json';
 
@@ -108,6 +109,14 @@ export async function handler(event: any) {
     (path === '/report' || path === '/api/report' || path.endsWith('/report'))
   ) {
     return reportHandler(event);
+  }
+
+  // Route: /chat or /api/chat
+  if (
+    (method === 'POST') &&
+    (path === '/chat' || path === '/api/chat' || path.endsWith('/chat'))
+  ) {
+    return chatHandler(event);
   }
 
   // Fallback 404
