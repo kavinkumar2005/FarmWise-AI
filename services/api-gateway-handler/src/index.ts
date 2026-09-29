@@ -1,4 +1,5 @@
 import { HealthResponseSchema, OrchestrationPipeline, FarmerRequestSchema } from '@farmwise/agent-core';
+import { handler as reportHandler } from '../../report-generator/src/index.js';
 import teamConfig from '../../../config/team.json';
 import modelsConfig from '../../../config/models.config.json';
 
@@ -99,6 +100,14 @@ export async function handler(event: any) {
     (path === '/orchestrate' || path === '/api/orchestrate' || path.endsWith('/orchestrate'))
   ) {
     return handleOrchestrate(event);
+  }
+
+  // Route: /report or /api/report
+  if (
+    (method === 'POST') &&
+    (path === '/report' || path === '/api/report' || path.endsWith('/report'))
+  ) {
+    return reportHandler(event);
   }
 
   // Fallback 404

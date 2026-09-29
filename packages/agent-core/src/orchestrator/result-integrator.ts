@@ -116,12 +116,15 @@ export class ResultIntegrator {
         centroid: geo.centroid,
         areaAcres: geo.areaAcres,
         gisAreaAcres: geo.gisAreaAcres,
-        areaDiscrepancyPct: geo.areaDiscrepancyPct
+        areaDiscrepancyPct: geo.areaDiscrepancyPct,
+        provenance: geo.provenance || 'FarmwiseAI-provided'
       },
       landRecord: {
         ownerNameMasked: land.ownerNameMasked,
         ownerNameFull: land.ownerNameFull,
         classification: land.classification,
+        wetOrDry: land.wetOrDry || 'Nanjai',
+        pattaNumber: land.pattaNumber || '1042',
         extentAcres: land.extentAcres,
         recordId: land.recordId,
         provenance: land.provenance

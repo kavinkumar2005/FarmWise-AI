@@ -20,7 +20,8 @@ export const FinalResultSchema = z.object({
     }).optional(),
     areaAcres: z.number().optional(),
     gisAreaAcres: z.number().optional(),
-    areaDiscrepancyPct: z.number().optional()
+    areaDiscrepancyPct: z.number().optional(),
+    provenance: ProvenanceSourceSchema.optional()
   }),
   landRecord: z.object({
     ownerNameMasked: z.string(), // e.g. 'R. K****'
@@ -35,6 +36,8 @@ export const FinalResultSchema = z.object({
       'Disputed',
       'Unclassified'
     ]),
+    wetOrDry: z.string().optional(),
+    pattaNumber: z.string().optional(),
     extentAcres: z.number(),
     recordId: z.string(),
     provenance: ProvenanceSourceSchema

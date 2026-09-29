@@ -22,3 +22,6 @@ export * from './geo/turf-utils.js';
 export * from './orchestrator/result-integrator.js';
 export * from './orchestrator/pipeline.js';
 export * from './voice/tamil-speech-normalizer.js';
+export * from './report/advisory-hasher.js';
+export * from './report/qr-generator.js';
+export * from './report/government-report-builder.js';
