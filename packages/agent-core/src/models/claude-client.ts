@@ -5,7 +5,8 @@ export class ClaudeClient implements IModelClient {
   private readonly apiKey?: string;
 
   constructor(apiKey?: string) {
-    this.apiKey = apiKey || process.env.ANTHROPIC_API_KEY;
+    const env = typeof process !== 'undefined' && process && process.env ? process.env : {};
+    this.apiKey = apiKey || (env as any).ANTHROPIC_API_KEY;
   }
 
   async invoke(params: ModelPromptParams): Promise<ModelResponse> {

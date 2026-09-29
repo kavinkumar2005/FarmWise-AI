@@ -1,5 +1,5 @@
 import http from 'http';
-import { handler } from '../services/api-gateway-handler/src/index.js';
+import { handler } from '../../services/api-gateway-handler/src/index.js';
 
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
