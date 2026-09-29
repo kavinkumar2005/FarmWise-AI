@@ -1,0 +1,29 @@
+{
+  "teamId": "01",
+  "region": "ap-south-1",
+  "roleName": "FAI-TCE-LambdaExecutionRole",
+  "roleArn": "arn:aws:iam::100247989552:role/FAI-TCE-LambdaExecutionRole",
+  "resourcePrefix": "fai-tce-team01",
+  "budgetLimitUSD": 100,
+  "buckets": {
+    "uploads": "fai-tce-team01-uploads",
+    "geodata": "fai-tce-team01-geodata",
+    "advisory": "fai-tce-team01-advisory",
+    "reports": "fai-tce-team01-reports"
+  },
+  "tables": {
+    "runs": "fai-tce-team01-runs",
+    "parcels": "fai-tce-team01-parcels",
+    "landrecords": "fai-tce-team01-landrecords",
+    "refimages": "fai-tce-team01-refimages",
+    "advisoryChunks": "fai-tce-team01-advisory-chunks",
+    "chats": "fai-tce-team01-chats",
+    "cache": "fai-tce-team01-cache"
+  },
+  "lambdas": {
+    "apiGatewayHandler": "fai-tce-team01-api-gateway-handler",
+    "orchestrator": "fai-tce-team01-orchestrator",
+    "chatbot": "fai-tce-team01-chatbot",
+    "reportGenerator": "fai-tce-team01-report-generator"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "confidenceThresholds": {
+    "cropPrediction": 0.80,
+    "growthStage": 0.75,
+    "cropCondition": 0.70,
+    "parcelMatch": 0.90,
+    "documentExtraction": 0.85,
+    "ragRelevance": 0.70,
+    "knnEmbeddingMargin": 0.15
+  },
+  "circuitBreaker": {
+    "failureThreshold": 3,
+    "resetTimeoutMs": 30000,
+    "halfOpenMaxAttempts": 2
+  },
+  "timeouts": {
+    "perStepMaxMs": 25000,
+    "apiGatewayLimitMs": 29000,
+    "orchestratorTotalMs": 55000
+  },
+  "uploadLimits": {
+    "maxImageSizeBytes": 8388608,
+    "maxDocSizeBytes": 15728640,
+    "allowedImageMimeTypes": ["image/jpeg", "image/png", "image/webp"],
+    "allowedDocMimeTypes": ["application/pdf", "image/jpeg", "image/png"]
+  }
+}

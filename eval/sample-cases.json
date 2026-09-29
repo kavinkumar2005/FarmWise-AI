@@ -1,0 +1,37 @@
+[
+  {
+    "id": "CASE-01",
+    "title": "Full Parcel Crop & Advisory Request (Survey 202/55)",
+    "query": "What crop is planted in Survey Number 202/55 in Sanganaperi village? Identify the parcel and its owner, retrieve the field photograph, predict crop and growth stage, and recommend fertilizer practices.",
+    "language": "en",
+    "district": "Tenkasi",
+    "taluk": "Sivagiri",
+    "village": "Sanganaperi",
+    "surveyNumber": "202/55",
+    "expectedCrop": "Paddy",
+    "expectedStage": "tillering"
+  },
+  {
+    "id": "CASE-02",
+    "title": "Ground Truth Coconut Parcel in Sanganaperi (Survey 1342/1B)",
+    "query": "சங்கணபேரி கிராமத்தில் உள்ள சர்வே எண் 1342/1B நிலத்தின் உரிமையாளர் யார்? தென்னை மரங்களின் தற்போதைய வளர்ச்சி நிலை மற்றும் உர பரிந்துரைகளை வழங்கவும்.",
+    "language": "ta",
+    "district": "Tenkasi",
+    "taluk": "Sivagiri",
+    "village": "Sanganaperi",
+    "surveyNumber": "1342/1B",
+    "expectedCrop": "Coconut",
+    "expectedStage": "full_growth"
+  },
+  {
+    "id": "CASE-03",
+    "title": "Cadastral Map Parcel in Keelathattaparai (Survey 387)",
+    "query": "Identify boundary and classification for survey number 387 in Keelathattaparai.",
+    "language": "en",
+    "district": "Thoothukudi",
+    "taluk": "Thoothukudi",
+    "village": "Keelathattaparai",
+    "surveyNumber": "387",
+    "expectedClassification": "Patta"
+  }
+]

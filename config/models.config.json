@@ -1,0 +1,90 @@
+{
+  "routerWeights": {
+    "capabilityFit": 0.35,
+    "expectedConfidence": 0.35,
+    "latencyNorm": 0.15,
+    "costNorm": 0.15
+  },
+  "models": {
+    "ministral-8b": {
+      "id": "mistral.ministral-8b-instruct",
+      "provider": "bedrock",
+      "type": "open-weight",
+      "tier": "small",
+      "role": "Plan drafting, structured extraction, query rewriting, routine chat turns",
+      "capabilities": ["text", "json", "planning-draft", "extraction"],
+      "costPer1kInputTokens": 0.0001,
+      "costPer1kOutputTokens": 0.0001,
+      "avgLatencyMs": 800
+    },
+    "ministral-3b": {
+      "id": "mistral.ministral-3b-instruct",
+      "provider": "bedrock",
+      "type": "open-weight",
+      "tier": "nano",
+      "role": "Lightweight translation, simple entity extraction, classification",
+      "capabilities": ["text", "classification", "light-translation"],
+      "costPer1kInputTokens": 0.00004,
+      "costPer1kOutputTokens": 0.00004,
+      "avgLatencyMs": 400
+    },
+    "titan-text-embed-v2": {
+      "id": "amazon.titan-embed-text-v2:0",
+      "provider": "bedrock",
+      "type": "embedding",
+      "tier": "nano",
+      "role": "RAG embeddings for agricultural corpus and search queries",
+      "capabilities": ["text-embedding"],
+      "dimensions": 1024,
+      "costPer1kInputTokens": 0.00002,
+      "avgLatencyMs": 150
+    },
+    "titan-multimodal-embed": {
+      "id": "amazon.titan-embed-image-v1",
+      "provider": "bedrock",
+      "type": "multimodal-embedding",
+      "tier": "nano",
+      "role": "Fast first-pass image embedding for kNN crop and stage matching",
+      "capabilities": ["image-embedding"],
+      "dimensions": 1024,
+      "costPerImage": 0.0008,
+      "avgLatencyMs": 350
+    },
+    "gemini-flash": {
+      "id": "gemini-1.5-flash",
+      "provider": "google",
+      "type": "proprietary",
+      "tier": "fast-multimodal",
+      "role": "First-line multimodal image analysis, audio transcription fallback",
+      "capabilities": ["text", "vision", "audio", "multilingual", "json"],
+      "costPer1kInputTokens": 0.000075,
+      "costPer1kOutputTokens": 0.0003,
+      "costPerImage": 0.00002,
+      "avgLatencyMs": 1200
+    },
+    "gemini-pro": {
+      "id": "gemini-1.5-pro",
+      "provider": "google",
+      "type": "proprietary",
+      "tier": "advanced-multimodal",
+      "role": "Hard vision cases, complex visual evidence adjudication, escalation",
+      "capabilities": ["text", "vision", "complex-reasoning", "json"],
+      "costPer1kInputTokens": 0.00125,
+      "costPer1kOutputTokens": 0.005,
+      "costPerImage": 0.001315,
+      "avgLatencyMs": 2800
+    },
+    "claude-sonnet": {
+      "id": "claude-3-5-sonnet-20241022",
+      "provider": "anthropic",
+      "type": "proprietary",
+      "tier": "frontier",
+      "role": "Complex planner escalation, Verifier/Critic agent, hallucination validation",
+      "capabilities": ["text", "vision", "critical-evaluation", "verification", "json"],
+      "costPer1kInputTokens": 0.003,
+      "costPer1kOutputTokens": 0.015,
+      "costPerImage": 0.0048,
+      "avgLatencyMs": 2500
+    }
+  }
+}

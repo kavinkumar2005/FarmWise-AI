@@ -1,0 +1,9 @@
+﻿@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', 'Noto Sans Tamil', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 0;
+}

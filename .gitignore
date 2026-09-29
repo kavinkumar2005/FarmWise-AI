@@ -1,0 +1,27 @@
+﻿# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds & Outputs
+dist/
+build/
+*.zip
+.esbuild/
+
+# Environment & Credentials
+.env
+.env.local
+.env.deploy
+*.pem
+credentials.json
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+
+# Antigravity & Scratch
+.system_generated/
+scratch/

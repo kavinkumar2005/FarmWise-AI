@@ -1,0 +1,26 @@
+{
+  "name": "farmwise-ai-platform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FarmwiseAI Agentic Agriculture Intelligence Platform",
+  "workspaces": [
+    "packages/*",
+    "services/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "dev": "npm run dev --workspace=apps/web",
+    "dev:api": "tsx infra/scripts/dev-server.ts",
+    "deploy:phase1": "powershell -ExecutionPolicy Bypass -File infra/scripts/deploy.ps1",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.3"
+  }
+}
