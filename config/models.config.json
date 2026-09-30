@@ -85,6 +85,27 @@
       "costPer1kOutputTokens": 0.015,
       "costPerImage": 0.0048,
       "avgLatencyMs": 2500
+    },
+    "groq-llama-70b": {
+      "id": "llama-3.3-70b-versatile",
+      "provider": "groq",
+      "type": "open-weight",
+      "tier": "accelerated-lpu",
+      "role": "Ultra-low latency open-weight inference, query expansion, fast chatbot turns",
+      "capabilities": ["text", "json", "fast-chat", "extraction"],
+      "costPer1kInputTokens": 0.00005,
+      "costPer1kOutputTokens": 0.00008,
+      "avgLatencyMs": 180
+    },
+    "groq-whisper": {
+      "id": "whisper-large-v3-turbo",
+      "provider": "groq",
+      "type": "speech-to-text",
+      "tier": "accelerated-lpu",
+      "role": "Ultra-fast bilingual Tamil/English farmer speech transcription",
+      "capabilities": ["audio", "transcription", "multilingual"],
+      "costPerMinute": 0.0007,
+      "avgLatencyMs": 220
     }
   }
 }

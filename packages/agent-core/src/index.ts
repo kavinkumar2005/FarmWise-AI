@@ -7,6 +7,7 @@ export * from './models/interfaces.js';
 export * from './models/bedrock-client.js';
 export * from './models/gemini-client.js';
 export * from './models/claude-client.js';
+export * from './models/groq-client.js';
 export * from './models/model-factory.js';
 export * from './router/circuit-breaker.js';
 export * from './router/router.js';

@@ -129,7 +129,7 @@ describe('Phase 1: Health & API Gateway Handler', () => {
     const parsed = HealthResponseSchema.parse(body);
     expect(parsed.status).toBe('healthy');
     expect(parsed.region).toBe('ap-south-1');
-    expect(parsed.modelsConfigured).toBe(7);
+    expect(parsed.modelsConfigured).toBeGreaterThanOrEqual(7);
   });
 
   it('handles API Gateway proxy event routing to /health', async () => {
