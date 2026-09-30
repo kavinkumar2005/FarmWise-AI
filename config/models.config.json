@@ -86,16 +86,16 @@
       "costPerImage": 0.0048,
       "avgLatencyMs": 2500
     },
-    "groq-llama-70b": {
-      "id": "llama-3.3-70b-versatile",
+    "groq-fast": {
+      "id": "qwen/qwen3.8-27b",
       "provider": "groq",
       "type": "open-weight",
       "tier": "accelerated-lpu",
-      "role": "Ultra-low latency open-weight inference, query expansion, fast chatbot turns",
+      "role": "Ultra-low latency open-weight reasoning, query expansion, fast chatbot turns",
       "capabilities": ["text", "json", "fast-chat", "extraction"],
       "costPer1kInputTokens": 0.00005,
       "costPer1kOutputTokens": 0.00008,
-      "avgLatencyMs": 180
+      "avgLatencyMs": 240
     },
     "groq-whisper": {
       "id": "whisper-large-v3-turbo",

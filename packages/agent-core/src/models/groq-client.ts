@@ -1,4 +1,4 @@
-﻿import Groq from "groq-sdk";
+import Groq from "groq-sdk";
 import { IModelClient, ModelPromptParams, ModelResponse } from './interfaces.js';
 import costsConfig from '../../../../config/costs.config.json';
 
@@ -38,7 +38,7 @@ export class GroqClient implements IModelClient {
 
   async invoke(params: ModelPromptParams): Promise<ModelResponse> {
     const start = Date.now();
-    const modelId = params.modelId || 'llama-3.3-70b-versatile';
+    const modelId = params.modelId || 'qwen/qwen3.8-27b';
     const inputTokens = Math.max(15, Math.ceil((params.prompt.length + (params.systemPrompt?.length || 0)) / 4));
     const rates = (costsConfig.rates as any)[modelId] || { inputPer1k: 0.00005, outputPer1k: 0.00008 };
 
