@@ -75,14 +75,14 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({
   ];
 
   return (
-    <div className="max-w-6xl mx-auto my-6 px-4 space-y-6">
+    <div className="w-full space-y-4">
       {/* Top Controls: Return to Wizard & Executive Metrics */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm">
         <div className="flex items-center space-x-3">
           <button
             type="button"
             onClick={onNewAnalysis}
-            className="px-3.5 py-2 border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-2"
+            className="px-3.5 py-1.5 border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold rounded-xl transition-all flex items-center space-x-1.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>{lang === 'en' ? 'New Submission' : 'புதிய மனு'}</span>

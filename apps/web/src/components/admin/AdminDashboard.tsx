@@ -167,9 +167,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ lang }) => {
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 py-6 animate-fade-in">
+    <div className="space-y-4 w-full py-2 animate-fade-in">
       {/* Title & Overview Banner */}
-      <div className="bg-gradient-to-r from-[#0F3D26] to-[#1E5638] rounded-2xl p-6 text-white shadow-xl flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-gradient-to-r from-[#0F3D26] to-[#1E5638] rounded-2xl p-5 text-white shadow-md flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2.5 mb-1.5">
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#FFC72C] text-black">

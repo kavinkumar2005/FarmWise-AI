@@ -50,9 +50,9 @@ export const LiveAgentRunView: React.FC<LiveAgentRunViewProps> = ({
     stepStatuses.every(s => s.status === 'completed' || s.status === 'escalated');
 
   return (
-    <div className="max-w-5xl mx-auto my-6 px-4 space-y-6">
+    <div className="w-full space-y-4">
       {/* Run Header / Live Status Bar */}
-      <div className="bg-[#0F3D26] text-white rounded-3xl p-6 shadow-md border border-green-800 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-[#0F3D26] text-white rounded-2xl p-4 sm:p-5 shadow-sm border border-green-800 flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2 text-xs font-mono text-green-300 mb-1">
             <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -60,12 +60,12 @@ export const LiveAgentRunView: React.FC<LiveAgentRunViewProps> = ({
             <span>•</span>
             <span>ap-south-1 (Mumbai)</span>
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">
+          <h2 className="text-lg sm:text-xl font-bold tracking-tight">
             {lang === 'en'
               ? 'Multi-Model Autonomous Agent Pipeline'
               : 'பன்முக மாதிரி தன்னாட்சி முகமை ஓட்டம்'}
           </h2>
-          <p className="text-xs text-green-200 mt-1 max-w-2xl">
+          <p className="text-xs text-green-200 mt-0.5 max-w-3xl">
             {plan?.summary ||
               (lang === 'en'
                 ? 'Synthesizing dynamic plan, selecting optimal models, and executing specialized verification agents.'
@@ -74,7 +74,7 @@ export const LiveAgentRunView: React.FC<LiveAgentRunViewProps> = ({
         </div>
 
         {/* Live Execution Metric */}
-        <div className="flex items-center space-x-3 bg-[#174D32] px-4 py-3 rounded-2xl border border-green-700/60 font-mono text-xs">
+        <div className="flex items-center space-x-3 bg-[#174D32] px-3.5 py-2.5 rounded-xl border border-green-700/60 font-mono text-xs">
           <div>
             <div className="text-[10px] text-gray-300 uppercase">Status</div>
             <div className="font-bold text-yellow-300 capitalize">

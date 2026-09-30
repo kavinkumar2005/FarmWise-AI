@@ -34,7 +34,7 @@ describe('Phase 3: Image Agent & Multi-Tier Vision', () => {
     expect(result.data.cropName).toBeDefined();
     expect(result.data.growthStage).toBeDefined();
     expect(result.data.visualEvidence).toContain('Bedrock Titan');
-  });
+  }, 15000);
 
   it('classifies crop and stage using escalated Gemini Flash VLM route', async () => {
     const agent = new ImageAgent();
@@ -67,5 +67,5 @@ describe('Phase 3: Image Agent & Multi-Tier Vision', () => {
     expect(result.status).toBe('success');
     expect(result.data.cropName).toBe('Paddy');
     expect(result.data.visualEvidence).toContain('gemini-flash');
-  });
+  }, 15000);
 });

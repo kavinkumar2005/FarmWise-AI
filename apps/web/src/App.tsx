@@ -189,11 +189,8 @@ export default function App() {
         isRunning={isRunning}
       />
 
-      {/* Trust & Provenance Strip */}
-      <TrustStrip lang={lang} />
-
       {/* Main Dynamic View Area */}
-      <main className="flex-1 w-full pb-12">
+      <main className="flex-1 w-full px-4 sm:px-8 py-3">
         {activeView === 'wizard' && (
           <SubmissionWizard
             lang={lang}
@@ -239,12 +236,12 @@ export default function App() {
       </main>
 
       {/* Global Footer */}
-      <footer className="bg-white border-t border-gray-200 py-6 text-center text-xs text-gray-500 space-y-1">
+      <footer className="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500 space-y-0.5">
         <div className="font-semibold text-gray-700">
           FarmwiseAI Campus Product Challenge — Task 1: Multi-Model, Multimodal & Agentic AI Platform
         </div>
         <div className="text-[11px] text-gray-400 font-mono">
-          Region: ap-south-1 (Mumbai) • Lambda: FAI-TCE-LambdaExecutionRole • Bedrock Ministral + Titan + Gemini + Claude
+          Region: ap-south-1 (Mumbai) • Lambda: FAI-TCE-LambdaExecutionRole • Bedrock Ministral + Titan + Groq LPU + Gemini + Claude
         </div>
       </footer>
 

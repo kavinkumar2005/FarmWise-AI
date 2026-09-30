@@ -26,21 +26,21 @@ export const Header: React.FC<HeaderProps> = ({
   isRunning
 }) => {
   return (
-    <header className="bg-[#0F3D26] text-white shadow-lg sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <header className="bg-[#0F3D26] text-white shadow-md sticky top-0 z-50">
+      <div className="w-full px-4 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Brand & Mission */}
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectView('wizard')}>
-          <div className="w-10 h-10 rounded-xl bg-[#2E7D32] flex items-center justify-center font-black text-xl text-[#FFC72C] shadow-inner border border-green-500/30">
+          <div className="w-9 h-9 rounded-xl bg-[#2E7D32] flex items-center justify-center font-black text-lg text-[#FFC72C] shadow-inner border border-green-500/30">
             FW
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-black tracking-tight text-white">FarmwiseAI</h1>
+              <h1 className="text-lg font-black tracking-tight text-white">FarmwiseAI</h1>
               <span className="text-[10px] bg-[#2E7D32] text-[#FFC72C] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-green-600">
                 Agentic
               </span>
             </div>
-            <p className="text-xs text-green-200">
+            <p className="text-[11px] text-green-200 hidden sm:block">
               {lang === 'en'
                 ? 'Autonomous Agriculture Intelligence Platform'
                 : 'தன்னாட்சி வேளாண் நுண்ணறிவு தளம்'}
@@ -146,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="w-2 h-2 rounded-full bg-[#6DB33F] animate-pulse"></span>
             <span className="text-green-200">ap-south-1</span>
             <span className="text-green-500">|</span>
-            <span className="text-yellow-300 font-bold">Team {health?.teamId || '01'}</span>
+            <span className="text-yellow-300 font-bold">Team 06</span>
           </div>
         </div>
       </div>
