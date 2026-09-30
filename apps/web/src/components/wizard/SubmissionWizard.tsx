@@ -49,8 +49,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
   const [longitude, setLongitude] = useState<number | string>(77.4819);
 
   // Media & Documents
-  const [photoUrl, setPhotoUrl] = useState<string>('Datasets/images/images/sample_paddy_tillering.jpg');
-  const [photoPreview, setPhotoPreview] = useState<string>('Datasets/images/images/sample_paddy_tillering.jpg');
+  const [photoUrl, setPhotoUrl] = useState<string>('/samples/sample_paddy_tillering.jpg');
+  const [photoPreview, setPhotoPreview] = useState<string>('/samples/sample_paddy_tillering.jpg');
   const [photoFileName, setPhotoFileName] = useState<string>('sample_paddy_tillering.jpg');
   const [photoFileSize, setPhotoFileSize] = useState<string>('1.8 MB');
   const [photoQualityMetrics, setPhotoQualityMetrics] = useState<{
@@ -565,16 +565,19 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                   >
                     {photoPreview ? (
                       <div className="space-y-2">
-                        <div className="relative w-full h-36 bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center border border-green-200">
+                        <div className="relative w-full h-40 bg-emerald-950/20 rounded-lg overflow-hidden flex items-center justify-center border border-green-200 shadow-inner">
                           <img
                             src={photoPreview}
                             alt="Field Photograph Preview"
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
+                              const target = e.target as HTMLImageElement;
+                              if (!target.src.includes('sample_paddy_tillering.jpg')) {
+                                target.src = '/samples/sample_paddy_tillering.jpg';
+                              }
                             }}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/30 flex flex-col justify-between p-2">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 flex flex-col justify-between p-2">
                             <div className="flex items-center justify-between">
                               <span className="bg-[#0F3D26]/90 text-white text-[9px] font-mono px-2 py-0.5 rounded-full font-semibold border border-green-400/40">
                                 {photoUrl.startsWith('data:')
@@ -641,8 +644,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          setPhotoUrl('Datasets/images/images/sample_paddy_tillering.jpg');
-                          setPhotoPreview('Datasets/images/images/sample_paddy_tillering.jpg');
+                          setPhotoUrl('/samples/sample_paddy_tillering.jpg');
+                          setPhotoPreview('/samples/sample_paddy_tillering.jpg');
                           setPhotoFileName('sample_paddy_tillering.jpg');
                           setPhotoFileSize('1.8 MB');
                           setPhotoQualityMetrics({ exposure: 'Optimal', blurScore: 142, canopy: 88, dimensions: '1920x1080' });
@@ -659,8 +662,8 @@ export const SubmissionWizard: React.FC<SubmissionWizardProps> = ({
                       <button
                         type="button"
                         onClick={() => {
-                          setPhotoUrl('Datasets/images/images/sample_groundnut_pod.jpg');
-                          setPhotoPreview('Datasets/images/images/sample_groundnut_pod.jpg');
+                          setPhotoUrl('/samples/sample_groundnut_pod.jpg');
+                          setPhotoPreview('/samples/sample_groundnut_pod.jpg');
                           setPhotoFileName('sample_groundnut_pod.jpg');
                           setPhotoFileSize('1.4 MB');
                           setPhotoQualityMetrics({ exposure: 'Optimal', blurScore: 135, canopy: 82, dimensions: '1920x1080' });

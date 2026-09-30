@@ -23,7 +23,7 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
         longitude: 77.4819
       },
       attachments: {
-        fieldPhotoUrl: 'Datasets/images/images/sample_paddy_tillering.jpg',
+        fieldPhotoUrl: '/samples/sample_paddy_tillering.jpg',
         soilType: 'Clay Loam'
       },
       consentGiven: true
@@ -50,6 +50,7 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
         longitude: 78.1342
       },
       attachments: {
+        fieldPhotoUrl: '/samples/sample_groundnut_pod.jpg',
         soilType: 'Red Sandy Loam'
       },
       consentGiven: true
@@ -76,6 +77,7 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
         longitude: 77.432
       },
       attachments: {
+        fieldPhotoUrl: '/samples/sample_paddy_tillering.jpg',
         landDocUrl: 'Datasets/documents/patta_sample_174.pdf'
       },
       consentGiven: true
