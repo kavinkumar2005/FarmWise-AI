@@ -1,14 +1,17 @@
-﻿import Anthropic from "@anthropic-ai/sdk";
+import Anthropic from "@anthropic-ai/sdk";
 import { IModelClient, ModelPromptParams, ModelResponse } from './interfaces.js';
 import costsConfig from '../../../../config/costs.config.json';
-import * as fs from 'fs';
 
 function loadEnv(): Record<string, string> {
   try {
-    const raw = fs.readFileSync('.env.deploy', 'utf-8');
+    if (typeof window !== 'undefined') return {};
+    if (typeof process === 'undefined' || !(process as any)?.versions?.node) return {};
+    const nodeFs = typeof require !== 'undefined' ? require('fs') : null;
+    if (!nodeFs?.readFileSync) return {};
+    const raw = nodeFs.readFileSync('.env.deploy', 'utf-8');
     return Object.fromEntries(
-      raw.split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#') && l.includes('='))
-        .map(l => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; })
+      raw.split('\n').map((l: string) => l.trim()).filter((l: string) => l && !l.startsWith('#') && l.includes('='))
+        .map((l: string) => { const i = l.indexOf('='); return [l.slice(0, i).trim(), l.slice(i + 1).trim()]; })
     );
   } catch { return {}; }
 }
