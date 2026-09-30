@@ -77,7 +77,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({
   return (
     <div className="w-full space-y-4">
       {/* Top Controls: Return to Wizard & Executive Metrics */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm print:hidden">
         <div className="flex items-center space-x-3">
           <button
             type="button"
@@ -115,7 +115,7 @@ export const ResultsDashboard: React.FC<ResultsDashboardProps> = ({
       </div>
 
       {/* Tab Navigation Strip */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none border-b border-gray-200">
+      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none border-b border-gray-200 print:hidden">
         {tabs.map(tab => (
           <button
             key={tab.id}

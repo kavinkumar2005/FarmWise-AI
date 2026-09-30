@@ -236,7 +236,7 @@ export default function App() {
       </main>
 
       {/* Global Footer */}
-      <footer className="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500 space-y-0.5">
+      <footer className="bg-white border-t border-gray-200 py-3 text-center text-xs text-gray-500 space-y-0.5 print:hidden">
         <div className="font-semibold text-gray-700">
           FarmwiseAI Campus Product Challenge — Task 1: Multi-Model, Multimodal & Agentic AI Platform
         </div>
@@ -246,11 +246,13 @@ export default function App() {
       </footer>
 
       {/* Persistent Floating Agri AI Chat Drawer */}
-      <AgriChatDrawer
-        currentResult={finalResult}
-        lang={lang}
-        persona={persona}
-      />
+      <div className="print:hidden">
+        <AgriChatDrawer
+          currentResult={finalResult}
+          lang={lang}
+          persona={persona}
+        />
+      </div>
     </div>
   );
 }

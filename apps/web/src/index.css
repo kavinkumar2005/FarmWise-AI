@@ -1,4 +1,4 @@
-﻿@tailwind base;
+@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -6,4 +6,70 @@ body {
   font-family: 'Inter', 'Noto Sans Tamil', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
+}
+
+@media print {
+  /* Hide all interactive website chrome, headers, footers, tabs, navigation and floating widgets */
+  header,
+  footer,
+  nav,
+  aside,
+  button,
+  .print\:hidden,
+  #agri-chat-drawer {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Reset body and page margins */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10pt !important;
+    line-height: 1.35 !important;
+    width: 100% !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm 8mm 10mm;
+  }
+
+  /* Hide everything on the page by default */
+  body * {
+    visibility: hidden;
+  }
+
+  /* Only make the printable government document and its children visible */
+  #printable-government-document,
+  #printable-government-document * {
+    visibility: visible;
+  }
+
+  /* Pin printable document to the very top-left of the first page */
+  #printable-government-document {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    page-break-after: avoid !important;
+    page-break-inside: auto !important;
+  }
+
+  /* Prevent page breaks inside critical sections */
+  #printable-government-document .gov-header,
+  #printable-government-document table,
+  #printable-government-document .gov-section,
+  #printable-government-document .gov-footer {
+    page-break-inside: avoid !important;
+  }
 }

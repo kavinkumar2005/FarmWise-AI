@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   isRunning
 }) => {
   return (
-    <header className="bg-[#0F3D26] text-white shadow-md sticky top-0 z-50">
+    <header className="bg-[#0F3D26] text-white shadow-md sticky top-0 z-50 print:hidden">
       <div className="w-full px-4 sm:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
         {/* Brand & Mission */}
         <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectView('wizard')}>
