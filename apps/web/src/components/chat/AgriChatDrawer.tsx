@@ -121,10 +121,13 @@ export const AgriChatDrawer: React.FC<AgriChatDrawerProps> = ({ currentResult, l
         weatherAlerts: currentResult.weather.agronomicAlerts
       } : undefined;
 
-      const history: ChatMessage[] = messages.slice(-4).map(m => ({
-        role: m.role,
-        content: m.content
-      }));
+      const history: ChatMessage[] = messages
+        .filter(m => m.id !== 'msg-welcome')
+        .slice(-8)
+        .map(m => ({
+          role: m.role,
+          content: m.content
+        }));
 
       const response: ChatResponse = await chatbotInstance.chat({
         message: text,
@@ -171,19 +174,34 @@ export const AgriChatDrawer: React.FC<AgriChatDrawerProps> = ({ currentResult, l
     }));
   };
 
-  const sampleChips = lang === 'ta'
-    ? [
-        'யூரியா அளவு என்ன?',
-        'தண்டுத்துளைப்பான் புழு கட்டுப்பாடு',
-        'சொட்டு நீர் பாசன மானியம்',
-        'மழை நேரத்தில் மருந்து அடிக்கலாமா?'
-      ]
-    : [
-        'Urea dosage for tillering?',
-        'Stem borer control chemical',
-        'Drip irrigation subsidy %',
-        'Can I spray during rain?'
-      ];
+  const hasChatHistory = messages.filter(m => m.id !== 'msg-welcome').length > 0;
+  const sampleChips = hasChatHistory
+    ? (lang === 'ta'
+        ? [
+            'தமிழில் விளக்கம் கொடு',
+            'ஏன் தண்ணீரை வடிக்க வேண்டும்?',
+            'உரத்தை எங்கு வாங்கலாம்?',
+            'துல்லிய அளவு என்ன?'
+          ]
+        : [
+            'In Tamil',
+            'Why drain standing water?',
+            'Where can I buy fertilizers?',
+            'Exact dosage per acre'
+          ])
+    : (lang === 'ta'
+        ? [
+            'யூரியா அளவு என்ன?',
+            'தண்டுத்துளைப்பான் புழு கட்டுப்பாடு',
+            'சொட்டு நீர் பாசன மானியம்',
+            'மழை நேரத்தில் மருந்து அடிக்கலாமா?'
+          ]
+        : [
+            'Urea dosage for tillering?',
+            'Stem borer control chemical',
+            'Drip irrigation subsidy %',
+            'Can I spray during rain?'
+          ]);
 
   return (
     <>

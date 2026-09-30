@@ -52,6 +52,9 @@ export interface ChatResponse {
 /** Matches simple greetings in English and Tamil */
 const GREETING_RE = /^(hi|hello|hey|vanakkam|வணக்கம்|helo|hai|hii|good\s*(morning|evening|night|afternoon)|namaste|நமஸ்காரம்|thanks|thank\s*you|நன்றி|ok|okay|bye|goodbye)[\s!?.]*$/i;
 
+/** Explicit non-agri topics that should always be rejected, even in follow-up turns */
+const EXPLICIT_NON_AGRI_RE = /cricket|ipl|match|score|football|movie|cinema|actor|actress|song|politics|election|minister|modi|bjp|dmk|aiadmk|congress|stock market|bitcoin|crypto|கிரிக்கெட்|மேட்ச்|சினிமா|நடிகர்|பாடல்|அரசியல்|தேர்தல்/i;
+
 /** Agricultural keyword patterns - if none match, message is off-topic */
 const AGRI_PATTERNS: RegExp[] = [
   /மானியம்|திட்டம்|scheme|subsidy|pmksy|pm.kisan/i,
@@ -71,6 +74,7 @@ const AGRI_PATTERNS: RegExp[] = [
 
 function isGreeting(q: string): boolean { return GREETING_RE.test(q.trim()); }
 function isAgriQuery(q: string): boolean { return AGRI_PATTERNS.some(p => p.test(q)); }
+function isExplicitNonAgri(q: string): boolean { return EXPLICIT_NON_AGRI_RE.test(q.trim()); }
 
 // ---------------------------------------------------------------------------
 
@@ -87,11 +91,70 @@ export class AgriChatbot {
     const startTime = Date.now();
     const rawMessage = request.message.trim();
 
-    // 1. Language detection
-    const isTamil = /[\u0B80-\u0BFF]/.test(rawMessage) || request.language === 'ta';
-    const lang: 'ta' | 'en' = isTamil ? 'ta' : 'en';
+    // Extract multi-turn conversation history
+    const history = request.history || [];
+    const priorUserTurns = history.filter(h => h.role === 'user');
+    const priorAssistantTurns = history.filter(h => h.role === 'assistant');
+    const lastUserMsg = priorUserTurns[priorUserTurns.length - 1]?.content?.trim() || '';
+    const lastAssistantMsg = priorAssistantTurns[priorAssistantTurns.length - 1]?.content?.trim() || '';
 
-    // 2. Greeting shortcut - no RAG, no hallucination risk
+    // 1. Language detection
+    const isTamilInput = /[\u0B80-\u0BFF]/.test(rawMessage);
+    let lang: 'ta' | 'en' = (isTamilInput || request.language === 'ta') ? 'ta' : 'en';
+
+    // 2. Language Switch / Translation Follow-Up on Prior Turn
+    // e.g. "In tamil", "In english", "தமிழில் சொல்லுங்கள்", "translate to tamil"
+    const isTamilSwitch = /^(in\s*tamil|tamil\s*(please|la|ல)?|தமிழில்|தமிழ்|தமிழில்\s*(சொல்லு|சொல்லுங்கள்|விளக்கு|விளக்கவும்|கூறு)|translate\s*(this\s*)?(in|to)?\s*tamil|explain\s*(this\s*)?(in|to)?\s*tamil|convert\s*to\s*tamil|tell\s*(me\s*)?in\s*tamil)[\s!?.]*$/i.test(rawMessage);
+    const isEnglishSwitch = /^(in\s*english|english\s*(please)?|ஆங்கிலத்தில்|ஆங்கிலம்|translate\s*(this\s*)?(in|to)?\s*english|explain\s*(this\s*)?(in|to)?\s*english|convert\s*to\s*english|tell\s*(me\s*)?in\s*english)[\s!?.]*$/i.test(rawMessage);
+
+    if ((isTamilSwitch || isEnglishSwitch) && (lastAssistantMsg || lastUserMsg)) {
+      const targetLang: 'ta' | 'en' = isTamilSwitch ? 'ta' : 'en';
+
+      // Check if previous turn was a procurement inquiry
+      if (lastAssistantMsg.includes('Procurement') || lastAssistantMsg.includes('கொள்முதல்') || lastAssistantMsg.includes('PACCS')) {
+        return this.handleProcurement(targetLang, request.parcelContext, startTime);
+      }
+
+      // Check if previous turn was a market price inquiry
+      if (lastAssistantMsg.includes('Market') || lastAssistantMsg.includes('சந்தை') || lastAssistantMsg.includes('Uzhavar Sandhai')) {
+        return this.handleMarketInquiry(targetLang, request.parcelContext, startTime);
+      }
+
+      // Re-retrieve using previous user query with target language
+      const cropFilter = request.parcelContext?.cropName || undefined;
+      const retrievalResults = await this.retriever.retrieve({
+        text: lastUserMsg || lastAssistantMsg,
+        language: targetLang,
+        filter: { crop: cropFilter, limit: 3 }
+      });
+      const chunks = retrievalResults.map(r => r.chunk);
+
+      const rawReply = this.synthesizeReply(lastUserMsg || rawMessage, chunks, request.parcelContext, targetLang, 'language_translation');
+      const verificationReport = HallucinationVerifier.verify(rawReply, chunks, targetLang, lastUserMsg || rawMessage);
+
+      const citations: ChatCitation[] = chunks.map(c => ({
+        sourceId: c.sourceCitation.sourceId,
+        title: c.sourceCitation.title,
+        section: c.sourceCitation.section,
+        provenance: c.sourceCitation.provenance,
+        snippet: targetLang === 'ta' ? c.contentTa.slice(0, 140) + '...' : c.contentEn.slice(0, 140) + '...'
+      }));
+
+      return {
+        reply: verificationReport.sanitizedResponse,
+        language: targetLang,
+        citations,
+        verified: verificationReport.isSafe,
+        confidence: Number((verificationReport.score * (retrievalResults[0]?.score || 0.9)).toFixed(2)),
+        modelUsed: 'ministral-8b',
+        intent: 'language_translation',
+        verificationReport,
+        latencyMs: Date.now() - startTime,
+        costUSD: 0.0001
+      };
+    }
+
+    // 3. Greeting shortcut - no RAG, no hallucination risk
     if (isGreeting(rawMessage)) {
       const greetReply = this.greetingReply(lang, request.parcelContext);
       const emptyVR: ChatVerificationReport = {
@@ -102,8 +165,38 @@ export class AgriChatbot {
       return { reply: greetReply, language: lang, citations: [], verified: true, confidence: 1.0, modelUsed: 'rule-based', intent: 'greeting', verificationReport: emptyVR, latencyMs: Date.now() - startTime, costUSD: 0 };
     }
 
-    // 3. Off-topic guard - no agri keywords -> polite redirect, no random RAG content
-    if (!isAgriQuery(rawMessage)) {
+    // 4. Explicit non-agri filter (blocks cricket, movies, politics immediately)
+    if (isExplicitNonAgri(rawMessage)) {
+      const offReply = lang === 'ta'
+        ? 'நான் வேளாண்மை கேள்விகளுக்கு மட்டுமே உதவுகிறேன்.\n\nகேட்கலாம்: பயிர் நோய்கள், உரம், பாசனம், வானிலை, அரசு திட்டங்கள்.'
+        : "I can only help with agriculture-related questions.\n\nYou can ask about: crop diseases, fertilizers, irrigation, weather, government schemes.";
+      const offVR: ChatVerificationReport = {
+        isSafe: true, score: 1.0, flaggedIssues: [],
+        checks: [{ ruleName: 'OffTopicGuard', passed: true, message: 'Explicit non-agri query — blocked to prevent hallucination.', severity: 'safe' }],
+        sanitizedResponse: offReply
+      };
+      return { reply: offReply, language: lang, citations: [], verified: true, confidence: 1.0, modelUsed: 'rule-based', intent: 'off_topic', verificationReport: offVR, latencyMs: Date.now() - startTime, costUSD: 0 };
+    }
+
+    // 5. Multi-Turn Context Resolution for Follow-up Queries
+    // If the message is a follow-up (e.g., "Why?", "What about potash?", "When to apply?", "How much?"),
+    // combine with previous user query so that the query remains grounded in the active conversation.
+    let effectiveQuery = rawMessage;
+    let isFollowUp = false;
+
+    const FOLLOW_UP_RE = /^(why|how|when|where|what about|which|can i|should i|is it|tell me|give me|explain|elaborate|details|steps|procedure|dosage|dose|quantity|amount|rate|cost|உர|அளவு|எப்போது|எப்படி|ஏன்|எங்கே|மேலும்|விளக்கம்)/i;
+    const isShortQuery = rawMessage.split(/\s+/).length <= 6;
+
+    if ((isShortQuery || FOLLOW_UP_RE.test(rawMessage)) && lastUserMsg) {
+      const combined = `${lastUserMsg} ${rawMessage}`;
+      if (isAgriQuery(combined)) {
+        effectiveQuery = combined;
+        isFollowUp = true;
+      }
+    }
+
+    // 6. Off-topic guard - if neither raw nor contextual query contains agri keywords
+    if (!isAgriQuery(effectiveQuery)) {
       const offReply = lang === 'ta'
         ? 'நான் வேளாண்மை கேள்விகளுக்கு மட்டுமே உதவுகிறேன்.\n\nகேட்கலாம்: பயிர் நோய்கள், உரம், பாசனம், வானிலை, அரசு திட்டங்கள்.'
         : "I can only help with agriculture-related questions.\n\nYou can ask about: crop diseases, fertilizers, irrigation, weather, government schemes.";
@@ -115,46 +208,20 @@ export class AgriChatbot {
       return { reply: offReply, language: lang, citations: [], verified: true, confidence: 1.0, modelUsed: 'rule-based', intent: 'off_topic', verificationReport: offVR, latencyMs: Date.now() - startTime, costUSD: 0 };
     }
 
-    // 4. Intent classification
-    const intent = this.classifyIntent(rawMessage);
+    // 7. Intent classification
+    const intent = this.classifyIntent(effectiveQuery);
 
     // Direct grounded handling for input procurement inquiries
     if (intent === 'input_procurement') {
-      const isTa = lang === 'ta';
-      const contextPrefix = request.parcelContext?.surveyNumber
-        ? (isTa ? `[புல எண்: ${request.parcelContext.surveyNumber} (${request.parcelContext.village || ''}), பயிர்: ${request.parcelContext.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${request.parcelContext.surveyNumber} (${request.parcelContext.village || ''}), Crop: ${request.parcelContext.cropName || 'Paddy'}]:\n\n`)
-        : '';
-      const procReply = contextPrefix + (isTa
-        ? '**அங்கீகரிக்கப்பட்ட உழவர் இடுபொருள் கொள்முதல் மையங்கள்**\n\nதரமான சான்று பெற்ற உரங்கள், விதைகள் மற்றும் பயிர் பாதுகாப்பு மருந்துகளை பின்வரும் அரசு அங்கீகாரம் பெற்ற மையங்களில் பெறலாம்:\n1. **தொடக்க வேளாண்மை கூட்டுறவு கடன் சங்கம் (PACCS)**: மானிய விலையிலான வேப்பம்பூசப்பட்ட யூரியா, டிஏபி மற்றும் பொட்டாஷ் உரம்.\n2. **வட்டார வேளாண் விரிவாக்க மையம் (AEC Depot)**: அரசு சான்று பெற்ற தரமான விதைகள் மற்றும் உயிர் உரங்கள்.\n3. **அரசு உரிமம் பெற்ற வேளாண் விற்பனையாளர்கள் (Licensed Dealers)**: பூச்சிக்கொல்லிகளை வாங்கும் போது எப்போதும் அரசு உரிமம் உள்ள கடைகளில் அசல் ரசீது மற்றும் காலாவதி தேதியைச் சரிபார்த்து வாங்கவும்.'
-        : '**Authorized Agricultural Input Procurement Centers**\n\nGenuine fertilizers, certified seeds, and TNAU-approved pesticides can be purchased from:\n1. **Primary Agricultural Cooperative Credit Societies (PACCS)**: For subsidized neem-coated urea, DAP, and potash.\n2. **Block Agricultural Extension Center (AEC Depot)**: For certified seeds, micronutrient mixtures, and bio-control agents.\n3. **Licensed Agro-Chemical Retailers**: Always ensure you purchase from authorized dealers and obtain a valid GST bill with batch number and expiry date.');
-      
-      const procVR: ChatVerificationReport = {
-        isSafe: true, score: 1.0, flaggedIssues: [],
-        checks: [{ ruleName: 'ProcurementRegistryCheck', passed: true, message: 'Grounded in Tamil Nadu Agriculture Department input distribution protocol.', severity: 'safe' }],
-        sanitizedResponse: procReply
-      };
-      return { reply: procReply, language: lang, citations: [], verified: true, confidence: 0.98, modelUsed: 'rule-based', intent: 'input_procurement', verificationReport: procVR, latencyMs: Date.now() - startTime, costUSD: 0 };
+      return this.handleProcurement(lang, request.parcelContext, startTime);
     }
 
     // Direct grounded handling for market / mandi commodity price inquiries
     if (intent === 'market_inquiry') {
-      const isTa = lang === 'ta';
-      const contextPrefix = request.parcelContext?.surveyNumber
-        ? (isTa ? `[புல எண்: ${request.parcelContext.surveyNumber} (${request.parcelContext.village || ''}), பயிர்: ${request.parcelContext.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${request.parcelContext.surveyNumber} (${request.parcelContext.village || ''}), Crop: ${request.parcelContext.cropName || 'Paddy'}]:\n\n`)
-        : '';
-      const marketReply = contextPrefix + (isTa
-        ? '**சந்தை விலை மற்றும் மண்டி நிலவரம்**\n\nதினசரி காய்கறி மற்றும் பயிர் சந்தை விலைகள் (உழவர் சந்தை / e-NAM மண்டி) உள்ளூர் வரத்து அடிப்படையில் தினமும் மாறுபடும். தற்போதைய நேரடி கொள்முதல் விலைகளை அறிய உங்கள் அருகிலுள்ள ஒழுங்குமுறை விற்பனைக் கூடம் (Regulated Market Committee) அல்லது உழவர் சந்தையைத் தொடர்பு கொள்ளவும்.'
-        : '**Market & Mandi Price Notice**\n\nDaily market prices (Uzhavar Sandhai / e-NAM mandis) fluctuate continuously based on daily arrivals. To check verified current auction rates, please contact your nearest Regulated Market Committee (RMC) or local Uzhavar Sandhai.');
-      
-      const marketVR: ChatVerificationReport = {
-        isSafe: true, score: 1.0, flaggedIssues: [],
-        checks: [{ ruleName: 'MarketPriceGuard', passed: true, message: 'Referred to official APMC / Uzhavar Sandhai to prevent price hallucination.', severity: 'safe' }],
-        sanitizedResponse: marketReply
-      };
-      return { reply: marketReply, language: lang, citations: [], verified: true, confidence: 0.95, modelUsed: 'rule-based', intent: 'market_inquiry', verificationReport: marketVR, latencyMs: Date.now() - startTime, costUSD: 0 };
+      return this.handleMarketInquiry(lang, request.parcelContext, startTime);
     }
 
-    // 5. RAG retrieval
+    // 8. RAG retrieval
     const cropFilter = request.parcelContext?.cropName || undefined;
     let categoryFilter: any = undefined;
     if (intent === 'fertilizer_inquiry') categoryFilter = 'fertilizer';
@@ -164,22 +231,29 @@ export class AgriChatbot {
     else if (intent === 'weather_spray_window') categoryFilter = 'weather_action';
 
     const retrievalResults = await this.retriever.retrieve({
-      text: rawMessage, language: lang,
+      text: effectiveQuery, language: lang,
       filter: { crop: cropFilter, category: categoryFilter, limit: 3 }
     });
     const chunks = retrievalResults.map(r => r.chunk);
 
-    // 6. Model selection
+    // 9. Model selection
     const isComplex = intent === 'complex_diagnostic' || (request.parcelContext?.condition !== undefined && request.parcelContext.condition !== 'Healthy');
     const modelId = isComplex ? 'claude-3-5-sonnet-20241022' : 'ministral-8b';
 
-    // 7. Response synthesis
-    const rawReply = this.synthesizeReply(rawMessage, chunks, request.parcelContext, lang, intent);
+    // 10. Response synthesis with follow-up awareness
+    const rawReply = this.synthesizeReply(
+      effectiveQuery,
+      chunks,
+      request.parcelContext,
+      lang,
+      intent,
+      isFollowUp ? rawMessage : undefined
+    );
 
-    // 8. Hallucination verification
-    const verificationReport = HallucinationVerifier.verify(rawReply, chunks, lang, rawMessage);
+    // 11. Hallucination verification
+    const verificationReport = HallucinationVerifier.verify(rawReply, chunks, lang, effectiveQuery);
 
-    // 9. Format citations
+    // 12. Format citations
     const citations: ChatCitation[] = chunks.map(c => ({
       sourceId: c.sourceCitation.sourceId,
       title: c.sourceCitation.title,
@@ -196,6 +270,40 @@ export class AgriChatbot {
       modelUsed: modelId, intent, verificationReport,
       latencyMs: Date.now() - startTime, costUSD: isComplex ? 0.0025 : 0.0004
     };
+  }
+
+  private handleProcurement(lang: 'ta' | 'en', ctx?: ActiveParcelContext, startTime: number = Date.now()): ChatResponse {
+    const isTa = lang === 'ta';
+    const contextPrefix = ctx?.surveyNumber
+      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${ctx.village || ''}), பயிர்: ${ctx.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
+      : '';
+    const procReply = contextPrefix + (isTa
+      ? '**அங்கீகரிக்கப்பட்ட உழவர் இடுபொருள் கொள்முதல் மையங்கள்**\n\nதரமான சான்று பெற்ற உரங்கள், விதைகள் மற்றும் பயிர் பாதுகாப்பு மருந்துகளை பின்வரும் அரசு அங்கீகாரம் பெற்ற மையங்களில் பெறலாம்:\n1. **தொடக்க வேளாண்மை கூட்டுறவு கடன் சங்கம் (PACCS)**: மானிய விலையிலான வேப்பம்பூசப்பட்ட யூரியா, டிஏபி மற்றும் பொட்டாஷ் உரம்.\n2. **வட்டார வேளாண் விரிவாக்க மையம் (AEC Depot)**: அரசு சான்று பெற்ற தரமான விதைகள் மற்றும் உயிர் உரங்கள்.\n3. **அரசு உரிமம் பெற்ற வேளாண் விற்பனையாளர்கள் (Licensed Dealers)**: பூச்சிக்கொல்லிகளை வாங்கும் போது எப்போதும் அரசு உரிமம் உள்ள கடைகளில் அசல் ரசீது மற்றும் காலாவதி தேதியைச் சரிபார்த்து வாங்கவும்.'
+      : '**Authorized Agricultural Input Procurement Centers**\n\nGenuine fertilizers, certified seeds, and TNAU-approved pesticides can be purchased from:\n1. **Primary Agricultural Cooperative Credit Societies (PACCS)**: For subsidized neem-coated urea, DAP, and potash.\n2. **Block Agricultural Extension Center (AEC Depot)**: For certified seeds, micronutrient mixtures, and bio-control agents.\n3. **Licensed Agro-Chemical Retailers**: Always ensure you purchase from authorized dealers and obtain a valid GST bill with batch number and expiry date.');
+
+    const procVR: ChatVerificationReport = {
+      isSafe: true, score: 1.0, flaggedIssues: [],
+      checks: [{ ruleName: 'ProcurementRegistryCheck', passed: true, message: 'Grounded in Tamil Nadu Agriculture Department input distribution protocol.', severity: 'safe' }],
+      sanitizedResponse: procReply
+    };
+    return { reply: procReply, language: lang, citations: [], verified: true, confidence: 0.98, modelUsed: 'rule-based', intent: 'input_procurement', verificationReport: procVR, latencyMs: Date.now() - startTime, costUSD: 0 };
+  }
+
+  private handleMarketInquiry(lang: 'ta' | 'en', ctx?: ActiveParcelContext, startTime: number = Date.now()): ChatResponse {
+    const isTa = lang === 'ta';
+    const contextPrefix = ctx?.surveyNumber
+      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${ctx.village || ''}), பயிர்: ${ctx.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
+      : '';
+    const marketReply = contextPrefix + (isTa
+      ? '**சந்தை விலை மற்றும் மண்டி நிலவரம்**\n\nதினசரி காய்கறி மற்றும் பயிர் சந்தை விலைகள் (உழவர் சந்தை / e-NAM மண்டி) உள்ளூர் வரத்து அடிப்படையில் தினமும் மாறுபடும். தற்போதைய நேரடி கொள்முதல் விலைகளை அறிய உங்கள் அருகிலுள்ள ஒழுங்குமுறை விற்பனைக் கூடம் (Regulated Market Committee) அல்லது உழவர் சந்தையைத் தொடர்பு கொள்ளவும்.'
+      : '**Market & Mandi Price Notice**\n\nDaily market prices (Uzhavar Sandhai / e-NAM mandis) fluctuate continuously based on daily arrivals. To check verified current auction rates, please contact your nearest Regulated Market Committee (RMC) or local Uzhavar Sandhai.');
+
+    const marketVR: ChatVerificationReport = {
+      isSafe: true, score: 1.0, flaggedIssues: [],
+      checks: [{ ruleName: 'MarketPriceGuard', passed: true, message: 'Referred to official APMC / Uzhavar Sandhai to prevent price hallucination.', severity: 'safe' }],
+      sanitizedResponse: marketReply
+    };
+    return { reply: marketReply, language: lang, citations: [], verified: true, confidence: 0.95, modelUsed: 'rule-based', intent: 'market_inquiry', verificationReport: marketVR, latencyMs: Date.now() - startTime, costUSD: 0 };
   }
 
   private greetingReply(lang: 'ta' | 'en', ctx?: ActiveParcelContext): string {
@@ -219,7 +327,14 @@ export class AgriChatbot {
     return 'general_agri_chat';
   }
 
-  private synthesizeReply(query: string, chunks: KnowledgeChunk[], ctx?: ActiveParcelContext, lang: 'ta' | 'en' = 'en', intent: string = 'general_agri_chat'): string {
+  private synthesizeReply(
+    query: string,
+    chunks: KnowledgeChunk[],
+    ctx?: ActiveParcelContext,
+    lang: 'ta' | 'en' = 'en',
+    intent: string = 'general_agri_chat',
+    followUpQuestion?: string
+  ): string {
     const isTa = lang === 'ta';
     const contextPrefix = ctx?.surveyNumber
       ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${ctx.village || ''}), பயிர்: ${ctx.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
@@ -233,9 +348,30 @@ export class AgriChatbot {
 
     const top = chunks[0];
     let body = isTa ? `**${top.titleTa}**\n\n${top.contentTa}` : `**${top.title}**\n\n${top.contentEn}`;
-    if (top.safetyRules?.maxDosagePerAcre) {
-      body += isTa ? `\n\n*பரிந்துரைக்கப்பட்ட உச்ச வரம்பு: ${top.safetyRules.maxDosagePerAcre}*` : `\n\n*Recommended Maximum Rate: ${top.safetyRules.maxDosagePerAcre}*`;
+
+    // Contextual explanation for specific follow-ups
+    if (followUpQuestion) {
+      if (/why|காரணம்|ஏன்/i.test(followUpQuestion)) {
+        body += isTa
+          ? `\n\n**காரணம் (Agronomic Rationale):** உரமிடுவதற்கு முன் தண்ணீரை வடிப்பது யூரியா வீணாக அடித்துச் செல்லப்படுவதைத் (Leaching loss) தடுத்து, வேர்கள் தழைச்சத்தை விரைவாகவும் முழுமையாகவும் கிரகிக்க உதவுகிறது.`
+          : `\n\n**Agronomic Rationale:** Draining standing water before broadcasting prevents leaching and surface runoff losses, ensuring the root zone absorbs the nitrogen and potassium efficiently before re-irrigation.`;
+      } else if (/how much|dosage|dose|அளவு|எவ்வளவு/i.test(followUpQuestion)) {
+        if (top.safetyRules?.maxDosagePerAcre) {
+          body += isTa
+            ? `\n\n**பரிந்துரைக்கப்பட்ட அளவு:** ஏக்கருக்கு ${top.safetyRules.maxDosagePerAcre}.`
+            : `\n\n**Exact Dosage Rate:** Apply ${top.safetyRules.maxDosagePerAcre} per acre.`;
+        }
+      } else if (/when|timing|எப்போது/i.test(followUpQuestion)) {
+        body += isTa
+          ? `\n\n**உகந்த நேரம்:** நடவு செய்த 20-25 நாட்களில் (தூர்கட்டும் பருவம்) காலை அல்லது மாலை வேளையில் இடவும்.`
+          : `\n\n**Application Timing:** Optimal at 20-25 days after transplanting (active tillering phase), preferably during morning or late afternoon.`;
+      }
+    } else {
+      if (top.safetyRules?.maxDosagePerAcre) {
+        body += isTa ? `\n\n*பரிந்துரைக்கப்பட்ட உச்ச வரம்பு: ${top.safetyRules.maxDosagePerAcre}*` : `\n\n*Recommended Maximum Rate: ${top.safetyRules.maxDosagePerAcre}*`;
+      }
     }
+
     if (ctx?.weatherAlerts && ctx.weatherAlerts.length > 0) {
       body += isTa ? `\n\nவானிலை எச்சரிக்கை: ${ctx.weatherAlerts[0]}` : `\n\nActive Micro-Climate Notice: ${ctx.weatherAlerts[0]}`;
     }

@@ -132,6 +132,58 @@ describe('Phase 7: Hallucination-Safe Bilingual Agricultural Chatbot & Evaluatio
       expect(response.reply).toContain('Paddy');
       expect(response.reply).toContain('Alternate Wetting and Drying');
     });
+
+    it('remembers previous chat turn and translates previous advisory to Tamil when asked "In tamil"', async () => {
+      const turn1Response = await chatbot.chat({
+        message: 'How can I plant paddy',
+        language: 'en'
+      });
+
+      expect(turn1Response.reply).toContain('Neem Coated Urea');
+
+      // User follows up with "In tamil"
+      const turn2Response = await chatbot.chat({
+        message: 'In tamil',
+        history: [
+          { role: 'user', content: 'How can I plant paddy' },
+          { role: 'assistant', content: turn1Response.reply }
+        ]
+      });
+
+      expect(turn2Response.language).toBe('ta');
+      expect(turn2Response.reply).toContain('செயலில் உள்ள தூர்கட்டும் பருவத்தில் தழைச்சத்து மேலாண்மை');
+      expect(turn2Response.reply).toContain('வேப்பம்பூசப்பட்ட யூரியா');
+      expect(turn2Response.verified).toBe(true);
+      expect(turn2Response.citations.length).toBeGreaterThan(0);
+      expect(turn2Response.intent).toBe('language_translation');
+    });
+
+    it('contextually answers multi-turn follow-ups such as "Why drain water?" using conversation history', async () => {
+      const response = await chatbot.chat({
+        message: 'Why drain standing water?',
+        history: [
+          { role: 'user', content: 'How can I plant paddy' },
+          { role: 'assistant', content: 'Apply Neem Coated Urea at 30 kg/acre at active tillering...' }
+        ]
+      });
+
+      expect(response.verified).toBe(true);
+      expect(response.reply).toContain('leaching');
+      expect(response.citations.length).toBeGreaterThan(0);
+    });
+
+    it('safely blocks off-topic queries even when prior agricultural conversation history exists', async () => {
+      const response = await chatbot.chat({
+        message: 'இன்னைக்கு கிரிக்கெட் மேட்ச் என்ன ஆச்சு',
+        history: [
+          { role: 'user', content: 'How can I plant paddy' },
+          { role: 'assistant', content: 'Apply Neem Coated Urea at 30 kg/acre at active tillering...' }
+        ]
+      });
+
+      expect(response.intent).toBe('off_topic');
+      expect(response.reply).toContain('வேளாண்மை');
+    });
   });
 
   describe('4. Serverless Chatbot Lambda Handler', () => {
