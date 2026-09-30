@@ -1,4 +1,4 @@
-﻿{
+{
   "routerWeights": {
     "capabilityFit": 0.35,
     "expectedConfidence": 0.35,
@@ -7,7 +7,7 @@
   },
   "models": {
     "ministral-8b": {
-      "id": "mistral.ministral-8b-instruct",
+      "id": "mistral.ministral-3-8b-instruct",
       "provider": "bedrock",
       "type": "open-weight",
       "tier": "small",
@@ -18,7 +18,7 @@
       "avgLatencyMs": 800
     },
     "ministral-3b": {
-      "id": "mistral.ministral-3b-instruct",
+      "id": "mistral.ministral-3-3b-instruct",
       "provider": "bedrock",
       "type": "open-weight",
       "tier": "nano",
