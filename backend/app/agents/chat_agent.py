@@ -99,6 +99,10 @@ class ChatbotAgent:
                 f"Wind: {weather_data.wind_speed} km/h. Spray Window: {weather_data.spray_recommendation}"
             )
 
+        rag_section = f"- Agronomic Reference Guidelines (TNAU/ICAR):\n{rag_context}\n" if rag_context else ""
+        market_section = f"- Local Mandi Market Price: {market_info.get('modal_price')} in {market_info.get('market')} (Range: {market_info.get('min_price')} - {market_info.get('max_price')})\n" if market_info else ""
+        weather_section = f"- Live Micro-Climate: {weather_info}\n" if weather_info else ""
+
         # 5. Build Comprehensive Agronomic Prompt for Model Router
         system_prompt = f"""You are FarmWise AI, an expert agricultural scientist and advisor specializing in Tamil Nadu and South Indian crops.
 Farmer Query: "{query}"
@@ -106,9 +110,7 @@ Farmer Query: "{query}"
 Available Grounded Facts:
 - Target Parcel: Survey #{survey_number or 'General'}, Village: {village_name}
 - Crop in Context: {detected_crop or 'General Agricultural Crops'}
-{f'- Agronomic Reference Guidelines (TNAU/ICAR):\n{rag_context}' if rag_context else ''}
-{f'- Local Mandi Market Price: {market_info.get("modal_price")} in {market_info.get("market")} (Range: {market_info.get("min_price")} - {market_info.get("max_price")})' if market_info else ''}
-{f'- Live Micro-Climate: {weather_info}' if weather_info else ''}
+{rag_section}{market_section}{weather_section}
 
 Instructions:
 1. Provide a direct, highly practical, and actionable answer tailored to the farmer's question.
