@@ -1,4 +1,4 @@
-﻿# Dependencies
+# Dependencies
 node_modules/
 .pnpm-store/
 
@@ -10,10 +10,20 @@ build/
 
 # Environment & Credentials
 .env
-.env.local
-.env.deploy
+.env.*
 *.pem
 credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+backend/uploads/*
+backend/farmwise.db
 
 # IDE & OS
 .vscode/
@@ -25,3 +35,4 @@ Thumbs.db
 # Antigravity & Scratch
 .system_generated/
 scratch/
+

@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: farmwise-ai-backend
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: singapore # or ohio/frankfurt
+    healthCheckPath: /api/health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_SESSION_TOKEN
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET_NAME
+        value: fai-tce-team06-crop-intel
