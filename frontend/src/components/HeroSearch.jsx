@@ -5,12 +5,13 @@ import { api } from '../services/api';
 
 const FEATURED_SURVEYS = [
   { no: "1342", crop: "Coconut", village: "Sivagiri", stage: "Full Growth" },
-  { no: "1346", crop: "Coconut", village: "Sivagiri", stage: "Vegetation" },
-  { no: "1482", crop: "Coconut", village: "Sivagiri", stage: "Full Growth" },
-  { no: "529", crop: "Coconut", village: "Sivagiri", stage: "Full Growth" },
-  { no: "584", crop: "Rice (Paddy)", village: "Sivagiri", stage: "Vegetation" },
-  { no: "384", crop: "Paddy", village: "Keelathattaparai", stage: "Cadastral" },
+  { no: "1476", crop: "Rice (Paddy)", village: "Sivagiri", stage: "Vegetation" },
+  { no: "870", crop: "Rice (Paddy)", village: "Sivagiri", stage: "Vegetation" },
+  { no: "584", crop: "Coconut", village: "Sivagiri", stage: "Full Growth" },
+  { no: "386", crop: "Maize", village: "Sivagiri", stage: "Full Growth" },
+  { no: "876", crop: "Groundnut", village: "Tenkasi", stage: "Vegetation" },
 ];
+
 
 export default function HeroSearch({ lang, onSelectSurvey, isLoading }) {
   const t = translations[lang] || translations.en;

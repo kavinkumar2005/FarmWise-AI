@@ -118,7 +118,8 @@ export default function App() {
           execution_trace: prev?.execution_trace || []
         }));
       } catch (e2) {
-        setErrorMsg(`Survey #${surveyNumber} was not found in the dataset. Try: 1342, 1346, 529, 584, 384, or 1482.`);
+        setErrorMsg(`Survey #${surveyNumber} was not found in the dataset. Try: 1342, 1476, 870, 584, 386, or 876.`);
+
       }
     } finally {
       setIsLoading(false);
