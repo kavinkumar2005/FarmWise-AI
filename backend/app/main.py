@@ -163,12 +163,14 @@ async def chatbot_advisor(
     """Dedicated AI Agricultural Advisor Chatbot with Multimodal input & Agentic routing."""
     uploaded_image_name = None
     saved_img_path = None
+    s3_image_url = None
     if image:
         ext = image.filename.split(".")[-1] if "." in image.filename else "jpg"
         uploaded_image_name = f"chat_{uuid.uuid4().hex[:8]}.{ext}"
         saved_img_path = uploads_dir / uploaded_image_name
         with open(saved_img_path, "wb") as buf:
             shutil.copyfileobj(image.file, buf)
+        s3_image_url = aws_service.upload_image(str(saved_img_path), object_name=f"fai-tce-team06-uploads/{uploaded_image_name}")
 
     # Call specialized conversational agent
     chat_result = chat_agent.answer_question(
@@ -188,7 +190,8 @@ async def chatbot_advisor(
             "crop_name": parcel_rec.recorded_crop if parcel_rec else "Agricultural Crop",
             "model_attribution": chat_result.get("model_used", "Gemini 3.1 Flash Lite")
         },
-        "model_used": chat_result.get("model_used", "Gemini 3.1 Flash Lite"),
+        "model_used": chat_result.get("model_used", "Gemini 3.5 Flash Lite"),
+        "s3_url": s3_image_url,
         "confidence_score": chat_result.get("confidence", 0.97),
         "sources": chat_result.get("sources", ["TNAU Package of Practices", "ICAR", "eNAM APMC"]),
         "execution_trace": chat_result.get("execution_trace", [])
