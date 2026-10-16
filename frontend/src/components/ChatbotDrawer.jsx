@@ -57,6 +57,15 @@ export default function ChatbotDrawer({ isOpen, onClose, activeParcel, lang: pro
 
   useEffect(() => { scrollToBottom(); }, [messages, isLoading]);
 
+  const cleanDisplayText = (text) => {
+    if (!text) return '';
+    return text
+      .replace(/^#{1,6}\s*/gm, '')
+      .replace(/\*{1,3}([^\*]+)\*{1,3}/g, '$1')
+      .replace(/^[-*_]{3,}$/gm, '')
+      .trim();
+  };
+
   // ─── Image helpers ─────────────────────────────────────────────────────────
   const handleImageSelect = (e) => {
     const file = e.target.files[0];
@@ -295,7 +304,7 @@ export default function ChatbotDrawer({ isOpen, onClose, activeParcel, lang: pro
                   <img src={msg.image} alt="User upload" className="w-full h-auto object-cover" />
                 </div>
               )}
-              <p className="whitespace-pre-line">{msg.text}</p>
+              <p className="whitespace-pre-line">{cleanDisplayText(msg.text)}</p>
               {msg.sender === 'bot' && msg.modelUsed && (
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500">
                   <div className="flex items-center gap-1 text-emerald-700 font-semibold">

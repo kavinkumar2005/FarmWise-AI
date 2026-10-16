@@ -150,8 +150,8 @@ class ModelRouter:
 
         # 2. Try Gemini — use thinking_budget=0 for fast 2-6s inference
         if not output_text and gemini_client:
-            active_models = ["gemini-3.5-flash", "gemini-3.6-flash", "gemini-3.1-flash-lite"]
-            timeout_secs = 20.0 if image_path else 8.0
+            active_models = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
+            timeout_secs = 12.0 if image_path else 6.0
             for m in active_models:
                 try:
                     future = _thread_pool.submit(cls._call_gemini_sync, m, prompt, image_path)
