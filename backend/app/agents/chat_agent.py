@@ -162,7 +162,7 @@ class ChatbotAgent:
         recorded_crop = parcel.recorded_crop if parcel else None
 
         # 3. Intent Detection
-        is_greeting = bool(re.search(r'\b(hi|hello|hey|vanakkam|namaste|good morning|good evening|வணக்கம்)\b', q_lower))
+        is_greeting = bool(re.search(r'\b(hi+|hello+|hey+|vanakkam+|namaste|good morning|good evening|thanks|thank you)\b', q_lower)) or any(k in query for k in ["வணக்கம்", "நன்றி", "நன்றாக", "நன்றாக செய்தாய்", "நல்லா இருக்கு", "வாழ்த்துகள்"])
         is_fertilizer = bool(re.search(r'\b(fertilizer|fertilizers|urea|dap|potash|mop|ssp|npk|manure|nutrition|nutrient|nutrients|dosage|tonic|feed|feeding)\b', q_lower)) or any(k in query for k in ["உரம்", "யூரியா", "பொட்டாஷ்", "டிஏபி"])
         is_price = bool(re.search(r'\b(price|prices|rate|rates|mandi|mandis|market|markets|cost|worth|sell|selling|quintal|ton|nut|e-nam|enam)\b', q_lower)) or any(k in query for k in ["விலை", "சந்தை", "மண்டி"])
 
@@ -526,7 +526,7 @@ Available Grounded Facts:
 CRITICAL RULES:
 0. OUT-OF-DOMAIN / NON-AGRICULTURAL QUERIES:
    - If the farmer asks about any non-agricultural topic (such as cricket, sports, cinema, politics, entertainment, personal chatter, etc.):
-   - You MUST ONLY reply with a single polite refusal sentence stating: "வணக்கம் ஐயா. நான் {topic} பற்றிய விவரங்களை வழங்கும் செயலி அல்ல, உங்கள் {crop} பயிர் மற்றும் விவசாயம் தொடர்பான சந்தேகங்களுக்கு உதவக்கூடிய FarmWise AI நிபுணர் ஆவேன்." (or English equivalent).
+   - You MUST ONLY reply with a single polite refusal sentence stating: "வணக்கம் ஐயா. நான் அந்த விவரங்களை வழங்கும் செயலி அல்ல, உங்கள் விவசாயம் தொடர்பான சந்தேகங்களுக்கு உதவக்கூடிய FarmWise AI நிபுணர் ஆவேன்." (or English equivalent).
    - STRICTLY DO NOT output weather reports, spraying advice, mandi prices, or fertilizer recommendations when refusing out-of-domain queries. ONLY output the single refusal sentence.
 1. DIRECT ANSWER FIRST:
    - Answer the farmer's specific question directly in the very first sentence.
