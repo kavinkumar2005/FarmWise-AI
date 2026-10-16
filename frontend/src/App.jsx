@@ -125,12 +125,16 @@ export default function App() {
     }
   };
 
-  const handleUploadComplete = (advisoryResult) => {
-    setAdvisoryData(advisoryResult);
-    if (advisoryResult.parcel) {
+  const handleUploadComplete = (advisoryResult, uploadRes, previewBlobUrl) => {
+    if (advisoryResult && advisoryResult.parcel) {
+      if (previewBlobUrl) {
+        advisoryResult.parcel.image_url = previewBlobUrl;
+      }
       setSelectedSurvey(advisoryResult.parcel.survey_number);
     }
+    setAdvisoryData(advisoryResult);
   };
+
 
   const handleResetHome = () => {
     loadParcelAdvisory("1342");

@@ -4,8 +4,10 @@ import uuid
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException, BackgroundTasks
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+
 
 from app.config import settings
 from app.db.database import db
@@ -38,13 +40,37 @@ app.add_middleware(
 def startup_event():
     db.load_data()
 
-# Static Mount for dataset images & uploads
-if settings.IMAGES_PATH.exists():
-    app.mount("/dataset-images", StaticFiles(directory=str(settings.IMAGES_PATH)), name="dataset-images")
-
 uploads_dir = Path(__file__).resolve().parent.parent / "uploads"
 uploads_dir.mkdir(exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
+
+@app.get("/dataset-images/{filename:path}")
+def serve_dataset_image(filename: str):
+    """Serves dataset images with automatic fallback to sample crop if missing."""
+    target = settings.IMAGES_PATH / filename
+    if target.exists() and target.is_file():
+        return FileResponse(target)
+    # Fallback to sample paddy if missing
+    sample = settings.IMAGES_PATH / "sample_paddy_tillering.jpg"
+    if sample.exists():
+        return FileResponse(sample)
+    raise HTTPException(status_code=404, detail="Image not found")
+
+@app.get("/uploads/{filename:path}")
+def serve_upload_image(filename: str):
+    """Serves uploaded farmer images with automatic fallback if missing."""
+    target = uploads_dir / filename
+    if target.exists() and target.is_file():
+        return FileResponse(target)
+    # Check dataset directory as backup
+    ds_target = settings.IMAGES_PATH / filename
+    if ds_target.exists() and ds_target.is_file():
+        return FileResponse(ds_target)
+    # Fallback to sample paddy image
+    sample = settings.IMAGES_PATH / "sample_paddy_tillering.jpg"
+    if sample.exists():
+        return FileResponse(sample)
+    raise HTTPException(status_code=404, detail="Uploaded file not found")
+
 
 # --- Routes ---
 

@@ -12,6 +12,15 @@ export const getMediaUrl = (path) => {
   return `${BACKEND_BASE}${path.startsWith('/') ? '' : '/'}${path}`;
 };
 
+export const getCropSampleFallback = (cropName) => {
+  const c = String(cropName || '').toLowerCase();
+  if (c.includes('coconut')) return '/samples/sample_coconut_palm.jpg';
+  if (c.includes('cotton')) return '/samples/sample_cotton_boll.jpg';
+  if (c.includes('groundnut') || c.includes('peanut')) return '/samples/sample_groundnut_pod.jpg';
+  return '/samples/sample_paddy_tillering.jpg';
+};
+
+
 
 export const api = {
   // Search survey numbers

@@ -7,7 +7,8 @@ import AdvisoryCard from './AdvisoryCard';
 import DecisionTraceModal from './DecisionTraceModal';
 import PrintableTraceReport from './PrintableTraceReport';
 import { translations, tCrop, tStage, tStatus } from '../utils/translations';
-import { getMediaUrl } from '../services/api';
+import { getMediaUrl, getCropSampleFallback } from '../services/api';
+
 
 export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch }) {
   const [isTraceOpen, setIsTraceOpen] = useState(false);
@@ -120,10 +121,17 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
 
                 <div className="relative rounded-2xl overflow-hidden border border-slate-200 group">
                   <img
-                    src={parcel.image_url}
+                    src={getMediaUrl(parcel.image_url)}
                     alt={`Field Photo for Survey ${parcel.survey_number}`}
                     className="w-full h-64 sm:h-80 object-cover group-hover:scale-102 transition-transform duration-300"
+                    onError={(e) => {
+                      const fallback = getCropSampleFallback(parcel.recorded_crop);
+                      if (e.target.src !== window.location.origin + fallback) {
+                        e.target.src = fallback;
+                      }
+                    }}
                   />
+
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-4 text-white">
                     <div className="font-bold text-sm">
                       {tCrop(parcel.recorded_crop, lang)} ({tStage(parcel.recorded_stage, lang)})
@@ -223,7 +231,14 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
                 src={getMediaUrl(parcel.image_url)}
                 alt={`Survey ${parcel.survey_number} Field Photo`}
                 className="max-h-[68vh] w-auto max-w-full rounded-xl object-contain shadow-2xl"
+                onError={(e) => {
+                  const fallback = getCropSampleFallback(parcel.recorded_crop);
+                  if (e.target.src !== window.location.origin + fallback) {
+                    e.target.src = fallback;
+                  }
+                }}
               />
+
             </div>
 
             {/* Modal Footer */}

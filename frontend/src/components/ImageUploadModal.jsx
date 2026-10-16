@@ -41,8 +41,9 @@ export default function ImageUploadModal({ isOpen, onClose, onUploadComplete, la
       // 3. Trigger advisory pipeline
       const advisoryRes = await api.runAdvisory(sNo, "Analyze uploaded crop photo", uploadRes.filename);
 
-      onUploadComplete(advisoryRes, uploadRes);
+      onUploadComplete(advisoryRes, uploadRes, previewUrl);
       onClose();
+
     } catch (err) {
       console.error("Upload & Analysis Error:", err.response?.data || err);
       const msg = err.response?.data?.detail || err.message || "Failed to analyze image. Please try again.";

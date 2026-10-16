@@ -1,6 +1,8 @@
 import React from 'react';
 import { ShieldCheck, CheckCircle2, Clock, DollarSign, Layers, Cpu, MapPin, Camera, Sparkles } from 'lucide-react';
 import { translations, tCrop, tStage, tHealth, tStatus } from '../utils/translations';
+import { getMediaUrl, getCropSampleFallback } from '../services/api';
+
 
 export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
   if (!advisoryData || !advisoryData.parcel) return null;
@@ -136,10 +138,17 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
             {parcel.image_url ? (
               <div className="w-full">
                 <img
-                  src={parcel.image_url}
+                  src={getMediaUrl(parcel.image_url)}
                   alt="Field Photograph"
                   className="w-full h-32 object-cover rounded-lg border border-slate-300"
+                  onError={(e) => {
+                    const fallback = getCropSampleFallback(parcel.recorded_crop);
+                    if (e.target.src !== window.location.origin + fallback) {
+                      e.target.src = fallback;
+                    }
+                  }}
                 />
+
                 <span className="block text-[10px] text-center text-slate-500 mt-1 font-mono">
                   Ground-Truth Field Photo (#{parcel.survey_number})
                 </span>
