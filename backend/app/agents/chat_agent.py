@@ -52,6 +52,14 @@ def clean_chat_response(text: str, query: str = "") -> str:
     )
     is_general_id = any(w in q_lower for w in ["what crop", "identify", "crop name", "which crop", "என்ன பயிர்", "எந்த பயிர்"])
 
+    # If response is an out-of-domain refusal, keep only the refusal sentence and drop any appended farm data
+    if "செயலி அல்ல" in text or "வழங்கும் செயலி அல்ல" in text or "not designed to provide" in text:
+        paras = [p.strip() for p in text.split("\n\n") if p.strip()]
+        if paras:
+            first_para = paras[0]
+            first_para = re.sub(r"\*{1,3}([^\*]+)\*{1,3}", r"\1", first_para)
+            return first_para.strip()
+
     # If user asked a specific question and response contains rigid multi-section headers
     # extract from Answer / Recommendations onwards
     if not is_general_id and ("Crop Identification" in text or "1. Crop" in text or "1. பயிர்" in text):
@@ -237,6 +245,78 @@ class ChatbotAgent:
                     "output_summary": "Agricultural greeting and service capabilities surfaced",
                     "confidence": 0.99,
                     "latency_ms": 15,
+                    "cost_usd": 0.0,
+                    "status": "completed"
+                }]
+            }
+
+        # 4b. Out-of-Domain / Non-Agricultural Queries (Cricket, Cinema, Politics, General Chat)
+        is_cricket = any(k in q_lower or k in query for k in [
+            "கிரிக்கெட்", "மேட்ச்", "ஸ்கோர்", "ஐபிஎல்", "தோனி", "கோலி",
+            "cricket", "match", "score", "ipl", "dhoni", "kohli", "world cup"
+        ])
+        is_cinema = any(k in q_lower or k in query for k in [
+            "சினிமா", "படம்", "திரைப்படம்", "நடிகர்", "நடிகை", "பாடல்", "பாட்டு",
+            "movie", "movies", "cinema", "actor", "actress", "song", "trailer"
+        ])
+        is_politics = any(k in q_lower or k in query for k in [
+            "அரசியல்", "தேர்தல்", "எம்எல்ஏ", "எம்பி", "முதல்வர்", "பிரதமர்",
+            "politics", "election", "politician", "minister"
+        ])
+        is_general_ood = any(k in q_lower or k in query for k in [
+            "ஜோக்", "கவிதை", "சமையல்", "joke", "poem", "recipe", "coding", "software", "football"
+        ])
+        is_out_of_domain = is_cricket or is_cinema or is_politics or is_general_ood
+
+        if is_out_of_domain:
+            crop_bilingual = {
+                "Coconut": "தென்னை (Coconut)",
+                "Rice (Paddy)": "நெல் (Paddy / Rice)",
+                "Maize": "சோளம் (Maize)",
+                "Banana": "வாழை (Banana)",
+                "Sugarcane": "கரும்பு (Sugarcane)",
+                "Cotton": "பருத்தி (Cotton)",
+                "Groundnut": "நிலக்கடலை (Groundnut)",
+                "Sorghum": "சோளம் (Sorghum)"
+            }
+            target_crop_name = detected_crop or recorded_crop
+            crop_label = crop_bilingual.get(target_crop_name, target_crop_name) if target_crop_name else None
+            crop_mention_ta = f", உங்கள் {crop_label} பயிர் மற்றும்" if crop_label else ", உங்கள் பயிர் மற்றும்"
+            crop_mention_en = f" your {target_crop_name} crop and" if target_crop_name else " your crops and"
+
+            if is_cricket:
+                topic_ta = "கிரிக்கெட் போட்டிகள்"
+                topic_en = "cricket matches and sports"
+            elif is_cinema:
+                topic_ta = "திரைப்படம் மற்றும் சினிமா"
+                topic_en = "movies and entertainment"
+            elif is_politics:
+                topic_ta = "அரசியல் விவரங்கள்"
+                topic_en = "politics and news"
+            else:
+                topic_ta = "விவசாயம் அல்லாத பொதுவான விவரங்கள்"
+                topic_en = "general non-agricultural topics"
+
+            if is_tamil:
+                ood_reply = f"வணக்கம் ஐயா. நான் {topic_ta} பற்றிய விவரங்களை வழங்கும் செயலி அல்ல{crop_mention_ta} விவசாயம் தொடர்பான சந்தேகங்களுக்கு உதவக்கூடிய FarmWise AI நிபுணர் ஆவேன்."
+            else:
+                ood_reply = f"Hello. I am not designed to provide updates on {topic_en}. I am FarmWise AI, dedicated to assisting you with{crop_mention_en} agricultural guidance."
+
+            return {
+                "reply": clean_chat_response(ood_reply, query),
+                "model_used": "FarmwiseAI Out-of-Domain Guardrail",
+                "confidence": 0.99,
+                "sources": ["FarmwiseAI System"],
+                "execution_trace": [{
+                    "step_id": 1,
+                    "name": "Out-of-Domain Guardrail",
+                    "agent_name": "Agricultural Advisor",
+                    "model_name": "FarmwiseAI Safety Guardrail",
+                    "task_type": "CONVERSATIONAL",
+                    "input_summary": query,
+                    "output_summary": "Non-agricultural query politely redirected to agricultural assistance",
+                    "confidence": 0.99,
+                    "latency_ms": 10,
                     "cost_usd": 0.0,
                     "status": "completed"
                 }]
@@ -444,6 +524,10 @@ Available Grounded Facts:
 {language_instruction}
 
 CRITICAL RULES:
+0. OUT-OF-DOMAIN / NON-AGRICULTURAL QUERIES:
+   - If the farmer asks about any non-agricultural topic (such as cricket, sports, cinema, politics, entertainment, personal chatter, etc.):
+   - You MUST ONLY reply with a single polite refusal sentence stating: "வணக்கம் ஐயா. நான் {topic} பற்றிய விவரங்களை வழங்கும் செயலி அல்ல, உங்கள் {crop} பயிர் மற்றும் விவசாயம் தொடர்பான சந்தேகங்களுக்கு உதவக்கூடிய FarmWise AI நிபுணர் ஆவேன்." (or English equivalent).
+   - STRICTLY DO NOT output weather reports, spraying advice, mandi prices, or fertilizer recommendations when refusing out-of-domain queries. ONLY output the single refusal sentence.
 1. DIRECT ANSWER FIRST:
    - Answer the farmer's specific question directly in the very first sentence.
 2. SPRAYING & WEATHER QUERIES (e.g. "மருந்து தெளிக்கலாமா", "can I spray today"):
