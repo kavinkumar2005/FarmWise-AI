@@ -6,6 +6,28 @@ from app.rag.knowledge_base import rag_engine
 from app.services.weather_service import weather_service
 from app.db.database import db
 
+WEATHER_CONDITION_TA = {
+    "Clear sky": "தெளிவான வானம்",
+    "Mainly clear": "பொதுவாக தெளிவான வானம்",
+    "Partly cloudy": "பகுதி மேகமூட்டம்",
+    "Overcast": "முழு மேகமூட்டம்",
+    "Foggy": "பனிமூட்டம்",
+    "Depositing rime fog": "கடும் பனி",
+    "Light drizzle": "லேசான தூறல்",
+    "Moderate drizzle": "மிதமான தூறல்",
+    "Dense drizzle": "அடர்ந்த தூறல்",
+    "Slight rain": "லேசான மழை",
+    "Moderate rain": "மிதமான மழை",
+    "Heavy rain": "கனமழை",
+    "Slight rain showers": "மழைச்சாரல்",
+    "Moderate rain showers": "மிதமான மழைச்சாரல்",
+    "Violent rain showers": "கடும் மழை",
+    "Thunderstorm": "இடி மின்னலுடன் கூடிய மழை",
+    "Thunderstorm with slight hail": "ஆலங்கட்டி மழை",
+    "Thunderstorm with heavy hail": "கடும் ஆலங்கட்டி மழை",
+    "Pleasant": "மிதமான வானிலை"
+}
+
 def clean_chat_response(text: str, query: str = "") -> str:
     """
     Cleans raw agricultural chat output:
@@ -133,11 +155,21 @@ class ChatbotAgent:
 
         # 3. Intent Detection
         is_greeting = bool(re.search(r'\b(hi|hello|hey|vanakkam|namaste|good morning|good evening|வணக்கம்)\b', q_lower))
-        is_fertilizer = bool(re.search(r'\b(fertilizer|fertilizers|urea|dap|potash|mop|ssp|npk|manure|nutrition|nutrient|nutrients|dosage|tonic|feed|feeding|உரம்|யூரியா|பொட்டாஷ்)\b', q_lower))
-        is_price = bool(re.search(r'\b(price|prices|rate|rates|mandi|mandis|market|markets|cost|worth|sell|selling|quintal|ton|nut|e-nam|enam|விலை|சந்தை|மண்டி)\b', q_lower))
-        is_weather = bool(re.search(r'\b(weather|rain|raining|rainfall|temperature|humidity|wind|spray|spraying|forecast|climate|மழை|வானிலை|தெளிப்பு)\b', q_lower))
-        is_pest = bool(re.search(r'\b(pest|pests|disease|diseases|insect|insects|bug|borer|beetle|fungus|fungal|blight|blast|leaf spot|whitefly|worm|caterpillar|பூச்சி|நோய்|வண்டு|புழு)\b', q_lower))
-        is_harvest = bool(re.search(r'\b(harvest|harvesting|reap|reaping|cut|cutting|maturity|mature|ripen|ripening|அறுவடை|அறுக்க|முதிர்ச்சி|நாட்கள்|நாள்)\b', q_lower)) or "அறுவடை" in query or "நாட்கள்" in query
+        is_fertilizer = bool(re.search(r'\b(fertilizer|fertilizers|urea|dap|potash|mop|ssp|npk|manure|nutrition|nutrient|nutrients|dosage|tonic|feed|feeding)\b', q_lower)) or any(k in query for k in ["உரம்", "யூரியா", "பொட்டாஷ்", "டிஏபி"])
+        is_price = bool(re.search(r'\b(price|prices|rate|rates|mandi|mandis|market|markets|cost|worth|sell|selling|quintal|ton|nut|e-nam|enam)\b', q_lower)) or any(k in query for k in ["விலை", "சந்தை", "மண்டி"])
+
+        # Spraying & weather intent (e.g. "இன்னைக்கு மருந்து தெளிக்கலாமா", "spray window", "rain")
+        is_spray = any(k in q_lower or k in query for k in [
+            "மருந்து", "தெளிக்க", "தெளிப்பு", "தெளிக்கலாமா", "அடிக்கலாமா", "மருந்தடிக்க", "மருந்து அடிக்கலாமா",
+            "spray", "spraying", "sprayed", "spray window", "foliar spray", "can i spray", "safe to spray"
+        ])
+        is_weather = is_spray or any(k in q_lower or k in query for k in [
+            "வானிலை", "மழை", "மழைபெய்யுமா", "மழைவருமா", "வெயில்", "காற்று", "ஈரப்பதம்", "தூறல்",
+            "weather", "rain", "raining", "rainfall", "temperature", "humidity", "wind", "forecast", "climate"
+        ])
+
+        is_pest = not is_spray and (bool(re.search(r'\b(pest|pests|disease|diseases|insect|insects|bug|borer|beetle|fungus|fungal|blight|blast|leaf spot|whitefly|worm|caterpillar)\b', q_lower)) or any(k in query for k in ["பூச்சி", "நோய்", "வண்டு", "புழு"]))
+        is_harvest = bool(re.search(r'\b(harvest|harvesting|reap|reaping|cut|cutting|maturity|mature|ripen|ripening)\b', q_lower)) or any(k in query for k in ["அறுவடை", "அறுக்க", "முதிர்ச்சி", "நாட்கள்", "நாள் ஆகும்"])
 
         # Detect crop mentioned in query
         detected_crop = None
@@ -204,33 +236,41 @@ class ChatbotAgent:
                 }]
             }
 
-        # 5. Context Grounding with RAG & Tools
+        # 5. Live Weather & Agro-met Grounding
+        lat = parcel.latitude if parcel else 9.246
+        lon = parcel.longitude if parcel else 77.379
+        weather_data = weather_service.get_weather(lat, lon)
+
+        today_forecast = weather_data.forecast_7d[0] if (weather_data and weather_data.forecast_7d) else None
+        today_rain_prob = today_forecast.rain_prob if today_forecast else (90 if weather_data and weather_data.precipitation_mm > 0.5 else 15)
+        today_rain_mm = today_forecast.rain_mm if today_forecast else (weather_data.precipitation_mm if weather_data else 0.0)
+        condition_ta = WEATHER_CONDITION_TA.get(weather_data.weather_condition, weather_data.weather_condition) if weather_data else "மிதமான வானிலை"
+
+        weather_info = (
+            f"Weather Condition: {weather_data.weather_condition} ({condition_ta}), "
+            f"Temperature: {weather_data.temperature}°C, Humidity: {weather_data.humidity}%, "
+            f"Wind Speed: {weather_data.wind_speed} km/h, Precipitation: {weather_data.precipitation_mm} mm, "
+            f"Rain Probability Today: {today_rain_prob}%, Expected Rain Today: {today_rain_mm} mm. "
+            f"Agro-met Spray Evaluation: {weather_data.spray_recommendation}"
+        ) if weather_data else ""
+
+        # Context Grounding with RAG & Market (omit RAG for pure spray/weather queries to avoid topic confusion)
         rag_context = ""
         market_info = None
-        weather_info = None
-
-        if detected_crop:
-            rag_docs = rag_engine.search_documents(query, crop_name=detected_crop, top_k=2)
-            if rag_docs:
-                rag_context = "\n\n".join([f"[{d['category']} - {d['title']}]:\n{d['content']}" for d in rag_docs])
-            market_info = rag_engine.get_market_price(detected_crop)
-        else:
-            rag_docs = rag_engine.search_documents(query, top_k=2)
-            if rag_docs:
-                rag_context = "\n\n".join([f"[{d['category']} - {d['title']}]:\n{d['content']}" for d in rag_docs])
-
-        if is_weather or parcel:
-            lat = parcel.latitude if parcel else 9.246
-            lon = parcel.longitude if parcel else 77.379
-            weather_data = weather_service.get_weather(lat, lon)
-            weather_info = (
-                f"Current Weather: {weather_data.temperature}°C, Humidity: {weather_data.humidity}%, "
-                f"Wind: {weather_data.wind_speed} km/h. Spray Window: {weather_data.spray_recommendation}"
-            )
+        if not is_weather and not is_spray:
+            if detected_crop:
+                rag_docs = rag_engine.search_documents(query, crop_name=detected_crop, top_k=2)
+                if rag_docs:
+                    rag_context = "\n\n".join([f"[{d['category']} - {d['title']}]:\n{d['content']}" for d in rag_docs])
+                market_info = rag_engine.get_market_price(detected_crop)
+            else:
+                rag_docs = rag_engine.search_documents(query, top_k=2)
+                if rag_docs:
+                    rag_context = "\n\n".join([f"[{d['category']} - {d['title']}]:\n{d['content']}" for d in rag_docs])
 
         rag_section = f"- Agronomic Reference Guidelines (TNAU/ICAR):\n{rag_context}\n" if rag_context else ""
         market_section = f"- Local Mandi Market Price: {market_info.get('modal_price')} in {market_info.get('market')} (Range: {market_info.get('min_price')} - {market_info.get('max_price')})\n" if market_info else ""
-        weather_section = f"- Live Micro-Climate: {weather_info}\n" if weather_info else ""
+        weather_section = f"- Live Micro-Climate ({village_name}):\n  {weather_info}\n" if weather_info else ""
 
         # 6. IMAGE PATH → call Gemini directly with vision-specific prompt and long timeout
         if image_path:
@@ -398,11 +438,22 @@ Available Grounded Facts:
 {language_instruction}
 
 CRITICAL RULES:
-1. DIRECT ANSWER: Answer the farmer's specific question directly in the very first sentence.
-2. If asking about fertilizers, give specific dosages per acre/tree, application timing, and methods (e.g. Urea, DAP, Potash, organic manure).
-3. If asking about prices, mention current mandi rates, price range, and market trend.
-4. If asking about pests or weather, give preventative recommendations and safe spraying windows.
-5. STRICT FORMATTING (NO MARKDOWN SYMBOLS):
+1. DIRECT ANSWER FIRST:
+   - Answer the farmer's specific question directly in the very first sentence.
+2. SPRAYING & WEATHER QUERIES (e.g. "மருந்து தெளிக்கலாமா", "can I spray today"):
+   - Inspect the Live Micro-Climate facts above (Rain Probability: {today_rain_prob}%, Condition: {condition_ta}, Wind Speed).
+   - If Rain Probability >= 40% or active rain/drizzle:
+     * Directly advise POSTPONING spraying in the first sentence ("இல்லை, இன்று மருந்து தெளிப்பதைத் தற்காலிகமாக ஒத்திவைப்பது நல்லது" / "No, postpone spraying today").
+     * Explain that rain probability is {today_rain_prob}% and chemical wash-off will waste the input and cause economic loss.
+   - If Wind Speed > 14 km/h:
+     * Directly advise waiting due to chemical drift risk.
+   - If Rain Probability < 40% and Wind is gentle (< 14 km/h):
+     * Directly confirm it is SAFE to spray today ("ஆம், இன்று மருந்து தெளிக்கலாம்" / "Yes, you can spray today").
+     * Advise early morning (6:30-9:00 AM) or late afternoon (4:00-6:00 PM), and avoid midday heat (11 AM-3 PM).
+3. If asking about fertilizers, give specific dosages per acre/tree, application timing, and methods (e.g. Urea, DAP, Potash, organic manure).
+4. If asking about prices, mention current mandi rates, price range, and market trend.
+5. If asking about pests or general agronomy, give preventative and integrated management steps.
+6. STRICT FORMATTING (NO MARKDOWN SYMBOLS):
    - Do NOT use markdown heading hashes (NO #, ##, ###).
    - Do NOT use horizontal divider lines (NO --- or ___).
    - Do NOT use markdown bold asterisks (NO ** or *). Use clean, plain text.
@@ -574,23 +625,113 @@ CRITICAL RULES:
                     )
 
             # CASE D: Micro-Climate & Spray Safety
-            elif is_weather:
-                if is_tamil:
-                    final_reply = (
-                        f"வானிலை மற்றும் தெளிப்பு பரிந்துரை ({village_name})\n\n"
-                        f"• தற்போதைய நிலை: {weather_info or 'வெப்பநிலை: 28°C, ஈரப்பதம்: 75%, காற்றின் வேகம்: 4.2 km/h'}\n\n"
-                        f"வயல் தெளிப்பு ஆலோசனை:\n"
-                        f"• காற்றின் வேகம் 14 km/h குறைவாக இருக்கும்போது மட்டுமே பூச்சிக்கொல்லி தெளிக்கவும்.\n"
-                        f"• நண்பகல் வெயிலில் (11 AM - 3 PM) தெளிப்பதைத் தவிர்த்து, அதிகாலை அல்லது மாலை வேளையில் தெளிக்கவும்."
-                    )
+            elif is_weather or is_spray:
+                curr_cond_lower = (weather_data.weather_condition.lower() if weather_data else "")
+                is_raining_now = (weather_data and weather_data.precipitation_mm > 0.2) or any(
+                    w in curr_cond_lower for w in ["rain", "drizzle", "shower", "thunderstorm"]
+                )
+                high_rain_risk = is_raining_now or (today_rain_prob >= 40)
+                is_windy = bool(weather_data and weather_data.wind_speed > 14.0)
+
+                temp_str = f"{weather_data.temperature}°C" if weather_data else "28°C"
+                wind_str = f"{weather_data.wind_speed} km/h" if weather_data else "4.2 km/h"
+                hum_str = f"{weather_data.humidity}%" if weather_data else "75%"
+                cond_disp = condition_ta if is_tamil else (weather_data.weather_condition if weather_data else "Normal")
+
+                if is_spray:
+                    if high_rain_risk:
+                        if is_tamil:
+                            final_reply = (
+                                f"இல்லை, இன்று மருந்து தெளிப்பதைத் தற்காலிகமாக ஒத்திவைப்பது நல்லது.\n\n"
+                                f"காரணம்:\n"
+                                f"• இன்று மழை பெய்ய வாய்ப்பு: {today_rain_prob}% (வானிலை: {cond_disp})\n"
+                                f"• மழை பெய்தால் தெளித்த மருந்து இலைகளில் தங்காமல் அடித்துச் செல்லப்பட்டு (wash-off) வீணாகிவிடும்.\n"
+                                f"• வானிலை நிலவரம்: வெப்பநிலை {temp_str}, காற்றின் வேகம் {wind_str}, ஈரப்பதம் {hum_str}\n\n"
+                                f"பரிந்துரை:\n"
+                                f"• மழை நின்ற பிறகும், இலைகளில் உள்ள ஈரப்பதம் காய்ந்த பிறகும் மருந்து தெளிக்க திட்டமிடவும்.\n"
+                                f"• அடுத்த 24 மணி நேர வானிலை நிலவரத்தை கவனித்துவிட்டு தெளிக்கவும்."
+                            )
+                        else:
+                            final_reply = (
+                                f"No, it is advisable to postpone pesticide spraying today.\n\n"
+                                f"Reason:\n"
+                                f"• Rain Probability Today: {today_rain_prob}% (Current Condition: {cond_disp})\n"
+                                f"• Spraying before or during rain will cause chemical wash-off, resulting in poor efficacy and financial loss.\n"
+                                f"• Micro-Climate: Temperature {temp_str}, Wind Speed {wind_str}, Humidity {hum_str}\n\n"
+                                f"Recommendation:\n"
+                                f"• Reschedule spraying after rain ceases and foliar canopy has completely dried.\n"
+                                f"• Monitor the weather forecast for the next 24 hours before application."
+                            )
+                    elif is_windy:
+                        if is_tamil:
+                            final_reply = (
+                                f"இல்லை, காற்றின் வேகம் அதிகமாக இருப்பதால் தற்பொழுது மருந்து தெளிப்பதைத் தவிர்க்கவும்.\n\n"
+                                f"காரணம்:\n"
+                                f"• காற்றின் வேகம்: {wind_str} (பாதுகாப்பான வரம்பான 14 km/h-ஐ விட அதிகம்)\n"
+                                f"• அதிக காற்றில் தெளித்தால் மருந்து காற்றில் சிதறி வீணாகும் மற்றும் அருகிலுள்ள நிலங்களுக்குப் பரவும் (Chemical Drift).\n\n"
+                                f"பரிந்துரை:\n"
+                                f"• காற்று அமைதியாகும் வரை காத்திருந்து, அதிகாலை அல்லது மாலை வேளையில் தெளிக்கவும்."
+                            )
+                        else:
+                            final_reply = (
+                                f"No, avoid pesticide spraying at this moment due to high wind speed.\n\n"
+                                f"Reason:\n"
+                                f"• Wind Speed: {wind_str} (exceeds the recommended 14 km/h threshold)\n"
+                                f"• High wind speeds cause significant droplet drift, wastage, and unintended exposure to nearby parcels.\n\n"
+                                f"Recommendation:\n"
+                                f"• Wait for wind conditions to subside, preferably during early morning or late afternoon."
+                            )
+                    else:
+                        if is_tamil:
+                            final_reply = (
+                                f"ஆம், இன்று தாராளமாக மருந்து தெளிக்கலாம்.\n\n"
+                                f"தற்போதைய சாதகமான வானிலை நிலவரம் ({village_name}):\n"
+                                f"• வானிலை: {cond_disp} (மழை பெய்ய வாய்ப்பு: {today_rain_prob}%)\n"
+                                f"• காற்றின் வேகம்: {wind_str} (தெளிப்பதற்கு ஏற்ற அமைதியான காற்று)\n"
+                                f"• வெப்பநிலை: {temp_str}, ஈரப்பதம்: {hum_str}\n\n"
+                                f"பாதுகாப்பான தெளிப்பு வழிகாட்டுதல்:\n"
+                                f"1. உகந்த நேரம்: அதிகாலை 6:30 முதல் 9:00 மணிக்குள் அல்லது மாலை 4:00 முதல் 6:00 மணிக்குள் தெளிக்கவும்.\n"
+                                f"2. நண்பகல் வெயிலில் (11:00 AM முதல் 3:00 PM வரை) இலைகளில் நச்சுத்தன்மை/கருகல் உண்டாக வாய்ப்புள்ளதால் தவிர்க்கவும்.\n"
+                                f"3. மருந்துடன் ஒட்டும் திரவம் (Wetting Agent / Sticker) கலந்து தெளிப்பது மருந்தின் செயல்திறனை அதிகரிக்கும்."
+                            )
+                        else:
+                            final_reply = (
+                                f"Yes, conditions are favorable for pesticide spraying today.\n\n"
+                                f"Current Weather ({village_name}):\n"
+                                f"• Weather Condition: {cond_disp} (Rain Probability: {today_rain_prob}%)\n"
+                                f"• Wind Speed: {wind_str} (Gentle, below the 14 km/h threshold)\n"
+                                f"• Temperature: {temp_str}, Humidity: {hum_str}\n\n"
+                                f"Application Guidelines:\n"
+                                f"1. Optimal Windows: Spray during early morning (6:30 AM – 9:00 AM) or late afternoon (4:00 PM – 6:00 PM).\n"
+                                f"2. Midday Heat: Avoid spraying between 11:00 AM and 3:00 PM to prevent leaf scorching.\n"
+                                f"3. Spray Adjuvant: Mix with an agricultural surfactant/sticker to enhance foliar absorption."
+                            )
                 else:
-                    final_reply = (
-                        f"Agro-Meteorological Spray Window ({village_name})\n\n"
-                        f"• {weather_info or 'Temperature: 28°C, Humidity: 75%, Wind Speed: 4.2 km/h'}\n\n"
-                        f"Field Operations Advisory:\n"
-                        f"• Foliar spraying is safe when wind velocity is under 14 km/h to prevent chemical drift.\n"
-                        f"• Avoid spraying during midday heat (11 AM – 3 PM) to prevent leaf scorching; schedule early morning or late evening."
-                    )
+                    # General weather query
+                    if is_tamil:
+                        final_reply = (
+                            f"இன்றைய வானிலை மற்றும் வேளாண்மை வழிகாட்டுதல் ({village_name})\n\n"
+                            f"• வானிலை நிலை: {cond_disp}\n"
+                            f"• மழை பெய்ய வாய்ப்பு: {today_rain_prob}%\n"
+                            f"• வெப்பநிலை: {temp_str}\n"
+                            f"• காற்றின் வேகம்: {wind_str}\n"
+                            f"• ஈரப்பதம்: {hum_str}\n\n"
+                            f"வேளாண் கள ஆலோசனை:\n"
+                            f"• {('மழை பெய்ய வாய்ப்பு அதிகமாக உள்ளதால் மருந்து தெளித்தல் மற்றும் உரம் இடுவதைத் தற்காலிகமாக ஒத்திவைக்கவும்.' if high_rain_risk else 'வானிலை சீராக உள்ளதால் பயிர் பராமரிப்பு மற்றும் தெளிப்பு பணிகளை மேற்கொள்ளலாம்.')}\n"
+                            f"• காற்றின் வேகம் 14 km/h குறைவாக உள்ளபோது மட்டுமே இலைவழி தெளிப்பு செய்யவும்."
+                        )
+                    else:
+                        final_reply = (
+                            f"Micro-Climate & Agro-Meteorological Advisory ({village_name})\n\n"
+                            f"• Current Condition: {cond_disp}\n"
+                            f"• Rain Probability: {today_rain_prob}%\n"
+                            f"• Temperature: {temp_str}\n"
+                            f"• Wind Speed: {wind_str}\n"
+                            f"• Relative Humidity: {hum_str}\n\n"
+                            f"Agronomic Advisory:\n"
+                            f"• {('Postpone foliar spraying and top dressing as rainfall probability is elevated.' if high_rain_risk else 'Weather conditions are stable for general field operations and foliar spraying.')}\n"
+                            f"• Ensure wind speed remains under 14 km/h during spraying."
+                        )
 
             # CASE E: Pest & Disease Control
             elif is_pest:
