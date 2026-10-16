@@ -28,22 +28,40 @@ class AWSService:
             self._s3_client = None
 
     def upload_image(self, file_path: str, object_name: Optional[str] = None) -> Optional[str]:
-        """Uploads image to S3 bucket or falls back to local storage."""
+        """Uploads image to S3 bucket with proper MIME ContentType or falls back to local storage."""
+        filename = Path(file_path).name
         if object_name is None:
-            object_name = f"fai-tce-team06-crops/{Path(file_path).name}"
+            object_name = f"fai-tce-team06-crops/{filename}"
+
+        # Determine MIME type
+        ext = filename.split(".")[-1].lower() if "." in filename else "jpg"
+        content_type = "image/jpeg"
+        if ext == "png":
+            content_type = "image/png"
+        elif ext == "webp":
+            content_type = "image/webp"
+        elif ext == "json":
+            content_type = "application/json"
+        elif ext == "txt":
+            content_type = "text/plain"
 
         # Try S3 upload if client is available
         if self._s3_client:
             try:
-                self._s3_client.upload_file(file_path, self.bucket_name, object_name)
+                self._s3_client.upload_file(
+                    file_path,
+                    self.bucket_name,
+                    object_name,
+                    ExtraArgs={"ContentType": content_type}
+                )
                 url = f"https://{self.bucket_name}.s3.{self.region}.amazonaws.com/{object_name}"
-                print(f"[OK] Uploaded to AWS S3: {url}")
+                print(f"[OK] Uploaded to AWS S3: {url} (ContentType: {content_type})")
                 return url
             except Exception as e:
                 print(f"[WARN] S3 Upload notice ({e}). Utilizing reliable local artifact serving.")
 
         # Local fallback URL
-        return f"/uploads/{Path(file_path).name}"
+        return f"/uploads/{filename}"
 
     def list_storage_objects(self, bucket_name: Optional[str] = None) -> Dict[str, Any]:
         """Lists objects in the team S3 bucket with metadata and temporary presigned URLs."""

@@ -131,7 +131,7 @@ async def upload_field_photo(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     # Trigger AWS S3 upload
-    s3_url = aws_service.upload_image(str(local_save_path), object_name=f"fai-tce-team06-uploads/{unique_filename}")
+    s3_url = aws_service.upload_image(str(local_save_path), object_name=f"fai-tce-team06-crops/{unique_filename}")
 
     return {
         "filename": unique_filename,
@@ -170,7 +170,7 @@ async def chatbot_advisor(
         saved_img_path = uploads_dir / uploaded_image_name
         with open(saved_img_path, "wb") as buf:
             shutil.copyfileobj(image.file, buf)
-        s3_image_url = aws_service.upload_image(str(saved_img_path), object_name=f"fai-tce-team06-uploads/{uploaded_image_name}")
+        s3_image_url = aws_service.upload_image(str(saved_img_path), object_name=f"fai-tce-team06-crops/{uploaded_image_name}")
 
     # Call specialized conversational agent
     chat_result = chat_agent.answer_question(
