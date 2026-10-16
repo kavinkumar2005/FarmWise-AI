@@ -45,6 +45,51 @@ class AWSService:
         # Local fallback URL
         return f"/uploads/{Path(file_path).name}"
 
+    def list_storage_objects(self, bucket_name: Optional[str] = None) -> Dict[str, Any]:
+        """Lists objects in the team S3 bucket with metadata and temporary presigned URLs."""
+        target_bucket = bucket_name or self.bucket_name
+        if not self._s3_client:
+            return {"bucket": target_bucket, "status": "no_credentials", "objects": [], "total_count": 0}
+
+        try:
+            paginator = self._s3_client.get_paginator("list_objects_v2")
+            objects = []
+            total_size_bytes = 0
+
+            for page in paginator.paginate(Bucket=target_bucket):
+                for item in page.get("Contents", []):
+                    key = item["Key"]
+                    size = item["Size"]
+                    total_size_bytes += size
+                    
+                    # Generate temporary presigned URL for viewing
+                    try:
+                        view_url = self._s3_client.generate_presigned_url(
+                            "get_object",
+                            Params={"Bucket": target_bucket, "Key": key},
+                            ExpiresIn=3600
+                        )
+                    except Exception:
+                        view_url = None
+
+                    objects.append({
+                        "key": key,
+                        "size_bytes": size,
+                        "size_kb": round(size / 1024, 2),
+                        "last_modified": item["LastModified"].isoformat(),
+                        "view_url": view_url
+                    })
+
+            return {
+                "bucket": target_bucket,
+                "region": self.region,
+                "total_count": len(objects),
+                "total_size_kb": round(total_size_bytes / 1024, 2),
+                "objects": objects
+            }
+        except Exception as e:
+            return {"bucket": target_bucket, "status": "error", "message": str(e), "objects": [], "total_count": 0}
+
     def check_bedrock_availability(self) -> Dict[str, Any]:
         """Checks Amazon Bedrock model availability in ap-south-1."""
         try:

@@ -297,6 +297,11 @@ Text to translate:
         "language": target_lang
     }
 
+@app.get("/api/storage")
+def get_s3_storage(bucket: Optional[str] = None):
+    """Returns the list of files stored in AWS S3 with temporary viewing links."""
+    return aws_service.list_storage_objects(bucket_name=bucket)
+
 # Mount Frontend static build if present
 frontend_dist = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 if frontend_dist.exists():
