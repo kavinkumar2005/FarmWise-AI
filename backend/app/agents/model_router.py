@@ -43,26 +43,26 @@ class ModelRouter:
         if task_type == "PLANNING":
             return ModelRoutingDecision(
                 task_type="PLANNING",
-                primary_model="gemini-3.1-flash-lite",
+                primary_model="gemini-3.5-flash-lite",
                 fallback_model="open-weight-crop-classifier",
                 estimated_latency_ms=280,
                 estimated_cost_usd=0.0001,
-                rationale="Gemini 3.1 Flash-Lite provides high-speed structured task planning with sub-second execution."
+                rationale="Gemini 3.5 Flash-Lite provides high-speed structured task planning with sub-second execution."
             )
         elif task_type in ["IMAGE_ANALYSIS", "MULTIMODAL_INSPECTION"]:
             return ModelRoutingDecision(
                 task_type=task_type,
-                primary_model="gemini-3.1-flash-lite",
+                primary_model="gemini-3.5-flash-lite",
                 fallback_model="open-weight-crop-classifier",
                 estimated_latency_ms=450,
                 estimated_cost_usd=0.0002,
-                rationale="Gemini 3.1 Flash-Lite vision inspects field canopy morphology, growth stage, and foliar symptoms."
+                rationale="Gemini 3.5 Flash-Lite vision inspects field canopy morphology, growth stage, and foliar symptoms."
             )
         elif task_type == "INITIAL_CROP_SCREENING":
             return ModelRoutingDecision(
                 task_type="INITIAL_CROP_SCREENING",
                 primary_model="open-weight-crop-classifier",
-                fallback_model="gemini-3.1-flash-lite",
+                fallback_model="gemini-3.5-flash-lite",
                 estimated_latency_ms=80,
                 estimated_cost_usd=0.00002,
                 rationale="Zero-cost, ultra-low latency edge model (Qwen-VL style) for rapid preliminary crop bounding."
@@ -70,7 +70,7 @@ class ModelRouter:
         elif task_type == "VERIFICATION_CRITIC":
             return ModelRoutingDecision(
                 task_type="VERIFICATION_CRITIC",
-                primary_model="gemini-3.1-flash-lite",
+                primary_model="gemini-3.5-flash-lite",
                 fallback_model="open-weight-crop-classifier",
                 estimated_latency_ms=180,
                 estimated_cost_usd=0.0001,
@@ -79,7 +79,7 @@ class ModelRouter:
         else: # SYNTHESIS / ADVISORY
             return ModelRoutingDecision(
                 task_type=task_type,
-                primary_model="gemini-3.1-flash-lite",
+                primary_model="gemini-3.5-flash-lite",
                 fallback_model="open-weight-crop-classifier",
                 estimated_latency_ms=320,
                 estimated_cost_usd=0.0001,
@@ -99,21 +99,10 @@ class ModelRouter:
                 mime_type="image/jpeg"
             ))
         contents.append(prompt)
-        config = None
-        try:
-            config = genai.types.GenerateContentConfig(
-                max_output_tokens=600,
-                temperature=0.3,
-                thinking_config=genai.types.ThinkingConfig(thinking_budget=0)
-            )
-        except Exception:
-            try:
-                config = genai.types.GenerateContentConfig(
-                    max_output_tokens=600,
-                    temperature=0.3
-                )
-            except Exception:
-                config = None
+        config = genai.types.GenerateContentConfig(
+            max_output_tokens=800,
+            temperature=0.3
+        )
 
         res = gemini_client.models.generate_content(
             model=model_name,
@@ -148,10 +137,10 @@ class ModelRouter:
                 fallback_used = True
                 chosen_model = decision.fallback_model
 
-        # 2. Try Gemini — use thinking_budget=0 for fast 2-6s inference
+        # 2. Try Gemini Flash models
         if not output_text and gemini_client:
-            active_models = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite", "gemini-3.8-flash"]
-            timeout_secs = 12.0 if image_path else 6.0
+            active_models = ["gemini-3.5-flash-lite", "gemini-3.5-flash", "gemini-3.8-flash"]
+            timeout_secs = 25.0
             for m in active_models:
                 try:
                     future = _thread_pool.submit(cls._call_gemini_sync, m, prompt, image_path)

@@ -171,6 +171,12 @@ class ChatbotAgent:
         is_pest = not is_spray and (bool(re.search(r'\b(pest|pests|disease|diseases|insect|insects|bug|borer|beetle|fungus|fungal|blight|blast|leaf spot|whitefly|worm|caterpillar)\b', q_lower)) or any(k in query for k in ["பூச்சி", "நோய்", "வண்டு", "புழு"]))
         is_harvest = bool(re.search(r'\b(harvest|harvesting|reap|reaping|cut|cutting|maturity|mature|ripen|ripening)\b', q_lower)) or any(k in query for k in ["அறுவடை", "அறுக்க", "முதிர்ச்சி", "நாட்கள்", "நாள் ஆகும்"])
 
+        # Crop inquiry (e.g. "என் வயலில் என்ன பயிர் உள்ளது", "what crop is in my field")
+        is_crop_inquiry = any(k in q_lower or k in query for k in [
+            "என்ன பயிர்", "எந்த பயிர்", "பயிர் என்ன", "பயிர் உள்ளது", "என்ன பயிறு",
+            "what crop", "which crop", "crop is in", "crop in my field", "crop on record", "recorded crop", "my crop"
+        ])
+
         # Detect crop mentioned in query
         detected_crop = None
         crop_aliases = {
@@ -254,10 +260,10 @@ class ChatbotAgent:
             f"Agro-met Spray Evaluation: {weather_data.spray_recommendation}"
         ) if weather_data else ""
 
-        # Context Grounding with RAG & Market (omit RAG for pure spray/weather queries to avoid topic confusion)
+        # Context Grounding with RAG & Market (omit RAG for pure spray/weather/crop inquiry queries to avoid topic confusion)
         rag_context = ""
         market_info = None
-        if not is_weather and not is_spray:
+        if not is_weather and not is_spray and not is_crop_inquiry:
             if detected_crop:
                 rag_docs = rag_engine.search_documents(query, crop_name=detected_crop, top_k=2)
                 if rag_docs:
@@ -450,10 +456,14 @@ CRITICAL RULES:
    - If Rain Probability < 40% and Wind is gentle (< 14 km/h):
      * Directly confirm it is SAFE to spray today ("ஆம், இன்று மருந்து தெளிக்கலாம்" / "Yes, you can spray today").
      * Advise early morning (6:30-9:00 AM) or late afternoon (4:00-6:00 PM), and avoid midday heat (11 AM-3 PM).
-3. If asking about fertilizers, give specific dosages per acre/tree, application timing, and methods (e.g. Urea, DAP, Potash, organic manure).
-4. If asking about prices, mention current mandi rates, price range, and market trend.
-5. If asking about pests or general agronomy, give preventative and integrated management steps.
-6. STRICT FORMATTING (NO MARKDOWN SYMBOLS):
+3. IF ASKING WHAT CROP IS IN THE FIELD (e.g. "என் வயலில் என்ன பயிர் உள்ளது", "what crop is in my field"):
+   - DIRECTLY STATE THE CROP in the very first sentence.
+   - Ground response in parcel facts: Recorded Crop ({detected_crop or recorded_crop or 'விவசாயப் பயிர்'}), Survey #{survey_number or 'பொதுவான நிலம்'}, and Village ({village_name}).
+   - Do NOT dump unrelated fertilizer schedules or pest treatments unless specifically asked.
+4. If asking about fertilizers, give specific dosages per acre/tree, application timing, and methods (e.g. Urea, DAP, Potash, organic manure).
+5. If asking about prices, mention current mandi rates, price range, and market trend.
+6. If asking about pests or general agronomy, give preventative and integrated management steps.
+7. STRICT FORMATTING (NO MARKDOWN SYMBOLS):
    - Do NOT use markdown heading hashes (NO #, ##, ###).
    - Do NOT use horizontal divider lines (NO --- or ___).
    - Do NOT use markdown bold asterisks (NO ** or *). Use clean, plain text.
@@ -477,13 +487,48 @@ CRITICAL RULES:
             trace_info.get("status") == "fallback_applied"
         )
 
-        model_display = trace_info.get("model_used", "Gemini 3.1 Flash Lite")
+        model_display = trace_info.get("model_used", "Gemini 3.5 Flash Lite")
 
         if is_generic_ai:
             model_display = "FarmwiseAI Agronomic Agent (TNAU / ICAR Knowledge)"
 
+            # CASE A: Crop Inquiry (e.g. "என் வயலில் என்ன பயிர் உள்ளது")
+            if is_crop_inquiry:
+                crop_ta = {
+                    "Coconut": "தென்னை (Coconut)",
+                    "Rice (Paddy)": "நெல் (Paddy / Rice)",
+                    "Maize": "மக்காச்சோளம் (Maize)",
+                    "Banana": "வாழை (Banana)",
+                    "Sugarcane": "கரும்பு (Sugarcane)",
+                    "Cotton": "பருத்தி (Cotton)",
+                    "Groundnut": "நிலக்கடலை (Groundnut)"
+                }.get(detected_crop or recorded_crop, detected_crop or recorded_crop or "விவசாயப் பயிர்")
+
+                if is_tamil:
+                    surv_str = f"• சர்வே எண்: #{survey_number}\n" if survey_number else ""
+                    final_reply = (
+                        f"உங்கள் நிலத்தில் பதிவு செய்யப்பட்டுள்ள பயிர்: {crop_ta}\n\n"
+                        f"நில விவரங்கள்:\n"
+                        f"• பயிர் வகை: {crop_ta}\n"
+                        f"{surv_str}"
+                        f"• கிராமம் / பகுதி: {village_name}\n\n"
+                        f"பயிர் வழிகாட்டுதல்:\n"
+                        f"• இந்த {crop_ta} பயிருக்கான உரம், பூச்சி மேலாண்மை, நேரடி சந்தை விலை அல்லது இன்றைய தெளிப்பு நேரம் பற்றி நீங்கள் அறிந்து கொள்ள விரும்பினால் கேட்கலாம்!"
+                    )
+                else:
+                    surv_str = f"• Survey Number: #{survey_number}\n" if survey_number else ""
+                    final_reply = (
+                        f"Recorded Crop for your parcel: {detected_crop or recorded_crop or 'Agricultural Crop'}\n\n"
+                        f"Parcel Registry Details:\n"
+                        f"• Crop: {detected_crop or recorded_crop or 'Agricultural Crop'}\n"
+                        f"{surv_str}"
+                        f"• Village: {village_name}\n\n"
+                        f"Agronomic Guidance:\n"
+                        f"• You can ask for fertilizer dosages, pest management, live mandi prices, or weather spray suitability for this crop!"
+                    )
+
             # CASE B: Fertilizer & Nutrient Schedules
-            if is_fertilizer:
+            elif is_fertilizer:
                 crop_lower = (detected_crop or "").lower()
                 if "coconut" in crop_lower:
                     if is_tamil:
