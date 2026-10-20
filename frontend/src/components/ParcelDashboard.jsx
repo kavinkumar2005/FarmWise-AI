@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Calendar, Layers, ShieldCheck, Share2, Printer, ChevronRight, Camera, Sparkles, X, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar, Layers, ShieldCheck, Share2, Printer, ChevronRight, Camera, Sparkles, X, ExternalLink, FlaskConical } from 'lucide-react';
 import ParcelMap from './ParcelMap';
 import CropAnalysisCard from './CropAnalysisCard';
 import WeatherCard from './WeatherCard';
@@ -51,6 +51,17 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
                   <ShieldCheck className="w-4 h-4 text-emerald-700" />
                   {tStatus(verification?.status, lang) || "AI VERIFIED"} ({verification?.score_percentage || 96}%)
                 </span>
+
+                {(advisoryData.soil_profile || parcel.soil_profile) && (
+                  <a
+                    href="#soil-card"
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 transition-colors cursor-pointer"
+                    title="Jump to Soil Health Card"
+                  >
+                    <FlaskConical className="w-3.5 h-3.5 text-amber-700" />
+                    <span>SHC: {(advisoryData.soil_profile || parcel.soil_profile).soil_health_card_id} (pH {(advisoryData.soil_profile || parcel.soil_profile).ph})</span>
+                  </a>
+                )}
               </div>
 
               <p className="text-xs sm:text-sm text-slate-600 mt-2 flex items-center gap-2">
@@ -160,10 +171,12 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
         </div>
 
         {/* Dynamic Soil Health Card & Nutrient Profile */}
-        <SoilHealthCard
-          soilProfile={advisoryData.soil_profile || parcel.soil_profile}
-          lang={lang}
-        />
+        <div id="soil-card" className="scroll-mt-6">
+          <SoilHealthCard
+            soilProfile={advisoryData.soil_profile || parcel.soil_profile}
+            lang={lang}
+          />
+        </div>
 
         {/* Full-width Advisory & Nutrient Schedule Section */}
         <AdvisoryCard

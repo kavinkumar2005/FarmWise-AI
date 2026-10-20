@@ -75,6 +75,7 @@ export default function App() {
         setAdvisoryData(prev => ({
           ...(prev || {}),
           parcel: fastParcel,
+          soil_profile: fastParcel.soil_profile,
           weather: fastWeather || prev?.weather,
           crop_analysis: {
             crop_name: fastParcel.recorded_crop,
@@ -104,6 +105,7 @@ export default function App() {
         setAdvisoryData(prev => ({
           ...(prev || {}),
           parcel: p,
+          soil_profile: p?.soil_profile || prev?.soil_profile,
           weather: w || prev?.weather,
           crop_analysis: prev?.crop_analysis || {
             crop_name: p.recorded_crop,
