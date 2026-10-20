@@ -4,6 +4,7 @@ import ParcelMap from './ParcelMap';
 import CropAnalysisCard from './CropAnalysisCard';
 import WeatherCard from './WeatherCard';
 import AdvisoryCard from './AdvisoryCard';
+import SoilHealthCard from './SoilHealthCard';
 import DecisionTraceModal from './DecisionTraceModal';
 import PrintableTraceReport from './PrintableTraceReport';
 import { translations, tCrop, tStage, tStatus } from '../utils/translations';
@@ -157,6 +158,12 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
             <WeatherCard weather={weather} lang={lang} />
           </div>
         </div>
+
+        {/* Dynamic Soil Health Card & Nutrient Profile */}
+        <SoilHealthCard
+          soilProfile={advisoryData.soil_profile || parcel.soil_profile}
+          lang={lang}
+        />
 
         {/* Full-width Advisory & Nutrient Schedule Section */}
         <AdvisoryCard

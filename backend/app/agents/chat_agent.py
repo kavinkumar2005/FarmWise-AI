@@ -358,6 +358,21 @@ class ChatbotAgent:
         market_section = f"- Local Mandi Market Price: {market_info.get('modal_price')} in {market_info.get('market')} (Range: {market_info.get('min_price')} - {market_info.get('max_price')})\n" if market_info else ""
         weather_section = f"- Live Micro-Climate ({village_name}):\n  {weather_info}\n" if weather_info else ""
 
+        # Dynamic Soil Health Grounding
+        soil = getattr(parcel, 'soil_profile', None) if parcel else None
+        soil_section = ""
+        if soil:
+            soil_section = (
+                f"- Soil Health Card Profile (#{soil.soil_health_card_id}):\n"
+                f"  • Soil Type: {soil.soil_type} ({soil.soil_texture})\n"
+                f"  • Soil pH: {soil.ph} ({soil.ph_status})\n"
+                f"  • Organic Carbon: {soil.organic_carbon_percent}% ({soil.organic_carbon_status})\n"
+                f"  • Available N-P-K: N={soil.nitrogen_kg_ha} kg/ha ({soil.nitrogen_status}), P={soil.phosphorus_kg_ha} kg/ha ({soil.phosphorus_status}), K={soil.potassium_kg_ha} kg/ha ({soil.potassium_status})\n"
+                f"  • Fertilizer Uptake Efficiency: {soil.fertilizer_efficiency_score}%\n"
+                f"  • Soil Amendments: {'; '.join(soil.amendments_needed[:2])}\n"
+                f"  • Custom Fertilizer Adjustments: {'; '.join(soil.fertilizer_adjustments)}\n"
+            )
+
         # 6. IMAGE PATH → call Gemini directly with vision-specific prompt and long timeout
         if image_path:
             vision_prompt = f"""You are FarmWise AI, an expert agricultural advisor assisting a farmer in Tamil Nadu.
@@ -513,13 +528,14 @@ CRITICAL RULES:
                 }
 
         # 7. Text-only → Build Comprehensive Agronomic Prompt for Model Router
-        system_prompt = f"""You are FarmWise AI, an expert agricultural advisor specializing in Tamil Nadu and South Indian crops.
+        system_prompt = f"""You are FarmWise AI, an expert agricultural advisor specializing strictly in Tamil Nadu and Indian agro-climatic conditions (TNAU Crop Production Guide CPG 2024 & ICAR protocols).
 Farmer Query: "{query}"
 
 Available Grounded Facts:
 - Target Parcel: Survey #{survey_number or 'General'}, Village: {village_name}
 - Crop in Context: {detected_crop or 'General Agricultural Crops'}
-{rag_section}{market_section}{weather_section}
+- Regional Authority: Tamil Nadu Agricultural University (TNAU) & ICAR
+{soil_section}{rag_section}{market_section}{weather_section}
 
 {language_instruction}
 
@@ -544,9 +560,13 @@ CRITICAL RULES:
    - DIRECTLY STATE THE CROP in the very first sentence.
    - Ground response in parcel facts: Recorded Crop ({detected_crop or recorded_crop or 'விவசாயப் பயிர்'}), Survey #{survey_number or 'பொதுவான நிலம்'}, and Village ({village_name}).
    - Do NOT dump unrelated fertilizer schedules or pest treatments unless specifically asked.
-4. If asking about fertilizers, give specific dosages per acre/tree, application timing, and methods (e.g. Urea, DAP, Potash, organic manure).
+4. FERTILIZER & SOIL-DRIVEN NUTRITION (உரம் மற்றும் மண்வளம்):
+   - Ground answers in the Soil Health Card above. If the soil pH is alkaline (pH > 7.8), mention that alkaline soil locks up Nitrogen and Zinc, so advise applying Gypsum and using Neem-Coated Urea in split doses.
+   - If Available Phosphorus is High, advise that DAP can be trimmed by 15-20% to save input costs without losing yield.
+   - Advise using biofertilizers (Azospirillum & Phosphobacteria @ 2 kg/acre).
+   - Always quote specific dosages per acre matching the TNAU Crop Production Guide (CPG) 2024.
 5. If asking about prices, mention current mandi rates, price range, and market trend.
-6. If asking about pests or general agronomy, give preventative and integrated management steps.
+6. If asking about pests or general agronomy, give preventative and integrated management steps (IPM / NSKE 5% / TNAU recommended bio-pesticides).
 7. STRICT FORMATTING (NO MARKDOWN SYMBOLS):
    - Do NOT use markdown heading hashes (NO #, ##, ###).
    - Do NOT use horizontal divider lines (NO --- or ___).

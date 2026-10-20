@@ -10,8 +10,10 @@ class AgriculturalKnowledgeAgent:
     def retrieve_guidance(state: AgentState) -> AgentState:
         start_time = time.time()
         crop_info = state.get("crop_analysis") or {}
+        parcel = state.get("parcel") or {}
         crop_name = crop_info.get("crop_name", "Rice (Paddy)")
         stage = crop_info.get("growth_stage", "vegetation")
+        soil = parcel.get("soil_profile") or {}
 
         # 1. RAG search
         rag_docs = rag_engine.search_documents(
@@ -23,7 +25,7 @@ class AgriculturalKnowledgeAgent:
         # 2. Market price
         market_info = rag_engine.get_market_price(crop_name)
 
-        # 3. Build fertilizer schedule tailored to growth stage
+        # 3. Build fertilizer schedule tailored to growth stage AND soil profile
         schedule = []
         if "coconut" in crop_name.lower():
             schedule = [
@@ -47,6 +49,44 @@ class AgriculturalKnowledgeAgent:
                 {"stage": "Active Tillering (20-25 DAT)", "fertilizer": "Neem Coated Urea (45 kg)", "dosage_per_acre": "Per acre", "timing": "Drain water lightly, broadcast urea, re-flood after 24 hrs", "notes": "Stimulates productive tillers."},
                 {"stage": "Panicle Initiation (40-45 DAT)", "fertilizer": "Urea (25 kg) + MOP (12 kg)", "dosage_per_acre": "Per acre", "timing": "Broadcast at boot-leaf emergence", "notes": "Essential for spikelet fertility and grain density."}
             ]
+
+        # Dynamic Soil-driven enhancements
+        soil_ph = soil.get("ph") if isinstance(soil, dict) else getattr(soil, "ph", None)
+        p_status = soil.get("phosphorus_status") if isinstance(soil, dict) else getattr(soil, "phosphorus_status", "")
+
+        if soil_ph is not None:
+            if soil_ph > 7.8:
+                schedule.insert(0, {
+                    "stage": "Soil Reclamation / Basal",
+                    "fertilizer": "Agricultural Gypsum (100 kg/acre)",
+                    "dosage_per_acre": "100 kg/acre",
+                    "timing": "Broadcast and incorporate 15 days before planting",
+                    "notes": f"Mandatory for alkaline soil (pH {soil_ph}) to neutralize sodium carbonates and optimize fertilizer efficiency."
+                })
+            elif soil_ph < 6.3:
+                schedule.insert(0, {
+                    "stage": "Soil Reclamation (Lime)",
+                    "fertilizer": "Agricultural Lime / Dolomite (120 kg/acre)",
+                    "dosage_per_acre": "120 kg/acre",
+                    "timing": "Broadcast during preparatory tillage",
+                    "notes": f"Corrects acidic soil (pH {soil_ph}) to unlock fixed phosphorus and eliminate aluminum toxicity."
+                })
+
+            # Biofertilizer boost
+            schedule.append({
+                "stage": "Bio-Fertilizer Inoculation",
+                "fertilizer": "TNAU Azospirillum + Phosphobacteria",
+                "dosage_per_acre": "2 kg/acre each mixed with 50 kg FYM",
+                "timing": "Soil application at basal or early vegetative stage",
+                "notes": "Reduces synthetic chemical Nitrogen requirement by 25% and unlocks native soil phosphorus."
+            })
+
+            # Check high phosphorus
+            if "high" in str(p_status).lower():
+                for item in schedule:
+                    if "DAP" in item["fertilizer"]:
+                        item["dosage_per_acre"] = "28 kg/acre (reduced by 20%)"
+                        item["notes"] += f" [Adjusted: Soil contains High P ({soil.get('phosphorus_kg_ha', 24)} kg/ha); dosage trimmed to prevent nutrient lockup]."
 
         elapsed_ms = int((time.time() - start_time) * 1000)
 

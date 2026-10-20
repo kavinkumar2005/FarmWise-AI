@@ -7,6 +7,7 @@ from typing import List, Dict, Any, Optional
 import pandas as pd
 from app.config import settings
 from app.db.models import ParcelRecord
+from app.services.soil_service import soil_service
 
 class ParcelDatabase:
     def __init__(self):
@@ -186,7 +187,12 @@ class ParcelDatabase:
                 image_path=matched_img,
                 image_url=img_url,
                 timestamp=str(row.get('timestamp', '2024-11-09')),
-                boundary_geojson=boundary
+                boundary_geojson=boundary,
+                soil_profile=soil_service.get_soil_profile(
+                    survey_number=s_clean,
+                    district=district,
+                    crop_name=str(row.get('final_crop_name', 'Rice (Paddy)'))
+                )
             )
 
         # Check Cadastral Map if not in CSV
@@ -219,7 +225,12 @@ class ParcelDatabase:
                 longitude=avg_lon,
                 recorded_crop="Paddy",
                 recorded_stage="vegetation",
-                boundary_geojson=feat
+                boundary_geojson=feat,
+                soil_profile=soil_service.get_soil_profile(
+                    survey_number=s_clean,
+                    district=props.get("dist_name", "Thoothukudi"),
+                    crop_name="Paddy"
+                )
             )
 
         return None

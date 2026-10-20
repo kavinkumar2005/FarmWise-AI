@@ -1,6 +1,26 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 
+class SoilProfile(BaseModel):
+    soil_type: str = "Red Loam (செம்மண்)"
+    soil_texture: str = "Fine Loamy"
+    ph: float = 7.2
+    ph_status: str = "Optimal (6.5 - 7.5)"
+    organic_carbon_percent: float = 0.58
+    organic_carbon_status: str = "Medium"
+    nitrogen_kg_ha: float = 195.0
+    nitrogen_status: str = "Low"
+    phosphorus_kg_ha: float = 16.4
+    phosphorus_status: str = "Medium"
+    potassium_kg_ha: float = 285.0
+    potassium_status: str = "High"
+    electrical_conductivity_ds_m: float = 0.32
+    soil_quality_rating: str = "Good Fertility Index (B+)"
+    fertilizer_efficiency_score: int = 78
+    soil_health_card_id: str = "TN-TNK-2024-SHC-1342"
+    amendments_needed: List[str] = []
+    fertilizer_adjustments: List[str] = []
+
 class ParcelRecord(BaseModel):
     survey_number: str
     sub_division: Optional[str] = "1"
@@ -16,6 +36,7 @@ class ParcelRecord(BaseModel):
     image_url: Optional[str] = None
     timestamp: Optional[str] = None
     boundary_geojson: Optional[Dict[str, Any]] = None
+    soil_profile: Optional[SoilProfile] = None
 
 class ExecutionStep(BaseModel):
     step_id: int
@@ -94,6 +115,7 @@ class AdvisoryOutput(BaseModel):
     parcel: Optional[ParcelRecord] = None
     crop_analysis: Optional[CropAnalysisResult] = None
     weather: Optional[WeatherData] = None
+    soil_profile: Optional[SoilProfile] = None
     fertilizer_schedule: List[FertilizerScheduleItem] = []
     pest_disease_advice: List[str] = []
     irrigation_advice: str = ""

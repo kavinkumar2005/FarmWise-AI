@@ -5,6 +5,7 @@ import concurrent.futures
 from typing import Dict, Any, Optional, Tuple
 from pathlib import Path
 from app.config import settings
+from app.services.privacy_service import privacy_service
 
 # Attempt AI clients initialization
 try:
@@ -123,13 +124,17 @@ class ModelRouter:
         output_text = ""
         confidence = 0.95
 
+        # Zero-Trust PII Redaction Proxy (India DPDP Act 2023 Compliance)
+        # Strips personal identity & applies 2-decimal geospatial fuzzing
+        clean_prompt, privacy_ledger = privacy_service.sanitize_for_model(prompt)
+
         # 1. Try Claude if not circuit-broken
         if not _claude_disabled and claude_client and decision.primary_model.startswith("claude"):
             try:
                 res = claude_client.messages.create(
                     model=decision.primary_model,
                     max_tokens=800,
-                    messages=[{"role": "user", "content": prompt}]
+                    messages=[{"role": "user", "content": clean_prompt}]
                 )
                 output_text = res.content[0].text
             except Exception as e:
@@ -143,7 +148,7 @@ class ModelRouter:
             timeout_secs = 25.0
             for m in active_models:
                 try:
-                    future = _thread_pool.submit(cls._call_gemini_sync, m, prompt, image_path)
+                    future = _thread_pool.submit(cls._call_gemini_sync, m, clean_prompt, image_path)
                     res_text = future.result(timeout=timeout_secs)
                     if res_text:
                         output_text = res_text
@@ -193,7 +198,8 @@ class ModelRouter:
             "latency_ms": elapsed_ms or decision.estimated_latency_ms,
             "cost_usd": decision.estimated_cost_usd,
             "confidence": confidence,
-            "rationale": decision.rationale
+            "rationale": decision.rationale,
+            "privacy_compliance": privacy_ledger
         }
 
         return output_text, trace_log

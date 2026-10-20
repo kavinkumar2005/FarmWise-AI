@@ -12,6 +12,7 @@ from app.agents.weather_agent import weather_agent
 from app.agents.knowledge_agent import knowledge_agent
 from app.agents.verifier_agent import verifier_agent
 from app.agents.model_router import model_router
+from app.services.privacy_service import privacy_service
 from app.db.models import (
     AdvisoryOutput, ParcelRecord, CropAnalysisResult, WeatherData,
     VerificationResult, ExecutionStep, MarketPriceInfo, FertilizerScheduleItem
@@ -42,10 +43,26 @@ def synthesize_advisory_node(state: AgentState) -> AgentState:
     market_name = market.get('market', 'Tenkasi Regulated Market (APMC)')
     trend = market.get('trend', 'Stable (+2.1% this week)')
 
+    # Extract dynamic Soil Health Profile
+    soil_info = parcel.get("soil_profile") or {}
+    soil_text = ""
+    if soil_info:
+        stype = soil_info.get("soil_type", "Red Loam (செம்மண்)")
+        sph = soil_info.get("ph", 7.2)
+        seff = soil_info.get("fertilizer_efficiency_score", 78)
+        shc = soil_info.get("soil_health_card_id", f"TN-TNK-SHC-{s_no}")
+        adjusts = soil_info.get("fertilizer_adjustments", [])
+        adj_str = " ".join(adjusts[:2]) if adjusts else "Standard TNAU Crop Production Guide NPK dosages apply."
+        soil_text = (
+            f"Soil Health Card Grounding (Card #{shc}): Classified as {stype} with a pH of {sph} "
+            f"and calculated fertilizer uptake efficiency of {seff}%. {adj_str}\n\n"
+        )
+
     summary_text = (
         f"Parcel & Stand Assessment: Cadastral Survey #{s_no} in {village} ({taluk} Taluk, {district} District) "
         f"is verified with an active stand of {crop_name} currently in the {stage} stage. "
         f"Multimodal canopy evaluation confirms {crop_info.get('crop_health', 'Healthy & Vigorous')} vigor with uniform chlorophyll reflectance and no acute foliar pathogen clusters.\n\n"
+        f"{soil_text}"
         f"Agro-Met & Field Operations This Week: Live ECMWF micro-climate telemetry records {temp}°C ({cond}), "
         f"{hum}% relative humidity, and {wind} km/h wind speed. {spray_rec} {irrig_rec} "
         f"Follow the TNAU/ICAR stage-specific NPK nutrient schedule below and scout lower leaf axils weekly.\n\n"
@@ -77,10 +94,22 @@ def synthesize_advisory_node(state: AgentState) -> AgentState:
     state["execution_trace"] = trace_list
     return state
 
+def privacy_gateway_node(state: AgentState) -> AgentState:
+    """Zero-Trust PII Redaction Node: Ensures India DPDP Act 2023 compliance before model dispatch."""
+    query = state.get("query", "")
+    sanitized_q, audit_ledger = privacy_service.sanitize_for_model(query)
+    privacy_step = privacy_service.get_privacy_trace_step(audit_ledger)
+    trace_list = state.get("execution_trace", [])
+    trace_list.append(privacy_step)
+    state["query"] = sanitized_q
+    state["execution_trace"] = trace_list
+    return state
+
 # Build LangGraph Workflow
 def build_agent_graph():
     builder = StateGraph(AgentState)
 
+    builder.add_node("privacy_gateway", privacy_gateway_node)
     builder.add_node("planner", planner_agent.plan)
     builder.add_node("geography", geo_agent.resolve_geography)
     builder.add_node("image_analysis", image_agent.analyze_image)
@@ -90,7 +119,8 @@ def build_agent_graph():
     builder.add_node("synthesizer", synthesize_advisory_node)
 
     # Edge transitions
-    builder.add_edge(START, "planner")
+    builder.add_edge(START, "privacy_gateway")
+    builder.add_edge("privacy_gateway", "planner")
     builder.add_edge("planner", "geography")
     builder.add_edge("geography", "image_analysis")
     builder.add_edge("image_analysis", "weather")
@@ -128,6 +158,7 @@ def run_farmwise_agent_pipeline(
         "plan": [],
         "current_step_index": 0,
         "execution_trace": [],
+        "fertilizer_schedule": [],
         "errors": []
     }
 
@@ -151,6 +182,7 @@ def run_farmwise_agent_pipeline(
         parcel=ParcelRecord(**parcel_data) if parcel_data else None,
         crop_analysis=CropAnalysisResult(**crop_data) if crop_data else None,
         weather=WeatherData(**weather_data) if weather_data else None,
+        soil_profile=parcel_data.get("soil_profile") if parcel_data else None,
         fertilizer_schedule=[FertilizerScheduleItem(**s) for s in sched_data],
         pest_disease_advice=[
             "Monitor lower leaf sheaths for early sign of fungal spots or stem borer pinholes.",

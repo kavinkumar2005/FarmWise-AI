@@ -19,6 +19,7 @@ class AgentState(TypedDict, total=False):
     weather: Optional[Dict[str, Any]]
     rag_docs: List[Dict[str, Any]]
     market_prices: Optional[Dict[str, Any]]
+    fertilizer_schedule: List[Dict[str, Any]]
     verification: Optional[Dict[str, Any]]
     final_advisory: str
 
