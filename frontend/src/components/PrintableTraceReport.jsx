@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShieldCheck, CheckCircle2, Clock, DollarSign, Layers, Cpu, MapPin, Camera, Sparkles } from 'lucide-react';
-import { translations, tCrop, tStage, tHealth, tStatus } from '../utils/translations';
+import { translations, tCrop, tStage, tHealth, tStatus, cleanEnglishText } from '../utils/translations';
 import { getMediaUrl, getCropSampleFallback } from '../services/api';
 
 
@@ -202,18 +202,18 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
           <div className="grid grid-cols-4 gap-3 text-xs mb-3">
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Soil Classification</span>
-              <span className="font-bold text-slate-900">{soil.soil_type}</span>
-              <span className="text-[10px] text-slate-500 block mt-0.5">{soil.soil_texture}</span>
+              <span className="font-bold text-slate-900">{cleanEnglishText(soil.soil_type)}</span>
+              <span className="text-[10px] text-slate-500 block mt-0.5">{cleanEnglishText(soil.soil_texture)}</span>
             </div>
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Soil Reaction (pH)</span>
               <span className="font-bold text-base text-slate-900">{soil.ph}</span>
-              <span className="text-[10px] text-slate-600 block mt-0.5">{soil.ph_status}</span>
+              <span className="text-[10px] text-slate-600 block mt-0.5">{cleanEnglishText(soil.ph_status)}</span>
             </div>
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Organic Carbon (OC)</span>
               <span className="font-bold text-base text-slate-900">{soil.organic_carbon_percent}%</span>
-              <span className="text-[10px] text-slate-600 block mt-0.5">{soil.organic_carbon_status}</span>
+              <span className="text-[10px] text-slate-600 block mt-0.5">{cleanEnglishText(soil.organic_carbon_status)}</span>
             </div>
             <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
               <span className="text-[10px] uppercase font-bold text-slate-500 block">Electrical Cond. (EC)</span>
@@ -230,15 +230,15 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
             <div className="grid grid-cols-3 gap-2">
               <div className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
                 <span>Nitrogen (N): <b>{soil.nitrogen_kg_ha} kg/ha</b></span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">{soil.nitrogen_status}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">{cleanEnglishText(soil.nitrogen_status)}</span>
               </div>
               <div className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
                 <span>Phosphorus (P): <b>{soil.phosphorus_kg_ha} kg/ha</b></span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">{soil.phosphorus_status}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">{cleanEnglishText(soil.phosphorus_status)}</span>
               </div>
               <div className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
                 <span>Potassium (K): <b>{soil.potassium_kg_ha} kg/ha</b></span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">{soil.potassium_status}</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">{cleanEnglishText(soil.potassium_status)}</span>
               </div>
             </div>
           </div>

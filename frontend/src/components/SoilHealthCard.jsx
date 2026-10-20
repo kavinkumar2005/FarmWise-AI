@@ -1,6 +1,14 @@
 import React from 'react';
-import { FlaskConical, Activity, Sparkles, AlertCircle, CheckCircle2, ShieldCheck, Layers, Gauge } from 'lucide-react';
-import { translations } from '../utils/translations';
+import { FlaskConical, Activity, Sparkles, CheckCircle2, ShieldCheck, Layers, Gauge } from 'lucide-react';
+import { 
+  translations, 
+  tSoilType, 
+  tSoilTexture, 
+  tPhStatus, 
+  tNutrientStatus, 
+  tSoilRating, 
+  tSoilSentence 
+} from '../utils/translations';
 
 export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
   if (!soilProfile) return null;
@@ -9,14 +17,23 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
   const isTamil = lang === 'ta';
 
   const ph = soilProfile.ph || 7.0;
-  const phStatus = soilProfile.ph_status || "Optimal (6.5 - 7.5)";
+  const phStatus = tPhStatus(soilProfile.ph_status || "Optimal Neutral", lang);
   const efficiency = soilProfile.fertilizer_efficiency_score || 75;
-  const soilType = soilProfile.soil_type || "Red Loamy Soil (செம்மண்)";
+  const soilType = tSoilType(soilProfile.soil_type || "Red Loamy Soil", lang);
+  const soilTexture = tSoilTexture(soilProfile.soil_texture || "Sandy Clay Loam", lang);
   const shcId = soilProfile.soil_health_card_id || "TN-TNK-2024-SHC-DEFAULT";
   const oc = soilProfile.organic_carbon_percent || 0.55;
+  const ocStatus = tNutrientStatus(soilProfile.organic_carbon_status || "Medium", lang);
+  const rating = tSoilRating(soilProfile.soil_quality_rating || "Good Fertility (Grade B+)", lang);
+
   const nVal = soilProfile.nitrogen_kg_ha || 200.0;
+  const nStatus = tNutrientStatus(soilProfile.nitrogen_status || "Low", lang);
+
   const pVal = soilProfile.phosphorus_kg_ha || 16.0;
+  const pStatus = tNutrientStatus(soilProfile.phosphorus_status || "Medium", lang);
+
   const kVal = soilProfile.potassium_kg_ha || 280.0;
+  const kStatus = tNutrientStatus(soilProfile.potassium_status || "High", lang);
 
   // pH meter color styling
   let phColor = "text-emerald-700 bg-emerald-50 border-emerald-300";
@@ -47,7 +64,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
               </span>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              {isTamil ? "தமிழ்நாடு வேளாண் பல்கலைக்கழகம் (TNAU) மற்றும் மண் ஆய்வு அட்டை அடிப்படையிலானது" : "Grounded in Tamil Nadu Soil Survey & National Soil Health Card (SHC) Scheme"}
+              {isTamil ? "தமிழ்நாடு வேளாண் பல்கலைக்கழகம் (TNAU) மற்றும் தேசிய மண் ஆய்வு அட்டை அடிப்படையிலானது" : "Grounded in Tamil Nadu Soil Survey & National Soil Health Card (SHC) Scheme"}
             </p>
           </div>
         </div>
@@ -78,7 +95,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             {soilType}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
-            {soilProfile.soil_texture || "Sandy Clay Loam"}
+            {soilTexture}
           </div>
         </div>
 
@@ -108,7 +125,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             <span className="text-xs font-bold text-slate-700">{oc}%</span>
           </div>
           <div className="font-bold text-slate-900 text-sm">
-            {soilProfile.organic_carbon_status || "Medium"}
+            {ocStatus}
           </div>
           <div className="text-[11px] text-slate-500 mt-1">
             EC: {soilProfile.electrical_conductivity_ds_m || 0.35} dS/m ({isTamil ? "இயல்பான உப்புத்தன்மை" : "Non-saline"})
@@ -122,7 +139,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="font-bold text-emerald-950 text-sm">
-            {soilProfile.soil_quality_rating || "Good Fertility Index"}
+            {rating}
           </div>
           <div className="text-[11px] text-emerald-700 mt-1">
             {isTamil ? "பரிசோதிக்கப்பட்ட மாதிரி" : "Audited against ICAR pedology"}
@@ -149,7 +166,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               nVal > 280 ? 'bg-emerald-100 text-emerald-800' : (nVal >= 200 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')
             }`}>
-              {soilProfile.nitrogen_status || "Low"}
+              {nStatus}
             </span>
           </div>
 
@@ -166,7 +183,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               pVal > 22 ? 'bg-purple-100 text-purple-800' : (pVal >= 12 ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800')
             }`}>
-              {soilProfile.phosphorus_status || "Medium"}
+              {pStatus}
             </span>
           </div>
 
@@ -183,7 +200,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
               kVal > 280 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
             }`}>
-              {soilProfile.potassium_status || "High"}
+              {kStatus}
             </span>
           </div>
         </div>
@@ -201,7 +218,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             {(soilProfile.amendments_needed || []).map((item, idx) => (
               <li key={idx} className="flex items-start gap-2">
                 <span className="text-amber-600 mt-0.5 font-bold">•</span>
-                <span>{item}</span>
+                <span>{tSoilSentence(item, lang)}</span>
               </li>
             ))}
           </ul>
@@ -217,7 +234,7 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
             {(soilProfile.fertilizer_adjustments || []).map((item, idx) => (
               <li key={idx} className="flex items-start gap-2">
                 <span className="text-emerald-600 mt-0.5 font-bold">✓</span>
-                <span>{item}</span>
+                <span>{tSoilSentence(item, lang)}</span>
               </li>
             ))}
           </ul>

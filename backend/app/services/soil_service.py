@@ -10,7 +10,7 @@ class SoilService:
 
     SOIL_VARIANTS = [
         {
-            "soil_type": "Red Loamy Soil (செம்மண்)",
+            "soil_type": "Red Loamy Soil",
             "soil_texture": "Sandy Clay Loam",
             "base_ph": 6.8,
             "base_oc": 0.65,
@@ -21,7 +21,7 @@ class SoilService:
             "rating": "High Productivity (Grade A)"
         },
         {
-            "soil_type": "Deep Black Cotton Soil (கரிசல் மண்)",
+            "soil_type": "Deep Black Cotton Soil",
             "soil_texture": "Clayey Heavy Loam",
             "base_ph": 7.9,
             "base_oc": 0.52,
@@ -32,7 +32,7 @@ class SoilService:
             "rating": "Good Fertility (Grade B+)"
         },
         {
-            "soil_type": "Clayey Alluvial Soil (வண்டல் மண்)",
+            "soil_type": "Clayey Alluvial Soil",
             "soil_texture": "Silty Clay Loam",
             "base_ph": 7.3,
             "base_oc": 0.78,
@@ -43,7 +43,7 @@ class SoilService:
             "rating": "Superior Fertility (Grade A+)"
         },
         {
-            "soil_type": "Calcareous Alkaline Loam (சுண்ணாம்பு கலந்த களிமண்)",
+            "soil_type": "Calcareous Alkaline Loam",
             "soil_texture": "Medium Loam",
             "base_ph": 8.2,
             "base_oc": 0.42,  # Low OC
@@ -54,7 +54,7 @@ class SoilService:
             "rating": "Moderate - Requires Gypsum (Grade C+)"
         },
         {
-            "soil_type": "Laterite Loamy Sand (செம்பொறை சரளை மண்)",
+            "soil_type": "Laterite Loamy Sand",
             "soil_texture": "Gravelly Loam",
             "base_ph": 5.9,  # Acidic
             "base_oc": 0.48,
@@ -99,18 +99,18 @@ class SoilService:
 
         # Categorize metrics
         if ph < 6.5:
-            ph_status = "Acidic (அமில மண்)"
+            ph_status = "Acidic"
         elif ph <= 7.5:
-            ph_status = "Optimal Neutral (உகந்த நடுநிலை மண்)"
+            ph_status = "Optimal Neutral"
         elif ph <= 8.0:
-            ph_status = "Slightly Alkaline (லேசான கார மண்)"
+            ph_status = "Slightly Alkaline"
         else:
-            ph_status = "Alkaline / Calcareous (காரத்தன்மை வாய்ந்த மண்)"
+            ph_status = "Alkaline / Calcareous"
 
-        oc_status = "High (அதிகம்)" if oc >= 0.75 else ("Medium (மிதமானது)" if oc >= 0.50 else "Low (குறைவு)")
-        n_status = "High" if n_val > 280 else ("Medium" if n_val >= 200 else "Low (குறைவு)")
-        p_status = "High (அதிகம்)" if p_val > 22.0 else ("Medium (மிதமானது)" if p_val >= 12.0 else "Low (குறைவு)")
-        k_status = "High (அதிகம்)" if k_val > 280.0 else ("Medium (மிதமானது)" if k_val >= 140.0 else "Low (குறைவு)")
+        oc_status = "High" if oc >= 0.75 else ("Medium" if oc >= 0.50 else "Low")
+        n_status = "High" if n_val > 280 else ("Medium" if n_val >= 200 else "Low")
+        p_status = "High" if p_val > 22.0 else ("Medium" if p_val >= 12.0 else "Low")
+        k_status = "High" if k_val > 280.0 else ("Medium" if k_val >= 140.0 else "Low")
 
         # Calculate fertilizer uptake efficiency percentage (Penalized if pH is far from 7.0 or low OC)
         ph_penalty = abs(ph - 7.0) * 12.0
@@ -133,12 +133,12 @@ class SoilService:
             adjustments.append("Apply Rock Phosphate as basal P source, which dissolves effectively in acidic soils.")
         else:
             amendments.append(f"Soil pH is optimal ({ph}). Excellent nutrient availability across macro and micro elements.")
-            amendments.append("Apply Azospirillum (அசோஸ்பைரில்லம்) and Phosphobacteria (பாஸ்போபாக்டீரியா) biofertilizers @ 2 kg/acre each.")
+            amendments.append("Apply Azospirillum and Phosphobacteria biofertilizers @ 2 kg/acre each.")
             adjustments.append("Standard TNAU Crop Production Guide recommended NPK ratio is 100% effective at this pH.")
 
-        if p_status.startswith("High"):
+        if p_status == "High":
             adjustments.append(f"Soil has High available Phosphorus ({p_val} kg/ha). Reduce chemical DAP dosage by 20% to prevent nutrient fixation and save input cost.")
-        elif p_status.startswith("Low"):
+        elif p_status == "Low":
             adjustments.append(f"Soil has Low available Phosphorus ({p_val} kg/ha). Apply full Single Super Phosphate (SSP 100 kg/acre) or DAP (35 kg/acre) band-placed at 5cm depth.")
 
         if oc < 0.50:

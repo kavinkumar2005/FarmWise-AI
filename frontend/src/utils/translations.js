@@ -424,3 +424,145 @@ export function tStatus(status, lang = 'en') {
   }
   return status;
 }
+
+// ─── Soil Intelligence Translations ───
+export const SOIL_TYPES_TA = {
+  "Red Loamy Soil": "செம்மண்",
+  "Deep Black Cotton Soil": "கரிசல் மண்",
+  "Clayey Alluvial Soil": "வண்டல் மண்",
+  "Calcareous Alkaline Loam": "சுண்ணாம்பு கலந்த களிமண்",
+  "Laterite Loamy Sand": "செம்பொறை சரளை மண்"
+};
+
+export const SOIL_TEXTURES_TA = {
+  "Sandy Clay Loam": "மணல் கலந்த களிமண் வண்டல்",
+  "Clayey Heavy Loam": "கனமான களிமண்",
+  "Silty Clay Loam": "வண்டல் களிமண்",
+  "Medium Loam": "நடுத்தர களிமண்",
+  "Gravelly Loam": "சரளை கலந்த களிமண்"
+};
+
+export const PH_STATUS_TA = {
+  "Acidic": "அமில மண்",
+  "Optimal Neutral": "உகந்த நடுநிலை மண்",
+  "Slightly Alkaline": "லேசான கார மண்",
+  "Alkaline / Calcareous": "காரத்தன்மை வாய்ந்த சுண்ணாம்பு மண்"
+};
+
+export const NUTRIENT_STATUS_TA = {
+  "Low": "குறைவு",
+  "Medium": "மிதமானது",
+  "High": "அதிகம்"
+};
+
+export const SOIL_RATINGS_TA = {
+  "High Productivity (Grade A)": "அதிக உற்பத்தித் திறன் (தரம் A)",
+  "Good Fertility (Grade B+)": "நல்ல மண்வளம் (தரம் B+)",
+  "Superior Fertility (Grade A+)": "சிறந்த மண்வளம் (தரம் A+)",
+  "Moderate - Requires Gypsum (Grade C+)": "மிதமானது - ஜிப்சம் தேவை (தரம் C+)",
+  "Moderate - Requires Lime (Grade C+)": "மிதமானது - சுண்ணாம்பு தேவை (தரம் C+)"
+};
+
+export function cleanEnglishText(str) {
+  if (!str) return '';
+  return String(str).replace(/\s*\([^)]*[\u0B80-\u0BFF][^)]*\)/g, '').trim();
+}
+
+export function tSoilType(val, lang = 'en') {
+  if (!val) return '';
+  const clean = cleanEnglishText(val);
+  if (lang === 'ta') {
+    return SOIL_TYPES_TA[clean] || SOIL_TYPES_TA[val] || val;
+  }
+  return clean;
+}
+
+export function tSoilTexture(val, lang = 'en') {
+  if (!val) return '';
+  const clean = cleanEnglishText(val);
+  if (lang === 'ta') {
+    return SOIL_TEXTURES_TA[clean] || SOIL_TEXTURES_TA[val] || val;
+  }
+  return clean;
+}
+
+export function tPhStatus(val, lang = 'en') {
+  if (!val) return '';
+  const clean = cleanEnglishText(val);
+  if (lang === 'ta') {
+    return PH_STATUS_TA[clean] || PH_STATUS_TA[val] || val;
+  }
+  return clean;
+}
+
+export function tNutrientStatus(val, lang = 'en') {
+  if (!val) return '';
+  const clean = cleanEnglishText(val);
+  if (lang === 'ta') {
+    return NUTRIENT_STATUS_TA[clean] || NUTRIENT_STATUS_TA[val] || val;
+  }
+  return clean;
+}
+
+export function tSoilRating(val, lang = 'en') {
+  if (!val) return '';
+  const clean = cleanEnglishText(val);
+  if (lang === 'ta') {
+    return SOIL_RATINGS_TA[clean] || SOIL_RATINGS_TA[val] || val;
+  }
+  return clean;
+}
+
+export function tSoilSentence(text, lang = 'en') {
+  if (!text) return '';
+  if (lang !== 'ta') {
+    return cleanEnglishText(text);
+  }
+  const s = String(text);
+  if (s.includes('Alkaline') && s.includes('Gypsum')) {
+    return "மண் pH காரத்தன்மை கொண்டது. அதிகப்படியான சோடியத்தை நீக்கி நீர்ப்புகு திறனை அதிகரிக்க ஏக்கருக்கு 100 கிலோ ஜிப்சம் இடவும்.";
+  }
+  if (s.includes('green manure') || s.includes('Daincha')) {
+    return "காரத்தன்மையைக் குறைக்க நடவுக்கு 45 நாட்கள் முன் தக்கைப்பூண்டு அல்லது சணப்பை (ஏக்கருக்கு 20 கிலோ) பயிரிட்டு மடக்கி உழவும்.";
+  }
+  if (s.includes('Acidic') && (s.includes('Lime') || s.includes('Dolomite'))) {
+    return "மண் pH அமிலத்தன்மை கொண்டது. ஆரம்ப உழவின் போது ஏக்கருக்கு 120 கிலோ விவசாய சுண்ணாம்பு (டோலமைட்) இடவும்.";
+  }
+  if (s.includes('Farmyard Manure') || s.includes('FYM to improve buffering')) {
+    return "மண்ணின் தாங்கு திறனை அதிகரிக்கவும் நச்சு அலுமினியத்தை நடுநிலையாக்கவும் 5 டன் தொழுவுரம் இடவும்.";
+  }
+  if (s.includes('optimal') && s.includes('nutrient availability')) {
+    return "மண் pH உகந்த அளவில் உள்ளது. அனைத்து முதன்மை மற்றும் நுண்ணூட்டச் சத்துக்களும் பயிருக்கு தாராளமாகக் கிடைக்கும்.";
+  }
+  if (s.includes('Azospirillum') && s.includes('Phosphobacteria')) {
+    return "அசோஸ்பைரில்லம் மற்றும் பாஸ்போபாக்டீரியா உயிர் உரங்களை தலா 2 கிலோ/ஏக்கர் வீதம் இடவும்.";
+  }
+  if (s.includes('Organic Carbon is Low')) {
+    return "மண்ணில் கரிம கரிமச்சத்து (OC) குறைவாக உள்ளது. விதைப்புக்கு முன் ஏக்கருக்கு 5 டன் தொழுவுரம் அல்லது 2 டன் மண்புழு உரம் இடவும்.";
+  }
+  if (s.includes('Organic Carbon is') && s.includes('healthy')) {
+    return "மண்ணில் கரிம கரிமச்சத்து மற்றும் நுண்ணுயிர் வளம் ஆரோக்கியமான நிலையில் உள்ளது.";
+  }
+  if (s.includes('Neem-Coated Urea')) {
+    return "கார மண்ணில் தழைச்சத்து மற்றும் துத்தநாகம் வீணாகாமல் இருக்க, வேப்பம் புண்ணாக்கு பூசிய யூரியாவை 3 முறை பிரித்து இடவும்.";
+  }
+  if (s.includes('Zinc Sulphate') || s.includes('ZnSO4')) {
+    return "வெள்ளை மொட்டு மற்றும் இலை வெளிரலைத் தடுக்க அடி உரமாக ஏக்கருக்கு 10 கிலோ துத்தநாக சல்பேட் (ZnSO4) இடவும்.";
+  }
+  if (s.includes('Ammonium Sulphate') || s.includes('Calcium Nitrate')) {
+    return "அம்மோனியம் சல்பேட் போன்ற அமில உரங்களைத் தவிர்த்து, கால்சியம் நைட்ரேட் அல்லது சுண்ணாம்பு கலந்த யூரியாவைப் பயன்படுத்தவும்.";
+  }
+  if (s.includes('Rock Phosphate')) {
+    return "அமில மண்ணில் எளிதில் கரையும் பாறை பாஸ்பேட்டை (Rock Phosphate) மணிச்சத்துக்காக அடி உரமாக இடவும்.";
+  }
+  if (s.includes('TNAU Crop Production Guide')) {
+    return "தமிழ்நாடு வேளாண் பல்கலைக்கழக பயிர் வழிகாட்டி (TNAU CPG) பரிந்துரைத்த உர விகிதம் இந்த மண்ணில் 100% முழுப்பலன் தரும்.";
+  }
+  if (s.includes('High available Phosphorus') || s.includes('Reduce chemical DAP')) {
+    return "மண்ணில் மணிச்சத்து அதிகமாக உள்ளது. செலவைக் குறைக்கவும் சத்து வீணாவதைத் தடுக்கவும் DAP உரத்தை 20% குறைக்கவும்.";
+  }
+  if (s.includes('Low available Phosphorus') || s.includes('Single Super Phosphate')) {
+    return "மண்ணில் மணிச்சத்து குறைவாக உள்ளதால், முழு அளவிலான SSP (ஏக்கருக்கு 100 கிலோ) அல்லது DAP (35 கிலோ) 5 செ.மீ ஆழத்தில் இடவும்.";
+  }
+  return cleanEnglishText(text);
+}
