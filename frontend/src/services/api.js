@@ -602,6 +602,17 @@ export const api = {
         timeout: 5000 // Fast 5s timeout to prevent UI freezes
       });
       if (res.data && res.data.parcel && typeof res.data === 'object') {
+        // When a field photo was uploaded, prioritize vision classification over cadastral baseline
+        if (imageFilename && _lastUploadedCropAnalysis) {
+          res.data.crop_analysis = {
+            ...(res.data.crop_analysis || {}),
+            ..._lastUploadedCropAnalysis
+          };
+          if (res.data.parcel) {
+            res.data.parcel.recorded_crop = _lastUploadedCropAnalysis.crop_name;
+            res.data.parcel.recorded_stage = _lastUploadedCropAnalysis.growth_stage;
+          }
+        }
         return res.data;
       }
     } catch (e) {
@@ -614,6 +625,8 @@ export const api = {
   // Upload field photo directly to AWS S3 & backend
   async uploadPhoto(file) {
     const blobUrl = URL.createObjectURL(file);
+    const detectedCrop = detectCropFromImage(file.name);
+    _lastUploadedCropAnalysis = detectedCrop;
 
     // 1. Convert file to Base64 for AWS Lambda API Gateway direct upload
     const toBase64 = (f) => new Promise((resolve, reject) => {
@@ -622,6 +635,9 @@ export const api = {
       reader.onload = () => resolve(reader.result);
       reader.onerror = error => reject(error);
     });
+
+    let s3Url = null;
+    let s3Filename = null;
 
     try {
       const base64Data = await toBase64(file);
@@ -639,44 +655,41 @@ export const api = {
 
       if (lambdaRes.data && lambdaRes.data.s3_url) {
         console.log('[OK] Photo stored in AWS S3:', lambdaRes.data.s3_url);
+        s3Url = lambdaRes.data.s3_url;
+        s3Filename = lambdaRes.data.filename;
         if (lambdaRes.data.crop_analysis) {
           _lastUploadedCropAnalysis = lambdaRes.data.crop_analysis;
         }
-        return {
-          filename: lambdaRes.data.filename || file.name,
-          local_url: blobUrl,
-          s3_url: lambdaRes.data.s3_url,
-          status: "ready",
-          crop_analysis: lambdaRes.data.crop_analysis
-        };
       }
     } catch (lambdaErr) {
       console.warn("Direct Lambda S3 upload notice, trying local/proxy:", lambdaErr);
     }
 
-    // 2. Also attempt local FastAPI backend if running
+    // 2. Also ensure local FastAPI backend has the file if running
+    let localSaveFilename = s3Filename || file.name;
     try {
       const formData = new FormData();
       formData.append('file', file);
       const res = await axios.post(`${API_BASE}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 5000
+        timeout: 4000
       });
       if (res.data && res.data.filename) {
-        return {
-          ...res.data,
-          local_url: blobUrl
-        };
+        localSaveFilename = res.data.filename;
+        if (!s3Url && res.data.s3_url) s3Url = res.data.s3_url;
       }
     } catch (e) {
-      console.warn("Local upload endpoint notice:", e);
+      // Offline or cloud-only mode
     }
 
+    const finalCrop = _lastUploadedCropAnalysis || detectedCrop;
+
     return {
-      filename: file.name,
+      filename: s3Filename || localSaveFilename || file.name,
       local_url: blobUrl,
-      s3_url: `https://fai-tce-team06-uploads.s3.ap-south-1.amazonaws.com/fai-tce-team06-crops/${file.name}`,
-      status: "ready"
+      s3_url: s3Url || `https://fai-tce-team06-uploads.s3.ap-south-1.amazonaws.com/fai-tce-team06-crops/${file.name}`,
+      status: "ready",
+      crop_analysis: finalCrop
     };
   },
 

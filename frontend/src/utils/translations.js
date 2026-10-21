@@ -304,15 +304,27 @@ export const translations = {
 
 export const CROP_NAMES_TA = {
   "Coconut": "தென்னை (தேங்காய்)",
+  "Coconut (தென்னை)": "தென்னை (தேங்காய்)",
   "Rice (Paddy)": "நெல் (பயிர்)",
   "Paddy": "நெல்",
   "Tomato": "தக்காளி",
-  "Maize": "மக்காச்சோளம்",
+  "Maize": "மक्काச்சோளம்",
+  "Maize (மக்காச்சோளம்)": "மக்காச்சோளம்",
   "Banana": "வாழை",
   "Cotton": "பருத்தி",
+  "Cotton (பருத்தி)": "பருத்தி",
+  "Wheat": "கோதுமை",
+  "Wheat (கோதுமை)": "கோதுமை",
   "Chilly": "மிளகாய்",
   "Chilli": "மிளகாய்",
   "Sugarcane": "கரும்பு",
+  "Red Gram / Pigeon Pea / Dhal": "துவரை / பருப்பு (Red Gram)",
+  "Red Gram / Pigeon Pea / Dhal (துவரை / பருப்பு)": "துவரை / பருப்பு (Red Gram)",
+  "Red Gram / Dhal": "துவரை / பருப்பு (Red Gram)",
+  "Red Gram": "துவரை",
+  "Pigeon Pea": "துவரை",
+  "Dhal": "பருப்பு",
+  "Pulses": "பயறு வகைகள்",
   "Agricultural Crop": "வேளாண் பயிர்"
 };
 
@@ -323,6 +335,11 @@ export const CROP_STAGES_TA = {
   "Vegetation": "தழைப்பருவம்",
   "flowering": "பூக்கும் பருவம்",
   "Flowering": "பூக்கும் பருவம்",
+  "Flowering & Pod Formation": "பூக்கும் மற்றும் காய் பிடிக்கும் பருவம்",
+  "Flowering to Pod Formation": "பூக்கும் மற்றும் காய் பிடிக்கும் பருவம்",
+  "Flowering to early pod formation stage (reproductive stage)": "பூக்கும் மற்றும் காய் பிடிக்கும் பருவம்",
+  "tillering": "தூர்கட்டும் பருவம்",
+  "tasseling": "மஞ்சரி தோன்றும் பருவம்",
   "Basal": "அடி உரம் (Basal)",
   "grain_formation": "கதிர் முதிர்ச்சி",
   "Grain Formation": "கதிர் முதிர்ச்சி",
@@ -333,6 +350,9 @@ export const CROP_STAGES_TA = {
 
 export const CROP_HEALTH_TA = {
   "Healthy & Vigorous": "ஆரோக்கியமானது & செழிப்பானது",
+  "Healthy Reproductive Canopy": "ஆரோக்கியமான பூக்கும் மற்றும் காய்ப்பு விதானம்",
+  "Healthy Square & Boll Setting": "ஆரோக்கியமான பூ மொட்டு மற்றும் காய் பிடிக்கும் நிலை",
+  "Vigorous Bearing Palm": "செழிப்பான பலன் தரும் மரங்கள்",
   "Moderate Vigor": "மிதமான வளர்ச்சி",
   "Stress Detected": "பயிர் தளர்ச்சி / மன அழுத்தம் கண்டறியப்பட்டது",
   "Nutrient Deficient": "ஊட்டச்சத்து குறைபாடு"
@@ -377,22 +397,54 @@ export const VISUAL_FEATURES_TA = {
   "Uniform vegetative canopy spread with healthy chlorophyll reflectance": "ஆரோக்கியமான பச்சையத்துடன் கூடிய சீரான பசுமை விதானம்",
   "Normal tiller density and leaf blade architecture": "இயல்பான தூர்களின் அடர்த்தி மற்றும் ஆரோக்கியமான இலை அமைப்பு",
   "Optimal spacing consistent with local agricultural practices": "பரிந்துரைக்கப்பட்ட பயிர் இடைவெளி முறை",
-  "No major foliar lesions detected": "இலைகளில் எவ்வித தீவிர நோய்க்குறிகளும் கண்டறியப்படவில்லை"
+  "No major foliar lesions detected": "இலைகளில் எவ்வித தீவிர நோய்க்குறிகளும் கண்டறியப்படவில்லை",
+  "Bushy indeterminate canopy with trifoliate green foliage": "அடர்ந்த பசுமையான மூன்று சிற்றிலைகள் கொண்ட விதானம்",
+  "Bushy plants with trifoliate green leaves, small yellow flowers interspersed throughout canopy": "அடர்ந்த பசுமையான இலைகள் மற்றும் மஞ்சள் மலர்களுடன் கூடிய ஆரோக்கியமான விதானம்",
+  "Abundant bright yellow raceme flowers interspersed throughout canopy": "விதானம் முழுவதும் பரவலாக பூத்துள்ள மஞ்சள் நிற மலர்கள்",
+  "Active pod initiation and elongation at nodal junctions": "கணுக்களில் காய்கள் உருவாகி வளரும் நிலை",
+  "Uniform tillering green canopy (4-6 tillers per plant)": "சீரான தூர் கட்டிய பசுமை விதானம் (செடிக்கு 4-6 தூர்கள்)",
+  "Erect leaf blade habit with high chlorophyll reflectance": "நேரான இலை அமைப்பு மற்றும் அதிக பச்சைய பிரதிபலிப்பு",
+  "Adequate crown root zone moisture": "வேர் மண்டலத்தில் போதுமான ஈரப்பதம்",
+  "Full tassel emergence with healthy cob silk initiation": "முழுமையான கதிர் மற்றும் சூல் முடி வெளிப்பாடு",
+  "Thick brace roots and dark green stalk integrity": "வலுவான முட்டு வேர்கள் மற்றும் தண்டு அமைப்பு",
+  "Uniform canopy closure": "முழுமையான விதான மூட்டம்",
+  "Vigorous sympodial branching with active square initiation": "செழிப்பான பக்க கிளைகள் மற்றும் பூ மொட்டுகள்",
+  "Healthy canopy architecture with dark green foliage": "அடர்பச்சை நிற இலைகளுடன் ஆரோக்கியமான விதான கட்டமைப்பு",
+  "Optimal internode length": "சரியான கணு இடைவெளி",
+  "32-36 fully opened fronds with dark green spherical crown": "32-36 முழு மட்டைகளுடன் கூடிய அடர்பச்சை வட்ட வடிவ மகுடம்",
+  "Healthy button setting in 4 consecutive bunches": "தொடர்ச்சியான 4 குலைகளில் ஆரோக்கியமான குரும்பைகள்",
+  "Stem diameter uniform with clean bole": "சீரான தண்டு தடிமன் மற்றும் சுத்தமான அடிமரம்"
 };
 
 // Helper Translation functions
 export function tCrop(cropName, lang = 'en') {
-  if (lang === 'ta' && cropName && CROP_NAMES_TA[cropName]) {
-    return CROP_NAMES_TA[cropName];
+  if (!cropName) return '';
+  const c = String(cropName).trim();
+  if (lang === 'ta') {
+    if (CROP_NAMES_TA[c]) return CROP_NAMES_TA[c];
+    if (c.toLowerCase().includes('red gram') || c.toLowerCase().includes('pigeon pea') || c.toLowerCase().includes('dhal') || c.includes('துவரை')) {
+      return "துவரை / பருப்பு (Red Gram)";
+    }
+    return c;
   }
-  return cropName;
+  // English: clean any embedded Tamil text in parentheses if present
+  if (c.includes('(') && (c.includes('துவரை') || c.includes('கோதுமை') || c.includes('மக்காச்சோளம்') || c.includes('பருத்தி') || c.includes('தென்னை'))) {
+    return c.split('(')[0].trim();
+  }
+  return c;
 }
 
 export function tStage(stageName, lang = 'en') {
-  if (lang === 'ta' && stageName && CROP_STAGES_TA[stageName]) {
-    return CROP_STAGES_TA[stageName];
+  if (!stageName) return '';
+  const s = String(stageName).trim();
+  if (lang === 'ta') {
+    if (CROP_STAGES_TA[s]) return CROP_STAGES_TA[s];
+    if (s.toLowerCase().includes('flower') || s.toLowerCase().includes('pod')) {
+      return "பூக்கும் மற்றும் காய் பிடிக்கும் பருவம்";
+    }
+    return s;
   }
-  return stageName;
+  return s;
 }
 
 export function tHealth(healthName, lang = 'en') {

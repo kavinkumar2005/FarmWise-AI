@@ -143,7 +143,7 @@ def run_farmwise_agent_pipeline(
 ) -> AdvisoryOutput:
     """Executes the entire end-to-end multi-agent LangGraph workflow with in-memory caching."""
     cache_key = f"{survey_number or ''}:{image_path or ''}"
-    if cache_key in _pipeline_cache:
+    if not image_path and cache_key in _pipeline_cache:
         cached = _pipeline_cache[cache_key]
         return cached.model_copy(update={
             "query_id": str(uuid.uuid4())[:8],

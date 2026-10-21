@@ -129,13 +129,28 @@ export default function App() {
   };
 
   const handleUploadComplete = (advisoryResult, uploadRes, previewBlobUrl) => {
-    if (advisoryResult && advisoryResult.parcel) {
-      if (previewBlobUrl) {
-        advisoryResult.parcel.image_url = previewBlobUrl;
+    if (advisoryResult) {
+      const activeCrop = uploadRes?.crop_analysis || advisoryResult.crop_analysis;
+      if (activeCrop) {
+        advisoryResult.crop_analysis = {
+          ...(advisoryResult.crop_analysis || {}),
+          ...activeCrop
+        };
+        if (advisoryResult.parcel) {
+          advisoryResult.parcel.recorded_crop = activeCrop.crop_name;
+          advisoryResult.parcel.recorded_stage = activeCrop.growth_stage;
+        }
       }
-      setSelectedSurvey(advisoryResult.parcel.survey_number);
+      if (advisoryResult.parcel) {
+        if (previewBlobUrl) {
+          advisoryResult.parcel.image_url = previewBlobUrl;
+        }
+        if (advisoryResult.parcel.survey_number) {
+          setSelectedSurvey(advisoryResult.parcel.survey_number);
+        }
+      }
     }
-    setAdvisoryData(advisoryResult);
+    setAdvisoryData({ ...advisoryResult });
   };
 
 
