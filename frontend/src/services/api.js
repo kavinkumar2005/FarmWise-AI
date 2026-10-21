@@ -596,23 +596,63 @@ export const api = {
     return createGroundedAdvisory(surveyNumber, imageFilename, query);
   },
 
-  // Upload field photo
+  // Upload field photo directly to AWS S3 & backend
   async uploadPhoto(file) {
+    const blobUrl = URL.createObjectURL(file);
+
+    // 1. Convert file to Base64 for AWS Lambda API Gateway direct upload
+    const toBase64 = (f) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(f);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+
+    try {
+      const base64Data = await toBase64(file);
+      
+      // Post to AWS Lambda API Gateway (which writes directly to S3 bucket fai-tce-team06-uploads)
+      const lambdaUploadUrl = 'https://7624u2zk2b.execute-api.ap-south-1.amazonaws.com/upload';
+      const lambdaRes = await axios.post(lambdaUploadUrl, {
+        filename: file.name,
+        contentType: file.type || 'image/jpeg',
+        dataBase64: base64Data
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000 // 10s for real S3 cloud write
+      });
+
+      if (lambdaRes.data && lambdaRes.data.s3_url) {
+        console.log('[OK] Photo stored in AWS S3:', lambdaRes.data.s3_url);
+        return {
+          filename: lambdaRes.data.filename || file.name,
+          local_url: blobUrl,
+          s3_url: lambdaRes.data.s3_url,
+          status: "ready"
+        };
+      }
+    } catch (lambdaErr) {
+      console.warn("Direct Lambda S3 upload notice, trying local/proxy:", lambdaErr);
+    }
+
+    // 2. Also attempt local FastAPI backend if running
     try {
       const formData = new FormData();
       formData.append('file', file);
-
       const res = await axios.post(`${API_BASE}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 4000 // Fast 4s timeout
+        timeout: 5000
       });
-      if (res.data && res.data.filename && typeof res.data === 'object') {
-        return res.data;
+      if (res.data && res.data.filename) {
+        return {
+          ...res.data,
+          local_url: blobUrl
+        };
       }
     } catch (e) {
-      console.warn("Backend photo upload unreachable; activating local blob & AWS S3 simulator.");
+      console.warn("Local upload endpoint notice:", e);
     }
-    const blobUrl = URL.createObjectURL(file);
+
     return {
       filename: file.name,
       local_url: blobUrl,

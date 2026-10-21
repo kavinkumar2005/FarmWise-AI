@@ -1,8 +1,12 @@
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { HealthResponseSchema, OrchestrationPipeline, FarmerRequestSchema } from '@farmwise/agent-core';
 import { handler as reportHandler } from '../../report-generator/src/index.js';
 import { handler as chatHandler } from '../../chatbot/src/index.js';
 import teamConfig from '../../../config/team.json';
 import modelsConfig from '../../../config/models.config.json';
+
+const s3Client = new S3Client({ region: process.env.AWS_REGION || 'ap-south-1' });
+const S3_BUCKET_UPLOADS = process.env.S3_BUCKET_UPLOADS || 'fai-tce-team06-uploads';
 
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
@@ -70,6 +74,82 @@ export async function handleOrchestrate(event: any) {
   }
 }
 
+export async function handleUpload(event: any) {
+  try {
+    let filename = `field_photo_${Date.now()}.jpg`;
+    let fileBuffer: Buffer | null = null;
+    let contentType = 'image/jpeg';
+
+    const rawBody = event.body;
+    const isBase64 = event.isBase64Encoded;
+
+    // Check if JSON body with base64 content
+    if (!isBase64 && typeof rawBody === 'string' && rawBody.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(rawBody);
+        if (parsed.filename) filename = parsed.filename;
+        if (parsed.contentType) contentType = parsed.contentType;
+        if (parsed.dataBase64) {
+          const cleanB64 = parsed.dataBase64.replace(/^data:image\/[a-z]+;base64,/, '');
+          fileBuffer = Buffer.from(cleanB64, 'base64');
+        }
+      } catch (e) {}
+    }
+
+    // Direct body
+    if (!fileBuffer && rawBody) {
+      if (isBase64) {
+        fileBuffer = Buffer.from(rawBody, 'base64');
+      } else {
+        fileBuffer = Buffer.from(rawBody, 'binary');
+      }
+    }
+
+    if (!fileBuffer || fileBuffer.length === 0) {
+      return {
+        statusCode: 400,
+        headers: CORS_HEADERS,
+        body: JSON.stringify({ error: 'No image data provided' })
+      };
+    }
+
+    const cleanExt = filename.split('.').pop() || 'jpg';
+    const cleanBase = filename.replace(/[^a-zA-Z0-9_\-]/g, '_').replace(new RegExp(`\\.${cleanExt}$`), '');
+    const s3Key = `fai-tce-team06-crops/field_photo_${Date.now()}_${cleanBase}.${cleanExt}`;
+
+    await s3Client.send(new PutObjectCommand({
+      Bucket: S3_BUCKET_UPLOADS,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: contentType
+    }));
+
+    const s3Url = `https://${S3_BUCKET_UPLOADS}.s3.ap-south-1.amazonaws.com/${s3Key}`;
+    console.log(`[OK] Successfully saved uploaded image to AWS S3: ${s3Url}`);
+
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        filename: s3Key.split('/').pop(),
+        s3_key: s3Key,
+        s3_url: s3Url,
+        status: 'ready'
+      })
+    };
+  } catch (err: any) {
+    console.error('S3 Upload Error in Lambda:', err);
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({
+        error: 'UploadError',
+        message: err.message
+      })
+    };
+  }
+}
+
 export async function handler(event: any) {
   const method = (event.requestContext?.http?.method || event.httpMethod || 'GET').toUpperCase();
   const path = event.rawPath || event.path || '/';
@@ -93,6 +173,14 @@ export async function handler(event: any) {
   // Route: /health or /api/health
   if (path === '/health' || path === '/api/health' || path.endsWith('/health')) {
     return handleHealth();
+  }
+
+  // Route: /upload or /api/upload
+  if (
+    (method === 'POST') &&
+    (path === '/upload' || path === '/api/upload' || path.endsWith('/upload'))
+  ) {
+    return handleUpload(event);
   }
 
   // Route: /orchestrate or /api/orchestrate

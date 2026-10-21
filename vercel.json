@@ -6,6 +6,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://7624u2zk2b.execute-api.ap-south-1.amazonaws.com/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
