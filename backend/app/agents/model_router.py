@@ -144,8 +144,8 @@ class ModelRouter:
 
         # 2. Try Gemini Flash models
         if not output_text and gemini_client:
-            active_models = ["gemini-3.8-flash", "gemini-3.5-flash-lite"]
-            timeout_secs = 4.0
+            active_models = ["gemini-3.5-flash-lite", "gemini-3.8-flash"]
+            timeout_secs = 8.5 if image_path else 5.0
             for m in active_models:
                 try:
                     future = _thread_pool.submit(cls._call_gemini_sync, m, clean_prompt, image_path)
