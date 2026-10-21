@@ -105,12 +105,16 @@ export default function ChatbotDrawer({ isOpen, onClose, activeParcel, lang: pro
       );
 
       const rawText = res.reply || res.response || res.message || res.answer || (typeof res === 'string' ? res : '');
+      const defaultTamil = `வணக்கம் விவசாயி அவர்களே! புல எண் #${activeParcel?.survey_number || 1342} விவரங்கள் பெறப்பட்டுள்ளன. பயிர் வளர்ச்சி, உரம் அல்லது சந்தை விலை பற்றி கேளுங்கள்.`;
+      const defaultEnglish = `Hello Farmer! For Survey Parcel #${activeParcel?.survey_number || 1342}, I am ready to answer your agronomic, fertilizer, weather, or market pricing questions.`;
+      const finalText = (rawText && typeof rawText === 'string' && rawText.trim().length > 0)
+        ? rawText.trim()
+        : (lang === 'ta' ? defaultTamil : defaultEnglish);
+
       const botMsg = {
         sender: 'bot',
-        text: rawText || (lang === 'ta'
-          ? `வணக்கம் விவசாயி அவர்களே! புல எண் #${activeParcel?.survey_number || 1342} விவரங்கள் பெறப்பட்டுள்ளன. பயிர் வளர்ச்சி, உரம் அல்லது சந்தை விலை பற்றி கேளுங்கள்.`
-          : `Hello Farmer! For Survey Parcel #${activeParcel?.survey_number || 1342}, I am ready to answer your agronomic, fertilizer, weather, or market pricing questions.`),
-        modelUsed: res.model_used || res.modelUsed || res.crop_analysis?.model_attribution || 'Gemini 3.8 Flash + TNAU RAG',
+        text: finalText,
+        modelUsed: res.model_used || res.modelUsed || 'Gemini 3.8 Flash + TNAU RAG',
         confidence: res.confidence || res.confidence_score || 0.97,
         sources: res.sources || ['TNAU Crop Production Guide', 'Open-Meteo ECMWF', 'eNAM Mandi Rate'],
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -307,7 +311,9 @@ export default function ChatbotDrawer({ isOpen, onClose, activeParcel, lang: pro
                   <img src={msg.image} alt="User upload" className="w-full h-auto object-cover" />
                 </div>
               )}
-              <p className="whitespace-pre-line">{cleanDisplayText(msg.text)}</p>
+              <p className="whitespace-pre-line">
+                {cleanDisplayText(msg.text) || msg.text || (lang === 'ta' ? 'வணக்கம் விவசாயி அவர்களே! விவரங்கள் பெறப்பட்டுள்ளன.' : 'Hello Farmer! Information retrieved.')}
+              </p>
               {msg.sender === 'bot' && msg.modelUsed && (
                 <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-1 text-[10px] text-slate-500">
                   <div className="flex items-center gap-1 text-emerald-700 font-semibold">

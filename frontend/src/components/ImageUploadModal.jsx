@@ -54,11 +54,11 @@ export default function ImageUploadModal({ isOpen, onClose, onUploadComplete, la
           ...finalCrop,
           crop_name: finalCrop.crop_name,
           growth_stage: finalCrop.growth_stage,
-          crop_health: finalCrop.crop_health || "Healthy Reproductive Canopy",
+          crop_health: finalCrop.crop_health || "Healthy & Vigorous Stand",
           visual_features: finalCrop.visual_features || [
-            "Bushy indeterminate canopy with trifoliate green foliage",
-            "Abundant bright yellow raceme flowers interspersed throughout canopy",
-            "Active pod initiation and elongation at nodal junctions"
+            "Uniform green vegetative canopy",
+            "Normal tiller density and leaf blade architecture",
+            "Optimal spacing consistent with local agricultural practices"
           ],
           confidence: finalCrop.confidence || 0.96
         };

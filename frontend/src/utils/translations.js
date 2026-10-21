@@ -318,6 +318,9 @@ export const CROP_NAMES_TA = {
   "Chilly": "மிளகாய்",
   "Chilli": "மிளகாய்",
   "Sugarcane": "கரும்பு",
+  "Sugarcane (கரும்பு)": "கரும்பு (Sugarcane)",
+  "Sugarcane / Cane": "கரும்பு (Sugarcane)",
+  "Cane": "கரும்பு",
   "Red Gram / Pigeon Pea / Dhal": "துவரை / பருப்பு (Red Gram)",
   "Red Gram / Pigeon Pea / Dhal (துவரை / பருப்பு)": "துவரை / பருப்பு (Red Gram)",
   "Red Gram / Dhal": "துவரை / பருப்பு (Red Gram)",
@@ -345,11 +348,15 @@ export const CROP_STAGES_TA = {
   "Grain Formation": "கதிர் முதிர்ச்சி",
   "harvest": "அறுவடை பருவம்",
   "Harvest": "அறுவடை பருவம்",
+  "Grand Growth / Cane Elongation": "முதிர்ச்சி மற்றும் தண்டு வளர்ச்சி நிலை",
+  "Grand Growth": "தண்டு வளர்ச்சி நிலை",
+  "Cane Elongation": "தண்டு வளர்ச்சி நிலை",
   "cadastral": "நில ஆவணப் பதிவு"
 };
 
 export const CROP_HEALTH_TA = {
   "Healthy & Vigorous": "ஆரோக்கியமானது & செழிப்பானது",
+  "Healthy & Vigorous Tillering Stalks": "செழிப்பான தூர் மற்றும் தண்டு வளர்ச்சி",
   "Healthy Reproductive Canopy": "ஆரோக்கியமான பூக்கும் மற்றும் காய்ப்பு விதானம்",
   "Healthy Square & Boll Setting": "ஆரோக்கியமான பூ மொட்டு மற்றும் காய் பிடிக்கும் நிலை",
   "Vigorous Bearing Palm": "செழிப்பான பலன் தரும் மரங்கள்",
@@ -389,6 +396,9 @@ export const PEST_ADVICE_TA = [
 
 export const VISUAL_FEATURES_TA = {
   "Uniform vegetative canopy spread": "சீரான பசுமையான பயிர் விதான பரவல்",
+  "Dense erect stalk clumps with vigorous internode elongation (8-12 nodes visible)": "8-12 கணுக்களுடன் கூடிய அடர்த்தியான நேரான கரும்புத் தண்டுகள்",
+  "Broad dark green linear leaf blades with prominent pale midrib": "வெளிறிய நடு நரம்புடன் கூடிய அகன்ற அடர்பச்சை இலைகள்",
+  "Uniform inter-row spacing and clean trash management along cane base": "சீரான வரிசை இடைவெளி மற்றும் சுத்தமான அடிமண் கரும்பு சோகை மேலாண்மை",
   "Adequate chlorophyll reflectance": "போதுமான பச்சையம் மற்றும் ஆரோக்கியமான தழை அடர்த்தி",
   "Proper row spacing and tiller density": "சரியான இடைவெளி மற்றும் நில எல்லைப் பொருத்தம்",
   "Uniform green Coconut vegetative canopy": "ஆரோக்கியமான பச்சையத்துடன் கூடிய சீரான தென்னை விதானம்",
@@ -422,13 +432,16 @@ export function tCrop(cropName, lang = 'en') {
   const c = String(cropName).trim();
   if (lang === 'ta') {
     if (CROP_NAMES_TA[c]) return CROP_NAMES_TA[c];
+    if (c.toLowerCase().includes('sugarcane') || c.toLowerCase().includes('cane') || c.includes('கரும்பு')) {
+      return "கரும்பு (Sugarcane)";
+    }
     if (c.toLowerCase().includes('red gram') || c.toLowerCase().includes('pigeon pea') || c.toLowerCase().includes('dhal') || c.includes('துவரை')) {
       return "துவரை / பருப்பு (Red Gram)";
     }
     return c;
   }
   // English: clean any embedded Tamil text in parentheses if present
-  if (c.includes('(') && (c.includes('துவரை') || c.includes('கோதுமை') || c.includes('மக்காச்சோளம்') || c.includes('பருத்தி') || c.includes('தென்னை'))) {
+  if (c.includes('(') && (c.includes('துவரை') || c.includes('கோதுமை') || c.includes('மக்காச்சோளம்') || c.includes('பருத்தி') || c.includes('தென்னை') || c.includes('கரும்பு'))) {
     return c.split('(')[0].trim();
   }
   return c;
@@ -439,6 +452,9 @@ export function tStage(stageName, lang = 'en') {
   const s = String(stageName).trim();
   if (lang === 'ta') {
     if (CROP_STAGES_TA[s]) return CROP_STAGES_TA[s];
+    if (s.toLowerCase().includes('cane') || s.toLowerCase().includes('elongation') || s.toLowerCase().includes('grand growth')) {
+      return "முதிர்ச்சி மற்றும் தண்டு வளர்ச்சி நிலை";
+    }
     if (s.toLowerCase().includes('flower') || s.toLowerCase().includes('pod')) {
       return "பூக்கும் மற்றும் காய் பிடிக்கும் பருவம்";
     }

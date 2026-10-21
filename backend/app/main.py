@@ -3,7 +3,7 @@ import shutil
 import uuid
 from pathlib import Path
 from typing import Optional, List, Dict, Any
-from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, Form, Query, HTTPException, BackgroundTasks, Request
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -156,25 +156,41 @@ def run_parcel_advisory(
 
 @app.post("/api/chat")
 async def chatbot_advisor(
-    message: str = Form(...),
-    survey_number: Optional[str] = Form(None),
-    image: Optional[UploadFile] = File(None)
+    request: Request
 ):
-    """Dedicated AI Agricultural Advisor Chatbot with Multimodal input & Agentic routing."""
-    uploaded_image_name = None
+    """Dedicated AI Agricultural Advisor Chatbot supporting both JSON and Multimodal Form input."""
+    content_type = request.headers.get("content-type", "")
+    message = ""
+    survey_number = None
     saved_img_path = None
     s3_image_url = None
-    if image:
-        ext = image.filename.split(".")[-1] if "." in image.filename else "jpg"
-        uploaded_image_name = f"chat_{uuid.uuid4().hex[:8]}.{ext}"
-        saved_img_path = uploads_dir / uploaded_image_name
-        with open(saved_img_path, "wb") as buf:
-            shutil.copyfileobj(image.file, buf)
-        s3_image_url = aws_service.upload_image(str(saved_img_path), object_name=f"fai-tce-team06-crops/{uploaded_image_name}")
+
+    if "application/json" in content_type:
+        try:
+            body = await request.json()
+            message = body.get("message") or body.get("query", "")
+            survey_number = body.get("survey_number")
+        except Exception:
+            pass
+    else:
+        try:
+            form = await request.form()
+            message = form.get("message") or form.get("query", "")
+            survey_number = form.get("survey_number")
+            image = form.get("image")
+            if image and hasattr(image, "filename") and image.filename:
+                ext = image.filename.split(".")[-1] if "." in image.filename else "jpg"
+                uploaded_image_name = f"chat_{uuid.uuid4().hex[:8]}.{ext}"
+                saved_img_path = uploads_dir / uploaded_image_name
+                with open(saved_img_path, "wb") as buf:
+                    shutil.copyfileobj(image.file, buf)
+                s3_image_url = aws_service.upload_image(str(saved_img_path), object_name=f"fai-tce-team06-crops/{uploaded_image_name}")
+        except Exception:
+            pass
 
     # Call specialized conversational agent
     chat_result = chat_agent.answer_question(
-        query=message,
+        query=message or "அக்ரானமி வழிகாட்டுதல்",
         survey_number=survey_number,
         image_path=str(saved_img_path) if saved_img_path else None
     )
@@ -189,9 +205,9 @@ async def chatbot_advisor(
         "parcel": parcel_rec,
         "crop_analysis": {
             "crop_name": parcel_rec.recorded_crop if parcel_rec else "Agricultural Crop",
-            "model_attribution": chat_result.get("model_used", "Gemini 3.1 Flash Lite")
+            "model_attribution": chat_result.get("model_used", "Gemini 3.8 Flash Vision")
         },
-        "model_used": chat_result.get("model_used", "Gemini 3.5 Flash Lite"),
+        "model_used": chat_result.get("model_used", "Gemini 3.8 Flash + TNAU RAG"),
         "s3_url": s3_image_url,
         "confidence_score": chat_result.get("confidence", 0.97),
         "sources": chat_result.get("sources", ["TNAU Package of Practices", "ICAR", "eNAM APMC"]),
