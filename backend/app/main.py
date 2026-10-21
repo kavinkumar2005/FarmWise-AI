@@ -185,6 +185,7 @@ async def chatbot_advisor(
 
     return {
         "reply": chat_result["reply"],
+        "response": chat_result["reply"],
         "parcel": parcel_rec,
         "crop_analysis": {
             "crop_name": parcel_rec.recorded_crop if parcel_rec else "Agricultural Crop",

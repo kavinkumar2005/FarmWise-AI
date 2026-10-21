@@ -27,7 +27,21 @@ export async function handler(event: any) {
       const rawBody = event.isBase64Encoded
         ? Buffer.from(event.body, 'base64').toString('utf8')
         : event.body;
-      payload = typeof rawBody === 'string' ? JSON.parse(rawBody) : rawBody;
+      if (typeof rawBody === 'string') {
+        try {
+          payload = JSON.parse(rawBody);
+        } catch {
+          // Check for multipart form or urlencoded body
+          const mMatch = rawBody.match(/name="message"[\r\n]+([^\r\n]+)/) || rawBody.match(/message=([^&]+)/);
+          const sMatch = rawBody.match(/name="survey_number"[\r\n]+([^\r\n]+)/) || rawBody.match(/survey_number=([^&]+)/);
+          payload = {
+            message: mMatch ? decodeURIComponent(mMatch[1].trim()) : '',
+            survey_number: sMatch ? decodeURIComponent(sMatch[1].trim()) : undefined
+          };
+        }
+      } else {
+        payload = rawBody;
+      }
     }
 
     const message = payload.message || payload.query;
@@ -54,7 +68,10 @@ export async function handler(event: any) {
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
-      body: JSON.stringify(response)
+      body: JSON.stringify({
+        ...response,
+        response: response.reply
+      })
     };
   } catch (err: any) {
     console.error('Error in chatbot Lambda handler:', err);
