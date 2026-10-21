@@ -40,6 +40,14 @@ export default function ImageUploadModal({ isOpen, onClose, onUploadComplete, la
       // 2. Trigger advisory pipeline
       const advisoryRes = await api.runAdvisory(sNo, "Analyze uploaded crop photo", uploadRes.filename);
 
+      // Prioritize multimodal vision classification over cadastral baseline
+      if (uploadRes && uploadRes.crop_analysis && advisoryRes) {
+        advisoryRes.crop_analysis = uploadRes.crop_analysis;
+        if (advisoryRes.parcel) {
+          advisoryRes.parcel.recorded_crop = uploadRes.crop_analysis.crop_name;
+        }
+      }
+
       onUploadComplete(advisoryRes, uploadRes, previewUrl);
       onClose();
 
