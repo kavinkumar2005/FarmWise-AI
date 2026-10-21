@@ -218,22 +218,25 @@ CONFIDENCE: <0.85 to 0.99>"""
             stage2_cost = trace_info["cost_usd"]
             stage2_status = trace_info["status"]
 
-            for line in gemini_res.split("\n"):
-                line = line.strip()
-                if line.startswith("CROP_NAME:"):
-                    cand = line.replace("CROP_NAME:", "").strip()
+            for raw_line in gemini_res.split("\n"):
+                line = raw_line.strip()
+                lower = line.lower()
+                if "crop_name:" in lower:
+                    cand = line.split(":", 1)[1].replace("*", "").strip()
                     if cand: identified_crop = cand
-                elif line.startswith("GROWTH_STAGE:"):
-                    cand = line.replace("GROWTH_STAGE:", "").strip()
+                elif "growth_stage:" in lower:
+                    cand = line.split(":", 1)[1].replace("*", "").strip()
                     if cand: growth_stage = cand
-                elif line.startswith("HEALTH_STATUS:"):
-                    cand = line.replace("HEALTH_STATUS:", "").strip()
+                elif "health_status:" in lower:
+                    cand = line.split(":", 1)[1].replace("*", "").strip()
                     if cand: health = cand
-                elif line.startswith("VISUAL_OBSERVATIONS:"):
-                    cand = line.replace("VISUAL_OBSERVATIONS:", "").strip()
-                    if cand: visual_features = [s.strip() for s in cand.split(",") if s.strip()] or visual_features
-                elif line.startswith("FOLIAR_SYMPTOMS:"):
-                    cand = line.replace("FOLIAR_SYMPTOMS:", "").strip()
+                elif "visual_observations:" in lower:
+                    cand = line.split(":", 1)[1].replace("*", "").strip()
+                    if cand:
+                        obs = [s.strip() for s in cand.replace(";", ",").split(",") if s.strip()]
+                        if obs: visual_features = obs
+                elif "foliar_symptoms:" in lower:
+                    cand = line.split(":", 1)[1].replace("*", "").strip()
                     if cand: issues = [cand]
 
         analysis_result = {

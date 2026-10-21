@@ -13,6 +13,7 @@ from app.config import settings
 from app.db.database import db
 from app.db.models import AdvisoryOutput, ParcelRecord, MarketPriceInfo, WeatherData
 from app.agents.graph import run_farmwise_agent_pipeline
+from app.agents.image_agent import image_agent
 from app.agents.model_router import model_router
 from app.services.aws_service import aws_service
 from app.services.weather_service import weather_service
@@ -122,7 +123,7 @@ def get_parcel_weather(survey_number: str):
 
 @app.post("/api/upload")
 async def upload_field_photo(file: UploadFile = File(...)):
-    """Receives farmer field photo, stores locally and triggers AWS S3 backup."""
+    """Receives farmer field photo, stores locally, triggers AWS S3 backup, and runs multimodal Vision Agent."""
     ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
     unique_filename = f"field_photo_{uuid.uuid4().hex[:10]}.{ext}"
     local_save_path = uploads_dir / unique_filename
@@ -133,11 +134,20 @@ async def upload_field_photo(file: UploadFile = File(...)):
     # Trigger AWS S3 upload
     s3_url = aws_service.upload_image(str(local_save_path), object_name=f"fai-tce-team06-crops/{unique_filename}")
 
+    # Immediately execute Multimodal Vision Agent on the uploaded image
+    analyzed_state = image_agent.analyze_image({
+        "image_path": unique_filename,
+        "parcel": {"recorded_crop": "Auto-Detect", "recorded_stage": "Detection"},
+        "execution_trace": []
+    })
+    crop_analysis = analyzed_state.get("crop_analysis")
+
     return {
         "filename": unique_filename,
         "local_url": f"/uploads/{unique_filename}",
         "s3_url": s3_url,
-        "status": "ready"
+        "status": "ready",
+        "crop_analysis": crop_analysis
     }
 
 @app.post("/api/advisory/run", response_model=AdvisoryOutput)
