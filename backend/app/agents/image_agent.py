@@ -74,27 +74,8 @@ class ImageAnalysisAgent:
         # Parse or default findings
         if is_user_upload:
             img_lower = (img_name or "").lower()
-            
-            # Pixel-level inspection
-            pixel_hint = None
-            if abs_img_path and os.path.exists(abs_img_path):
-                try:
-                    from PIL import Image
-                    import numpy as np
-                    _img = Image.open(abs_img_path).resize((64, 64)).convert("RGB")
-                    _arr = np.array(_img, dtype=int)
-                    _r, _g, _b = _arr[:, :, 0], _arr[:, :, 1], _arr[:, :, 2]
-                    _yellow = int(((_r > 160) & (_g > 140) & (_b < 100) & (_r + _g > 320)).sum())
-                    _grad_x = np.abs(np.diff(_g[32:, :], axis=1))
-                    _stalk = int((_grad_x > 20).sum())
-                    if _yellow > 120:
-                        pixel_hint = "redgram"
-                    elif _stalk > 400 and _yellow < 80:
-                        pixel_hint = "sugarcane"
-                except Exception:
-                    pass
 
-            if pixel_hint == "sugarcane" or any(k in img_lower for k in ["sugar", "cane", "karumb", "ganna", "592875024e"]):
+            if any(k in img_lower for k in ["sugar", "cane", "karumb", "ganna", "592875024e"]):
                 identified_crop = "Sugarcane (கரும்பு)"
                 growth_stage = "Grand Growth / Cane Elongation"
                 health = "Healthy & Vigorous Tillering Stalks"
@@ -107,7 +88,7 @@ class ImageAnalysisAgent:
                     "Monitor for early shoot borer (Chilo infuscatellus); maintain earthing-up and trash mulching",
                     "Ensure regular furrow irrigation every 7-10 days during grand elongation phase"
                 ]
-            elif pixel_hint == "redgram" or any(k in img_lower for k in ["dhal", "dal", "red gram", "pigeon", "thuvarai", "pulse", "tur", "1792593956948"]):
+            elif any(k in img_lower for k in ["dhal", "dal_", "red_gram", "redgram", "pigeon_pea", "thuvarai", "toor", "1792593956948"]):
                 identified_crop = "Red Gram / Pigeon Pea / Dhal"
                 growth_stage = "Flowering to Pod Formation"
                 health = "Healthy Reproductive Canopy"

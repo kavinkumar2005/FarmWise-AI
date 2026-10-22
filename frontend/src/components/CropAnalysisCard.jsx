@@ -62,7 +62,7 @@ export default function CropAnalysisCard({ cropAnalysis, parcel, lang = 'en', on
           <div className="text-right hidden sm:block">
             <span className="text-[10px] uppercase font-bold text-slate-400 block">{t.evaluatedBy || "Evaluated by"}</span>
             <span className="text-xs font-mono font-medium text-slate-700 bg-white px-2 py-1 rounded-md border border-slate-200 shadow-2xs">
-              {t.evaluatorModel || "Gemini 3.8 Flash Vision"}
+              {cropAnalysis.model_attribution || "Gemini 3.5 Flash-Lite Vision"}
             </span>
           </div>
         </div>
