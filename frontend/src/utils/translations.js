@@ -328,6 +328,12 @@ export const CROP_NAMES_TA = {
   "Pigeon Pea": "துவரை",
   "Dhal": "பருப்பு",
   "Pulses": "பயறு வகைகள்",
+  "Globe Amaranth": "வாடாமல்லி (Globe Amaranth)",
+  "Globe Amaranth / Gomphrena globosa": "வாடாமல்லி (Globe Amaranth)",
+  "Globe Amaranth / வாடாமல்லி (Gomphrena globosa)": "வாடாமல்லி (Globe Amaranth)",
+  "Gomphrena globosa": "வாடாமல்லி (Globe Amaranth)",
+  "Globe amaranth": "வாடாமல்லி (Globe Amaranth)",
+  "வாடாமல்லி": "வாடாமல்லி (Globe Amaranth)",
   "Agricultural Crop": "வேளாண் பயிர்"
 };
 
@@ -437,6 +443,9 @@ export function tCrop(cropName, lang = 'en') {
     }
     if (c.toLowerCase().includes('red gram') || c.toLowerCase().includes('pigeon pea') || c.toLowerCase().includes('dhal') || c.includes('துவரை')) {
       return "துவரை / பருப்பு (Red Gram)";
+    }
+    if (c.toLowerCase().includes('amaranth') || c.toLowerCase().includes('gomphrena') || c.includes('வாடாமல்லி')) {
+      return "வாடாமல்லி (Globe Amaranth)";
     }
     return c;
   }

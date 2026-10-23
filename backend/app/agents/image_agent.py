@@ -69,7 +69,8 @@ class ImageAnalysisAgent:
             "details": {"stage": "preliminary_screening", "crop_candidate": fast_crop}
         }
 
-        is_user_upload = bool(img_name and ("field_photo" in img_name or "chat" in img_name or "dhal" in img_name.lower() or "red_gram" in img_name.lower()))
+        is_sample_baseline = bool(img_name and (img_name.startswith("sample_") or "sample_" in img_name))
+        is_user_upload = bool(abs_img_path and not is_sample_baseline)
 
         # Parse or default findings
         if is_user_upload:
@@ -98,6 +99,16 @@ class ImageAnalysisAgent:
                     "Active pod initiation and elongation at nodal junctions"
                 ]
                 issues = ["Scout for early pod borer (Helicoverpa) pinholes; apply neem oil 3% repellent"]
+            elif any(k in img_lower for k in ["amaranth", "gomphrena", "vadamalli", "vaadamalli", "flower"]):
+                identified_crop = "Globe Amaranth / வாடாமல்லி (Gomphrena globosa)"
+                growth_stage = "Flowering stage"
+                health = "Healthy & Vigorous"
+                visual_features = [
+                    "Abundant spherical purple/magenta globose flower heads",
+                    "Erect branching stems with vibrant green lanceolate foliage",
+                    "Optimal bloom density with clean bracts"
+                ]
+                issues = ["Maintain proper weeding; avoid waterlogging around root collar"]
             elif any(k in img_lower for k in ["paddy", "rice", "nel", "arisi", "dhan"]):
                 identified_crop = "Rice (Paddy)"
                 growth_stage = "tillering"
@@ -178,15 +189,17 @@ class ImageAnalysisAgent:
 
         if is_user_upload and abs_img_path:
             # STAGE 2: Deep Multimodal Inspection (Gemini 3.5 Flash) for user-uploaded photos
-            prompt = f"""You are an agricultural plant pathologist and agronomist analyzing a South Indian crop field photograph.
-Identify the exact crop species visible in the photo (do NOT guess from context—inspect the actual leaves, stems, panicles, or palms).
+            prompt = """You are an expert plant pathologist, botanist, and agronomist inspecting a crop, plant, or field photograph from South India / Tamil Nadu.
+Identify the EXACT plant or crop species present in this photograph.
+It can be ANY agricultural crop (Sugarcane, Paddy/Rice, Maize, Cotton, Coconut, Red Gram, Groundnut, Banana, Tomato, etc.) OR a horticultural flower / medicinal plant (Globe Amaranth / வாடாமல்லி / Gomphrena globosa, Marigold / சாமந்தி, Jasmine / மல்லிகை, Rose / ரோஜா, etc.).
+Inspect the actual flowers, leaves, stems, and canopy visible in the image. DO NOT guess Rice (Paddy) unless it is genuinely a rice/paddy plant.
 
-Provide concise analysis in this exact format:
-CROP_NAME: <Name of crop, e.g. Rice (Paddy), Coconut, Maize, Banana, Sugarcane, Cotton>
-GROWTH_STAGE: <vegetation, flowering, full_growth, sown, harvesting>
-HEALTH_STATUS: <Healthy & Vigorous, Mild Nutrient Deficiency, Moderate Foliar Stress, Pest Observed>
-VISUAL_OBSERVATIONS: <Key visual characteristics like canopy density, leaf color, panicles/nuts>
-FOLIAR_SYMPTOMS: <Any visible leaf spots, yellowing, or healthy clean blades>
+Provide concise analysis in this exact format (one key-value pair per line):
+CROP_NAME: <Common Name in English and Tamil (Botanical Name if applicable)>
+GROWTH_STAGE: <Exact growth stage, e.g. Flowering Stage, Vegetative Growth, Grand Growth, Tillering, Ripening, Pod Setting>
+HEALTH_STATUS: <e.g. Healthy & Vigorous, Mild Nutrient Stress, Clean Foliage>
+VISUAL_OBSERVATIONS: <Key visual characteristics separated by semicolons>
+FOLIAR_SYMPTOMS: <Any visible foliar symptoms or clean healthy leaves>
 CONFIDENCE: <0.85 to 0.99>"""
 
             gemini_res, trace_info = model_router.execute_call(
@@ -200,25 +213,35 @@ CONFIDENCE: <0.85 to 0.99>"""
             stage2_status = trace_info["status"]
 
             for raw_line in gemini_res.split("\n"):
-                line = raw_line.strip()
-                lower = line.lower()
-                if "crop_name:" in lower:
-                    cand = line.split(":", 1)[1].replace("*", "").strip()
-                    if cand: identified_crop = cand
-                elif "growth_stage:" in lower:
-                    cand = line.split(":", 1)[1].replace("*", "").strip()
-                    if cand: growth_stage = cand
-                elif "health_status:" in lower:
-                    cand = line.split(":", 1)[1].replace("*", "").strip()
-                    if cand: health = cand
-                elif "visual_observations:" in lower:
-                    cand = line.split(":", 1)[1].replace("*", "").strip()
-                    if cand:
-                        obs = [s.strip() for s in cand.replace(";", ",").split(",") if s.strip()]
-                        if obs: visual_features = obs
-                elif "foliar_symptoms:" in lower:
-                    cand = line.split(":", 1)[1].replace("*", "").strip()
-                    if cand: issues = [cand]
+                line = raw_line.replace("*", "").replace("#", "").strip()
+                if ":" not in line:
+                    continue
+                k_part, v_part = line.split(":", 1)
+                k_clean = k_part.lower().strip()
+                v_clean = v_part.strip()
+                if not v_clean:
+                    continue
+
+                if any(x in k_clean for x in ["crop", "plant", "species", "name"]):
+                    identified_crop = v_clean
+                elif any(x in k_clean for x in ["stage", "growth"]):
+                    growth_stage = v_clean
+                elif any(x in k_clean for x in ["health", "status", "condition"]):
+                    health = v_clean
+                elif any(x in k_clean for x in ["observation", "feature", "visual"]):
+                    obs = [s.strip() for s in v_clean.replace(";", ",").split(",") if s.strip()]
+                    if obs:
+                        visual_features = obs
+                elif any(x in k_clean for x in ["symptom", "issue", "foliar", "disease"]):
+                    issues = [v_clean]
+                elif "confidence" in k_clean:
+                    try:
+                        import re
+                        m = re.search(r"0?\.\d+", v_clean)
+                        if m:
+                            confidence = float(m.group(0))
+                    except Exception:
+                        pass
 
         analysis_result = {
             "crop_name": identified_crop,
@@ -252,7 +275,8 @@ CONFIDENCE: <0.85 to 0.99>"""
         if state.get("parcel"):
             if img_name:
                 state["parcel"]["image_path"] = img_name
-                if "field_photo" in img_name or "chat" in img_name:
+                p_up = Path(__file__).resolve().parent.parent.parent / "uploads" / img_name
+                if p_up.exists():
                     state["parcel"]["image_url"] = f"/uploads/{img_name}"
                 else:
                     state["parcel"]["image_url"] = f"/dataset-images/{img_name}"

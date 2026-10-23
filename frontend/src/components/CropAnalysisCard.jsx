@@ -6,7 +6,7 @@ export default function CropAnalysisCard({ cropAnalysis, parcel, lang = 'en', on
   if (!cropAnalysis) return null;
   const t = translations[lang] || translations.en;
 
-  const crop = cropAnalysis.crop_name || parcel?.recorded_crop || "Rice (Paddy)";
+  const crop = cropAnalysis.crop_name || parcel?.recorded_crop || "Agricultural Crop";
   const stage = cropAnalysis.growth_stage || parcel?.recorded_stage || "vegetation";
   const health = cropAnalysis.crop_health || "Healthy & Vigorous";
   const confidence = cropAnalysis.confidence || 0.95;
