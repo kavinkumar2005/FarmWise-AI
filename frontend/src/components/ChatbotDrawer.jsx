@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Bot, Camera, Loader2, Cpu, ShieldCheck, Mic, MicOff, Globe, RotateCcw, Volume2, VolumeX } from 'lucide-react';
+import { X, Send, Bot, Camera, Loader2, Mic, MicOff, Globe, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { api } from '../services/api';
 
 const QUICK_PROMPTS = [
@@ -538,43 +538,29 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
                 {cleanDisplayText(msg.text) || msg.text || (lang === 'ta' ? 'வணக்கம் விவசாயி அவர்களே! விவரங்கள் பெறப்பட்டுள்ளன.' : 'Hello Farmer! Information retrieved.')}
               </p>
               {msg.sender === 'bot' && (
-                <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500">
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => speakMessage(msg.text, idx)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
-                        currentlySpeakingIdx === idx && isSpeaking
-                          ? 'bg-emerald-600 text-white animate-pulse shadow-xs'
-                          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
-                      }`}
-                      title={currentlySpeakingIdx === idx && isSpeaking ? 'Stop speaking' : (lang === 'ta' ? 'குரலில் கேட்கவும்' : 'Listen with voice')}
-                    >
-                      {currentlySpeakingIdx === idx && isSpeaking ? (
-                        <>
-                          <VolumeX className="w-3.5 h-3.5" />
-                          <span>{lang === 'ta' ? 'நிறுத்து' : 'Stop'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
-                          <span>{lang === 'ta' ? 'குரலில் கேட்க' : 'Listen'}</span>
-                        </>
-                      )}
-                    </button>
-                    {msg.modelUsed && (
-                      <div className="flex items-center gap-1 text-emerald-700 font-medium">
-                        <Cpu className="w-3 h-3" />
-                        <span>{msg.modelUsed}</span>
-                      </div>
+                <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={() => speakMessage(msg.text, idx)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold transition-all cursor-pointer ${
+                      currentlySpeakingIdx === idx && isSpeaking
+                        ? 'bg-emerald-600 text-white animate-pulse shadow-xs'
+                        : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200'
+                    }`}
+                    title={currentlySpeakingIdx === idx && isSpeaking ? 'Stop speaking' : (lang === 'ta' ? 'குரலில் கேட்கவும்' : 'Listen with voice')}
+                  >
+                    {currentlySpeakingIdx === idx && isSpeaking ? (
+                      <>
+                        <VolumeX className="w-3.5 h-3.5" />
+                        <span>{lang === 'ta' ? 'நிறுத்து' : 'Stop'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Volume2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>{lang === 'ta' ? 'குரலில் கேட்க' : 'Listen'}</span>
+                      </>
                     )}
-                  </div>
-                  {msg.confidence && (
-                    <div className="flex items-center gap-1 text-slate-500">
-                      <ShieldCheck className="w-3 h-3 text-blue-600" />
-                      <span>{Math.round(msg.confidence * 100)}% Confidence</span>
-                    </div>
-                  )}
+                  </button>
                 </div>
               )}
             </div>
