@@ -36,9 +36,6 @@ export default function WeatherCard({ weather, lang = 'en' }) {
             <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight">
               {t.microClimateTitle || "Micro-Climate & Agro-Met"}
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              {t.microClimateSubtitle || "Live ECMWF telemetry for parcel coordinates"}
-            </p>
           </div>
         </div>
       </div>

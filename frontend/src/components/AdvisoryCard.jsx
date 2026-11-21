@@ -200,7 +200,7 @@ export default function AdvisoryCard({ advisoryData, lang = 'en', onOpenTrace })
       <div className="bg-gradient-to-r from-emerald-50/70 via-green-50/50 to-teal-50/70 p-5 rounded-2xl border border-emerald-200/80 text-sm text-slate-800 leading-relaxed">
         <div className="font-bold text-emerald-950 text-xs uppercase tracking-wider mb-2 flex items-center justify-between gap-2">
           <span className="flex items-center gap-1.5">
-            {t.executiveSummary || "🌾 Executive Advisory Summary"}
+            {t.executiveSummary || "Executive Advisory Summary"}
           </span>
           {displaySummary && <TTSButton text={displaySummary} lang={lang} />}
         </div>

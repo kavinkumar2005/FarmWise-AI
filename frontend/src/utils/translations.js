@@ -84,7 +84,7 @@ export const translations = {
     // Advisory Card
     advisoryTitle: "Personalized Agronomic Advisory",
     groundTruthGrounded: "Ground-truth grounded",
-    executiveSummary: "🌾 Executive Advisory Summary",
+    executiveSummary: "Executive Advisory Summary",
     translatingText: "Translating to Tamil...",
     nutrientSchedule: "Nutrient Management Schedule (TNAU / ICAR)",
     colStage: "Crop Stage",
@@ -184,7 +184,7 @@ export const translations = {
     // Advisory Card
     advisoryTitle: "தனிப்பயனாக்கப்பட்ட வேளாண் ஆலோசனை",
     groundTruthGrounded: "கள தரவுகளின்படி சரிபார்க்கப்பட்டது",
-    executiveSummary: "🌾 முதன்மை வேளாண் ஆலோசனைச் சுருக்கம்",
+    executiveSummary: "முதன்மை வேளாண் ஆலோசனைச் சுருக்கம்",
     translatingText: "தமிழில் மொழிபெயர்க்கிறது...",
     nutrientSchedule: "ஊட்டச்சத்து & உரமிடுதல் அட்டவணை (TNAU / ICAR)",
     colStage: "பயிர் நிலை",
@@ -284,7 +284,7 @@ export const translations = {
     // Advisory Card
     advisoryTitle: "व्यक्तिगत कृषि सलाह",
     groundTruthGrounded: "जमीनी साक्ष्यों से सत्यापित",
-    executiveSummary: "🌾 कार्यकारी कृषि सारांश",
+    executiveSummary: "कार्यकारी कृषि सारांश",
     translatingText: "अनुवाद हो रहा है...",
     nutrientSchedule: "पोषक तत्व एवं उर्वरक समय सारणी (TNAU / ICAR)",
     colStage: "फसल चरण",

@@ -136,9 +136,6 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
                     <div className="font-bold text-sm">
                       {tCrop(parcel.recorded_crop, lang)} ({tStage(parcel.recorded_stage, lang)})
                     </div>
-                    <div className="text-xs text-slate-300 font-mono">
-                      Image: {parcel.image_path}
-                    </div>
                   </div>
                 </div>
               </div>
@@ -253,7 +250,6 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
             <div className="px-6 py-3 bg-slate-900 border-t border-slate-800 text-xs text-slate-400 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-4">
                 <span>Centroid: {parcel.latitude?.toFixed(5)}°N, {parcel.longitude?.toFixed(5)}°E</span>
-                <span>Source: {parcel.image_path || 'Field Survey'}</span>
               </div>
               <button
                 onClick={() => setIsPhotoModalOpen(false)}
