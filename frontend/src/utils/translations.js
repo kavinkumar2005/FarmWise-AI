@@ -438,6 +438,14 @@ export function tCrop(cropName, lang = 'en') {
   const c = String(cropName).trim();
   if (lang === 'ta') {
     if (CROP_NAMES_TA[c]) return CROP_NAMES_TA[c];
+    // Check if it has a slash with Tamil text like "Coconut / தென்னை"
+    if (c.includes('/') && /[\u0B80-\u0BFF]/.test(c)) {
+      const parts = c.split('/');
+      const taPart = parts.find(p => /[\u0B80-\u0BFF]/.test(p));
+      if (taPart) return taPart.trim();
+    }
+    if (c.toLowerCase().includes('coconut') || c.includes('தென்னை')) return "தென்னை";
+    if (c.toLowerCase().includes('paddy') || c.toLowerCase().includes('rice') || c.includes('நெல்')) return "நெல்";
     if (c.toLowerCase().includes('sugarcane') || c.toLowerCase().includes('cane') || c.includes('கரும்பு')) {
       return "கரும்பு (Sugarcane)";
     }
@@ -449,8 +457,13 @@ export function tCrop(cropName, lang = 'en') {
     }
     return c;
   }
-  // English: clean any embedded Tamil text in parentheses if present
-  if (c.includes('(') && (c.includes('துவரை') || c.includes('கோதுமை') || c.includes('மக்காச்சோளம்') || c.includes('பருத்தி') || c.includes('தென்னை') || c.includes('கரும்பு'))) {
+  // English: clean any embedded Tamil text in slashes or parentheses
+  if (c.includes('/') && /[\u0B80-\u0BFF]/.test(c)) {
+    const parts = c.split('/');
+    const enPart = parts.find(p => !/[\u0B80-\u0BFF]/.test(p));
+    if (enPart) return enPart.trim();
+  }
+  if (c.includes('(') && /[\u0B80-\u0BFF]/.test(c)) {
     return c.split('(')[0].trim();
   }
   return c;
@@ -461,15 +474,26 @@ export function tStage(stageName, lang = 'en') {
   const s = String(stageName).trim();
   if (lang === 'ta') {
     if (CROP_STAGES_TA[s]) return CROP_STAGES_TA[s];
+    if (s.toLowerCase().includes('bearing') || s.toLowerCase().includes('mature')) {
+      return "காய்க்கும் / முதிர்ச்சி நிலை";
+    }
     if (s.toLowerCase().includes('cane') || s.toLowerCase().includes('elongation') || s.toLowerCase().includes('grand growth')) {
       return "முதிர்ச்சி மற்றும் தண்டு வளர்ச்சி நிலை";
     }
     if (s.toLowerCase().includes('flower') || s.toLowerCase().includes('pod')) {
       return "பூக்கும் மற்றும் காய் பிடிக்கும் பருவம்";
     }
-    return s;
+    if (s.toLowerCase().includes('full')) {
+      return "முழு வளர்ச்சி பருவம்";
+    }
+    return s.replace(/\s*\([^)]*\)/g, '').trim();
   }
-  return s;
+  // English: clean bulky nested parentheticals like "(Grand Growth & Yield)" to prevent double parens ((...))
+  if (s.toLowerCase().includes('bearing') && s.toLowerCase().includes('mature')) {
+    return "Bearing / Mature Stage";
+  }
+  const cleaned = s.replace(/\s*\([^)]*\)/g, '').trim();
+  return cleaned || s;
 }
 
 export function tHealth(healthName, lang = 'en') {

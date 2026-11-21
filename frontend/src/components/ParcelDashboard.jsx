@@ -29,9 +29,9 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
       <div className="screen-only-dashboard space-y-6">
         {/* Top Breadcrumb & Parcel Identity Banner */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-slate-500 mb-1.5 font-medium">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
                 <span>{t.landRecordsBreadcrumb || "Tamil Nadu Land Records"}</span>
                 <span>/</span>
                 <span>{parcel.district || "Tenkasi"}</span>
@@ -41,33 +41,40 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
                 <span className="text-emerald-700 font-bold">{parcel.village_name || "Sivagiri"}</span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                  {t.surveyParcel || "Survey Parcel"} #{parcel.survey_number}
-                  {parcel.sub_division && <span className="text-slate-400 text-xl font-medium"> / {parcel.sub_division}</span>}
-                </h1>
-              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                {t.surveyParcel || "Survey Parcel"} #{parcel.survey_number}
+                {parcel.sub_division && <span className="text-slate-400 text-xl font-medium"> / {parcel.sub_division}</span>}
+              </h1>
 
-              <p className="text-xs sm:text-sm text-slate-600 mt-2 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
-                <span>{t.centroid || "Centroid"}: {parcel.latitude.toFixed(5)}° N, {parcel.longitude.toFixed(5)}° E</span>
-                <span className="text-slate-300">•</span>
-                <span>{t.recordedCrop || "Crop"}: <b>{tCrop(parcel.recorded_crop, lang)}</b> ({tStage(parcel.recorded_stage, lang)})</span>
-              </p>
+              {/* Uniform, non-breaking metadata strip */}
+              <div className="pt-1 flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-600">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-full border border-slate-200 font-medium whitespace-nowrap transition-colors">
+                  <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>{t.centroid || "Centroid"}: {parcel.latitude.toFixed(5)}°N, {parcel.longitude.toFixed(5)}°E</span>
+                </span>
+
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-900 rounded-full border border-emerald-200/90 font-medium whitespace-nowrap">
+                  <span className="text-emerald-700">{t.recordedCrop || "Crop"}:</span>
+                  <b className="text-emerald-950 font-bold">{tCrop(parcel.recorded_crop, lang)}</b>
+                  {parcel.recorded_stage && (
+                    <span className="text-emerald-800 text-xs font-normal">({tStage(parcel.recorded_stage, lang)})</span>
+                  )}
+                </span>
+              </div>
             </div>
 
             {/* Action CTAs */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => setIsTraceOpen(true)}
-                className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer"
+                className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
               >
                 <Sparkles className="w-4 h-4 text-emerald-600" />
                 <span>{t.aiTraceBtn || "View AI Decision Trace"}</span>
               </button>
               <button
                 onClick={() => window.print()}
-                className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold shadow-2xs hover:shadow-xs"
+                className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold shadow-2xs hover:shadow-xs whitespace-nowrap"
                 title="Print Structured Audit & Trace PDF Document"
               >
                 <Printer className="w-4 h-4 text-slate-600" />
