@@ -27,16 +27,14 @@ export default function WeatherCard({ weather, lang = 'en' }) {
   return (
     <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
       {/* Aligned Header */}
-      <div className="flex items-start justify-between gap-3 mb-5">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0 shadow-2xs">
             <CloudRain className="w-5 h-5" />
           </div>
-          <div>
-            <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight">
-              {t.microClimateTitle || "Micro-Climate & Agro-Met"}
-            </h3>
-          </div>
+          <h3 className="font-bold text-slate-900 text-base sm:text-lg leading-tight">
+            {t.microClimateTitle || "Micro-Climate & Agro-Met"}
+          </h3>
         </div>
       </div>
 
