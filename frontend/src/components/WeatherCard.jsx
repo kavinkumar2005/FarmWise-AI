@@ -1,5 +1,5 @@
 import React from 'react';
-import { CloudRain, Wind, Droplets, Thermometer, AlertTriangle, CheckCircle2, Calendar } from 'lucide-react';
+import { CloudRain, Wind, Droplets, Thermometer, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { translations, tWeatherCondition } from '../utils/translations';
 
 export default function WeatherCard({ weather, lang = 'en' }) {
@@ -145,37 +145,6 @@ export default function WeatherCard({ weather, lang = 'en' }) {
           </div>
         </div>
       </div>
-
-      {/* 7-Day Forecast Strip */}
-      {weather.forecast_7d && weather.forecast_7d.length > 0 && (
-        <div>
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />
-            {lang === 'ta' ? '7-நாள் வேளாண் முன்னறிவிப்பு' : '7-Day Agronomic Outlook'}
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-            {weather.forecast_7d.map((day, idx) => (
-              <div
-                key={idx}
-                className="p-2.5 bg-slate-50 hover:bg-emerald-50/60 rounded-xl border border-slate-200/70 text-center transition-colors text-xs"
-              >
-                <div className="font-bold text-slate-700 text-[11px]">
-                  {day.date.includes('-') ? day.date.slice(5) : day.date}
-                </div>
-                <div className="text-[11px] text-slate-500 my-1 truncate">
-                  {tWeatherCondition(day.condition, lang)}
-                </div>
-                <div className="font-bold text-slate-900 text-xs">
-                  {Math.round(day.max_temp)}° / <span className="text-slate-400 font-normal">{Math.round(day.min_temp)}°</span>
-                </div>
-                <div className="text-[10px] text-blue-600 font-medium mt-1">
-                  🌧 {day.rain_prob}%
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
