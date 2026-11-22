@@ -90,15 +90,10 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
           <div className="lg:col-span-7 space-y-6">
             <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                    <Layers className="w-4 h-4 text-emerald-600" />
-                    {t.cadastralTitle || "Cadastral Parcel & FMB Boundary"}
-                  </h3>
-                  <p className="text-xs text-slate-500">
-                    {t.cadastralSubtitle || "Interactive GIS layer showing survey perimeter and field centroid"}
-                  </p>
-                </div>
+                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-emerald-600" />
+                  {t.cadastralTitle || "Cadastral Parcel & FMB Boundary"}
+                </h3>
               </div>
               
               <ParcelMap parcel={parcel} lang={lang} />
