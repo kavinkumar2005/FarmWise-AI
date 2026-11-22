@@ -180,9 +180,6 @@ export default function AdvisoryCard({ advisoryData, lang = 'en', onOpenTrace })
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
                 {tStatus(verification?.status, lang) || 'AI சரிபார்க்கப்பட்டது'} ({verification?.score_percentage || 95}% score)
               </span>
-              <span className="text-xs text-slate-500">
-                {t.groundTruthGrounded || "Ground-truth grounded"}
-              </span>
             </div>
           </div>
         </div>

@@ -242,6 +242,7 @@ export default function ParcelMap({ parcel, lang = 'en' }) {
         center={center}
         zoom={16}
         zoomControl={false}
+        attributionControl={false}
         scrollWheelZoom={true}
         doubleClickZoom={true}
         className="w-full h-full"
@@ -253,7 +254,6 @@ export default function ParcelMap({ parcel, lang = 'en' }) {
         {mapType === 'hybrid' && (
           <>
             <TileLayer
-              attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
               url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
               maxZoom={19}
             />
@@ -275,7 +275,6 @@ export default function ParcelMap({ parcel, lang = 'en' }) {
         {/* STREETS: OpenStreetMap with detailed regional towns, villages, and roads */}
         {mapType === 'streets' && (
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             maxZoom={19}
           />
@@ -284,7 +283,6 @@ export default function ParcelMap({ parcel, lang = 'en' }) {
         {/* SATELLITE: Raw high-resolution satellite imagery */}
         {mapType === 'satellite' && (
           <TileLayer
-            attribution='Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
             url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
             maxZoom={19}
           />

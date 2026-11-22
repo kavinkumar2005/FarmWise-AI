@@ -48,6 +48,10 @@
   z-index: 10;
 }
 
+.leaflet-control-attribution {
+  display: none !important;
+}
+
 /* Print Styles for Structured PDF Document */
 @media print {
   @page {
