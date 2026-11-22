@@ -198,7 +198,6 @@ export default function App() {
                 <QuickActionCards
                   lang={lang}
                   onOpenUpload={() => setIsUploadOpen(true)}
-                  onSelectDefaultSurvey={loadParcelAdvisory}
                   onOpenMarket={() => setIsMarketOpen(true)}
                   inline={true}
                 />
