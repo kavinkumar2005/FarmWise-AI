@@ -1,4 +1,14 @@
 import axios from 'axios';
+import { 
+  tCrop, 
+  tStage, 
+  tSoilType, 
+  tSoilRating, 
+  tSoilSentence, 
+  tVillage, 
+  tDistrict, 
+  ensureTamilChatReply 
+} from '../utils/translations';
 
 const RAW_BASE = import.meta.env.VITE_API_BASE_URL || '';
 export const BACKEND_BASE = RAW_BASE.replace(/\/$/, '');
@@ -760,8 +770,8 @@ export function createGroundedAdvisory(surveyNumber, imageFilename = null, query
 }
 
 // ─── DYNAMIC GROUNDED CHATBOT ENGINE (Tamil & English) ───
-export function getGroundedChatReply(message, surveyNumber = "1342") {
-  const isTa = /[\u0B80-\u0BFF]/.test(message);
+export function getGroundedChatReply(message, surveyNumber = "1342", lang = null) {
+  const isTa = (lang === 'ta') || /[\u0B80-\u0BFF]/.test(message);
   const sNo = String(surveyNumber || "1342").replace(/[^a-zA-Z0-9]/g, '');
   const parcel = DEFAULT_PARCELS[sNo] || DEFAULT_PARCELS["1342"];
   const currentCrop = _lastUploadedCropAnalysis?.crop_name || parcel.recorded_crop;
@@ -769,10 +779,22 @@ export function getGroundedChatReply(message, surveyNumber = "1342") {
   const soil = parcel.soil_profile;
   const mLower = String(message || '').toLowerCase();
 
+  // Tamil localized data variables
+  const cropTa = tCrop(currentCrop, 'ta');
+  const stageTa = tStage(currentStage, 'ta');
+  const villageTa = tVillage(parcel.village_name, 'ta');
+  const districtTa = tDistrict(parcel.district, 'ta');
+  const soilTypeTa = tSoilType(soil.soil_type, 'ta');
+  const soilRatingTa = tSoilRating(soil.soil_quality_rating, 'ta');
+  const amendmentTa = tSoilSentence(soil.amendments_needed[0], 'ta');
+  const adjustmentTa = tSoilSentence(soil.fertilizer_adjustments[0], 'ta');
+
   // 1. Greetings (hello, hi, வணக்கம்)
   if (mLower.includes('hello') || mLower.includes('hi') || mLower.includes('hey') || message.includes('வணக்கம்')) {
     if (isTa) {
-      return `வணக்கம் விவசாயி அவர்களே! நான் உங்கள் உழவன் AI வேளாண் ஆலோசகர். உங்கள் நிலப் புல எண் #${sNo} (${parcel.village_name}, ${parcel.district}) விவரங்கள் சரிபார்க்கப்பட்டுள்ளன.\n\n• தற்போதைய பயிர்: ${currentCrop} (${currentStage})\n• மண் வகை: ${soil.soil_type} (pH ${soil.ph})\n\nஉரம், தெளிக்கும் நேரம், பூச்சி மேலாண்மை அல்லது நேரடி சந்தை விலை பற்றி ஏதேனும் கேட்க விரும்புகிறீர்களா?`;
+      return ensureTamilChatReply(
+        `வணக்கம் விவசாயி அவர்களே! நான் உங்கள் பார்ம்வைஸ் AI வேளாண் ஆலோசகர். உங்கள் நிலப் புல எண் #${sNo} (${villageTa}, ${districtTa}) விவரங்கள் சரிபார்க்கப்பட்டுள்ளன.\n\n• தற்போதைய பயிர்: **${cropTa}** (${stageTa})\n• நில மண் வகை: **${soilTypeTa}** (மண் pH ${soil.ph})\n\nஉரம், பூச்சி மேலாண்மை, மருந்து தெளிக்கும் நேரம் அல்லது நேரடி சந்தை விலை பற்றி ஏதேனும் கேட்க விரும்புகிறீர்களா?`
+      );
     }
     return `Hello Farmer! I am your FarmWise AI Agricultural Advisor. For Survey Parcel #${sNo} in ${parcel.village_name}, ${parcel.district}, your crop stand is verified as ${currentCrop} (${currentStage}). How can I assist you with fertilizer schedules, pest scouting, spray windows, or live mandi prices today?`;
   }
@@ -780,21 +802,72 @@ export function getGroundedChatReply(message, surveyNumber = "1342") {
   // 2. Crop Identification Question (என்ன பயிர் / what crop / என்னிடத்தில் என்ன பயிர் உள்ளது)
   if (message.includes('பயிர்') || mLower.includes('what crop') || mLower.includes('which crop') || mLower.includes('identify')) {
     if (isTa) {
-      return `உங்கள் நிலத்தில் (புல எண் #${sNo}, ${parcel.village_name}) கண்டறியப்பட்ட பயிர் விவரம்:\n\n• பயிர் பெயர்: **${currentCrop}**\n• வளர்ச்சி நிலை: **${currentStage}**\n• நில மண் வகை: ${soil.soil_type} (மண் pH ${soil.ph})\n• உர ஏற்பு திறன்: ${soil.fertilizer_efficiency_score}%\n\nகளப் புகைப்பட ஆய்வு மற்றும் தமிழ்நாடு நில வருவாய் ஆவணத்தின்படி உங்கள் பயிர் தழைத்து ஆரோக்கியமாக உள்ளது.`;
+      return ensureTamilChatReply(
+        `உங்கள் நிலத்தில் (புல எண் #${sNo}, ${villageTa}) கண்டறியப்பட்ட பயிர் விவரம்:\n\n• பயிர் பெயர்: **${cropTa}**\n• வளர்ச்சி நிலை: **${stageTa}**\n• நில மண் வகை: **${soilTypeTa}** (மண் pH ${soil.ph})\n• உர ஏற்பு திறன்: **${soil.fertilizer_efficiency_score}%**\n\nகளப் புகைப்பட ஆய்வு மற்றும் தமிழ்நாடு நில வருவாய் ஆவணத்தின்படி உங்கள் பயிர் தழைத்து ஆரோக்கியமாக உள்ளது.`
+      );
     }
     return `Identified crop stand for Survey Parcel #${sNo} (${parcel.village_name}, ${parcel.district}):\n\n• Crop: **${currentCrop}**\n• Growth Stage: **${currentStage}**\n• Soil Series: ${soil.soil_type} (pH ${soil.ph})\n• Fertilizer Uptake Efficiency: ${soil.fertilizer_efficiency_score}%\n\nCanopy vision verification confirms healthy vegetative branching and optimal chlorophyll reflectance.`;
   }
 
-  // 3. Fertilizer / Soil Question (உரம் / fertilizer / urea / dap / potash / npk)
-  if (message.includes('உரம்') || message.includes('மண்') || mLower.includes('fertilizer') || mLower.includes('urea') || mLower.includes('dap') || mLower.includes('npk')) {
+  // 3. Pest & Disease Management Question (பூச்சி / நோய் / புழு / வண்டு / pest / disease)
+  if (message.includes('பூச்சி') || message.includes('நோய்') || message.includes('புழு') || message.includes('வண்டு') || mLower.includes('pest') || mLower.includes('disease') || mLower.includes('insect') || mLower.includes('worm')) {
     if (isTa) {
-      if (message.includes('தென்னை') || mLower.includes('coconut')) {
-        return `தென்காசி மற்றும் சுற்றுவட்டாரப் பகுதிகளுக்கான தென்னை மர உரப் பரிந்துரை (TNAU CPG வழிகாட்டுதல்):\n\n1. ரசாயன உரங்கள் (ஒரு காய்க்கும் மரத்திற்கு / ஆண்டுக்கு):\n• யூரியா: 1.3 கிலோ\n• சூப்பர் பாஸ்பேட் (SSP): 2.0 கிலோ\n• பொட்டாஷ் (MOP): 2.0 கிலோ (கொப்பரை எடை மற்றும் தேங்காய் எண்ணிக்கைக்கு மிகவும் இன்றியமையாதது)\n\n2. இடும் முறை:\n• மரத்தைச் சுற்றி 1.8 மீ (6 அடி) தூரத்தில் வட்டப்பாத்தி அமைத்து உரங்களை இடவும்.\n• ஆண்டுக்கு இருமுறை (ஜூன்-ஜூலை தென்மேற்கு பருவமழை, டிசம்பர்-ஜனவரி வடகிழக்கு பருவமழை) பிரித்து இடவும்.\n\n3. நுண்ணூட்டம்:\n• குரும்பை உதிர்வதைத் தடுக்க ஆண்டுதோறும் 50 கிலோ தொழுவுரம் மற்றும் TNAU தென்னை டானிக் 200 மி.லி வேர் வழியாக செலுத்தவும்.`;
+      if (cropTa.includes('தென்னை') || currentCrop.toLowerCase().includes('coconut')) {
+        return ensureTamilChatReply(
+          `தென்னை பயிருக்கான ஒருங்கிணைந்த பூச்சி மற்றும் நோய் மேலாண்மை (TNAU CPG பரிந்துரை):\n\n1. காண்டாமிருக வண்டு (Rhinoceros Beetle):\n• மரத்தின் நடுக்குருத்தில் மணல் மற்றும் வேப்பங்கொட்டை தூள் (1:1) சமஅளவு கலந்து குருத்து இடுக்குகளில் வைக்கவும்.\n• ரைனோலூர் (Rhino-lure) இனக்கவர்ச்சி பொறி ஏக்கருக்கு 2 வீதம் அமைக்கவும்.\n\n2. சிவப்பு கூன் வண்டு (Red Palm Weevil):\n• வேப்பங்கொட்டை சாறு 5% அல்லது பரிந்துரைக்கப்பட்ட கரைசலை வேர் வழியாக செலுத்தவும்.\n\n3. தஞ்சாவூர் வாடல் நோய் (Thanjavur Wilt):\n• மரத்திற்கு வேப்பம் புண்ணாக்கு 5 கிலோ + டிரைக்கோடெர்மா விரிடி 50 கிராம் இடவும். நோய் தீவிரமானால் 100 மி.லி தண்ணீரில் பரிந்துரைக்கப்பட்ட பூசணக்கொல்லியை வேர் மூலம் செலுத்தவும்.`
+        );
       }
-      if (message.includes('கரும்பு') || mLower.includes('sugarcane')) {
-        return `கரும்பு பயிருக்கான TNAU CPG 2024 உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: நடவு பாரில் 100 கிலோ DAP + 25 கிலோ பொட்டாஷ் (MOP) + 10 டன் மட்கிய தொழுவுரம்.\n2. முதல் மேலுரம் (30-45 ஆம் நாள்): 60 கிலோ வேப்பம்பூசிய யூரியா.\n3. இரண்டாம் மேலுரம் (75-90 ஆம் நாள்): 60 கிலோ யூரியா + 25 கிலோ பொட்டாஷ்.\n4. இறுதி உரம் (120-150 ஆம் நாள்): 30 கிலோ யூரியா இட்டு மண் அணைக்கவும் (Earthing-up).\n\nகரும்பு தண்டு தடிமன் மற்றும் சர்க்கரைச் சத்தை அதிகரிக்க பொட்டாஷ் மிக முக்கியம்.`;
+      if (cropTa.includes('மக்காச்சோளம்') || currentCrop.toLowerCase().includes('maize')) {
+        return ensureTamilChatReply(
+          `மக்காச்சோளத்தில் படைப்புழு (Fall Armyworm) மேலாண்மை:\n\n1. ஆரம்ப நிலை (விதைத்த 15-20 நாட்கள்):\n• ஏக்கருக்கு 5 இனக்கவர்ச்சி பொறி அமைக்கவும்.\n• வேப்பங்கொட்டை கரைசல் (NSKE 5%) அல்லது அசாடிராக்டின் இலைகளில் தெளிக்கவும்.\n\n2. தீவிர தாக்குதல் இருப்பின்:\n• குருத்தில் படும்படி பரிந்துரைக்கப்பட்ட பூச்சிக்கொல்லியை மாலை வேளையில் தெளிக்கவும்.`
+        );
       }
-      return `புல எண் #${sNo} மண் பரிசோதனை அட்டை (SHC #${soil.soil_health_card_id}) மற்றும் TNAU CPG 2024 பரிந்துரை:\n\n1. நில சீரமைப்பு: ${soil.amendments_needed[0]}\n2. அடி உரம்: ${soil.fertilizer_adjustments[0]}\n3. நுண்ணுயிர் உரம்: அசோஸ்பைரில்லம் மற்றும் பாஸ்போபாக்டீரியா தலா 2 கிலோ/ஏக்கர் இட்டு தழை மற்றும் மணிச்சத்து பயன்பாட்டை அதிகரிக்கவும்.\n• மண் தரம்: ${soil.soil_quality_rating}.`;
+      if (cropTa.includes('நெல்') || currentCrop.toLowerCase().includes('rice') || currentCrop.toLowerCase().includes('paddy')) {
+        return ensureTamilChatReply(
+          `நெல் பயிருக்கான பூச்சி மற்றும் நோய் மேலாண்மை:\n\n• தண்டுத்துளைப்பான் & இலைமடக்கு புழு: வேப்பங்கொட்டை சாறு 5% தெளிக்கவும். விளக்கு பொறி அமைத்து தாய் அந்துப்பூச்சிகளைக் கவரவும்.\n• குலை நோய் & இலைக்கருகல்: டிரைசைக்ளோசோல் அல்லது சூடோமோனாஸ் புளோரசன்ஸ் இலைவழியாக தெளிக்கவும்.`
+        );
+      }
+      return ensureTamilChatReply(
+        `பயிர் பாதுகாப்பு ஆலோசனை (${cropTa}):\n\n• இயற்கை முறை: வேப்பங்கொட்டை பருப்பு சாறு (NSKE 5%) இலைவழியாக தெளித்து ஆரம்ப கட்ட பூச்சிகளைக் கட்டுப்படுத்தவும்.\n• மஞ்சள் மற்றும் நீல ஒட்டும் பொறிகளை ஏக்கருக்கு 10 அமைத்து உறிஞ்சும் பூச்சிகளைக் கண்காணிக்கவும்.\n• ஏதேனும் தீவிர அறிகுறிகள் இருப்பின் பயிரின் புகைப்படத்தை பதிவேற்றி கூடுதல் ஆலோசனை பெறலாம்.`
+      );
+    }
+  }
+
+  // 4. Irrigation / Water Question (பாசனம் / தண்ணீர் / நீர் / water / irrigation)
+  if (message.includes('பாசனம்') || message.includes('தண்ணீர்') || message.includes('நீர்') || mLower.includes('water') || mLower.includes('irrigation')) {
+    if (isTa) {
+      if (cropTa.includes('தென்னை') || currentCrop.toLowerCase().includes('coconut')) {
+        return ensureTamilChatReply(
+          `தென்னை மர பாசன வழிகாட்டுதல் (${villageTa} பகுதி):\n\n• சொட்டு நீர் பாசனம் மூலம் ஒரு காய்க்கும் மரத்திற்கு நாள் ஒன்றுக்கு 60 முதல் 80 லிட்டர் தண்ணீர் போதுமானது.\n• வட்டப்பாத்தியில் ஈரப்பதத்தைப் பாதுகாக்க காய்ந்த தென்னை மட்டைகள் அல்லது சோகை இலைகளை 1.8 மீ வட்டத்திற்கு மூடாக்காக இடவும்.\n• மழைக்காலத்தில் மரத்தைச் சுற்றி தண்ணீர் தேங்காமல் வடிகால் வசதி உறுதி செய்யவும்.`
+        );
+      }
+      return ensureTamilChatReply(
+        `${cropTa} பாசன வழிகாட்டுதல்:\n\n• நிலத்தில் இயற்கை ஈரப்பதம் போதுமான அளவு உள்ளதால் மிதமான பாசனம் பரிந்துரைக்கப்படுகிறது.\n• பூக்கும் பருவம் மற்றும் காய்/கதிர் பிடிக்கும் முக்கியமான தருணங்களில் நீர் பற்றாக்குறை ஏற்படாமல் பார்த்துக் கொள்ளவும்.`
+      );
+    }
+  }
+
+  // 5. Fertilizer / Soil Question (உரம் / fertilizer / urea / dap / potash / npk)
+  if (message.includes('உரம்') || message.includes('மண்') || mLower.includes('fertilizer') || mLower.includes('urea') || mLower.includes('dap') || mLower.includes('npk') || mLower.includes('potash')) {
+    if (isTa) {
+      if (message.includes('தென்னை') || mLower.includes('coconut') || cropTa.includes('தென்னை') || currentCrop.toLowerCase().includes('coconut')) {
+        return ensureTamilChatReply(
+          `${districtTa} மற்றும் சுற்றுவட்டாரப் பகுதிகளுக்கான தென்னை மர உரப் பரிந்துரை (TNAU CPG வழிகாட்டுதல்):\n\n1. ரசாயன உரங்கள் (ஒரு காய்க்கும் மரத்திற்கு / ஆண்டுக்கு):\n• யூரியா: 1.3 கிலோ\n• சூப்பர் பாஸ்பேட் (SSP): 2.0 கிலோ\n• பொட்டாஷ் (MOP): 2.0 கிலோ (கொப்பரை எடை மற்றும் தேங்காய் எண்ணிக்கைக்கு மிகவும் இன்றியமையாதது)\n\n2. இடும் முறை:\n• மரத்தைச் சுற்றி 1.8 மீ (6 அடி) தூரத்தில் வட்டப்பாத்தி அமைத்து உரங்களை இடவும்.\n• ஆண்டுக்கு இருமுறை (ஜூன்-ஜூலை தென்மேற்கு பருவமழை, டிசம்பர்-ஜனவரி வடகிழக்கு பருவமழை) பிரித்து இடவும்.\n\n3. நுண்ணூட்டம்:\n• குரும்பை உதிர்வதைத் தடுக்க ஆண்டுதோறும் 50 கிலோ தொழுவுரம் மற்றும் TNAU தென்னை டானிக் 200 மி.லி வேர் வழியாக செலுத்தவும்.`
+        );
+      }
+      if (message.includes('கரும்பு') || mLower.includes('sugarcane') || cropTa.includes('கரும்பு') || currentCrop.toLowerCase().includes('sugarcane')) {
+        return ensureTamilChatReply(
+          `கரும்பு பயிருக்கான TNAU CPG உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: நடவு பாரில் 100 கிலோ DAP + 25 கிலோ பொட்டாஷ் + 10 டன் மட்கிய தொழுவுரம்.\n2. முதல் மேலுரம் (30-45 ஆம் நாள்): 60 கிலோ வேப்பம்பூசிய யூரியா.\n3. இரண்டாம் மேலுரம் (75-90 ஆம் நாள்): 60 கிலோ யூரியா + 25 கிலோ பொட்டாஷ்.\n4. இறுதி உரம் (120-150 ஆம் நாள்): 30 கிலோ யூரியா இட்டு மண் அணைக்கவும் (Earthing-up).\n\nகரும்பு தண்டு தடிமன் மற்றும் சர்க்கரைச் சத்தை அதிகரிக்க பொட்டாஷ் மிக முக்கியம்.`
+        );
+      }
+      if (message.includes('நெல்') || mLower.includes('paddy') || mLower.includes('rice') || cropTa.includes('நெல்') || currentCrop.toLowerCase().includes('rice') || currentCrop.toLowerCase().includes('paddy')) {
+        return ensureTamilChatReply(
+          `நெல் பயிருக்கான TNAU CPG உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: 35 கிலோ DAP + 15 கிலோ பொட்டாஷ் + 10 கிலோ துத்தநாக சல்பேட்.\n2. முதல் மேலுரம் (தூர்கட்டும் பருவம்): 30 கிலோ வேப்பம்பூசிய யூரியா.\n3. இரண்டாம் மேலுரம் (கதிர் உருவாகும் பருவம்): 25 கிலோ யூரியா + 15 கிலோ பொட்டாஷ்.\n\nஅடி உரமாக துத்தநாக சல்பேட் இடுவது இலை வெளிரலைத் தடுத்து விளைச்சலை 15% அதிகரிக்கும்.`
+        );
+      }
+      return ensureTamilChatReply(
+        `புல எண் #${sNo} மண் பரிசோதனை அட்டை (SHC #${soil.soil_health_card_id}) மற்றும் TNAU CPG பரிந்துரை:\n\n1. நில சீரமைப்பு: ${amendmentTa}\n2. அடி உரம்: ${adjustmentTa}\n3. நுண்ணுயிர் உரம்: அசோஸ்பைரில்லம் மற்றும் பாஸ்போபாக்டீரியா தலா 2 கிலோ/ஏக்கர் இட்டு தழை மற்றும் மணிச்சத்து பயன்பாட்டை அதிகரிக்கவும்.\n• மண் தரம்: ${soilRatingTa}.`
+      );
     }
     if (mLower.includes('coconut')) {
       return `TNAU Recommended Fertilizer Schedule for Bearing Coconut Palms (Tenkasi / Sivagiri Region):\n\n1. Chemical Nutrients (Per Palm / Year):\n• Urea: 1.3 kg\n• Single Super Phosphate (SSP): 2.0 kg\n• Muriate of Potash (MOP): 2.0 kg (critical for nut size and copra yield)\n\n2. Application Timing & Method:\n• Form a circular basin 1.8 m (6 ft) around the trunk.\n• Apply in two split doses: June-July (South-West Monsoon) and December-January (North-East Monsoon).\n\n3. Micronutrient Care:\n• Apply 50 kg well-decomposed FYM annually and root-feed TNAU Coconut Tonic (200 ml tonic + 200 ml water) every 6 months.`;
@@ -802,25 +875,31 @@ export function getGroundedChatReply(message, surveyNumber = "1342") {
     return `TNAU CPG 2024 Soil & Nutrient Schedule for Parcel #${sNo} (Soil Health Card #${soil.soil_health_card_id}):\n\n1. Soil Reclamation: ${soil.amendments_needed[0]}\n2. Basal Dosage: ${soil.fertilizer_adjustments[0]}\n3. Biofertilizer: Co-inoculate with Azospirillum and Phosphobacteria @ 2 kg/acre to boost microbial nutrient solubilization.\n• Rating: ${soil.soil_quality_rating}.`;
   }
 
-  // 4. Market / Price Question (விலை / சந்தை / price / mandi / rate)
-  if (message.includes('விலை') || message.includes('சந்தை') || mLower.includes('price') || mLower.includes('rate') || mLower.includes('mandi') || mLower.includes('market')) {
+  // 6. Market / Price Question (விலை / சந்தை / price / mandi / rate)
+  if (message.includes('விலை') || message.includes('சந்தை') || message.includes('மண்டி') || mLower.includes('price') || mLower.includes('rate') || mLower.includes('mandi') || mLower.includes('market')) {
     if (isTa) {
-      return `தென்காசி மற்றும் கோவில்பட்டி ஒழுங்குமுறை விற்பனைக்கூட நேரடி சந்தை விலை (e-NAM நிலவரம்):\n\n• ${currentCrop}: ₹2,450 - ₹2,850 / குவிண்டால்\n• சந்தை நிலவரம்: நிலையான தேவை மற்றும் சீரான வரத்து உள்ளது. அறுவடைக்கு பின் தரம் பிரித்து விற்பனை செய்தால் கூடுதல் விலை பெறலாம்.`;
+      return ensureTamilChatReply(
+        `${districtTa} மற்றும் கோவில்பட்டி ஒழுங்குமுறை விற்பனைக்கூட நேரடி சந்தை விலை (e-NAM நிலவரம்):\n\n• ${cropTa}: ₹2,450 - ₹2,850 / குவிண்டால்\n• சந்தை நிலவரம்: நிலையான தேவை மற்றும் சீரான வரத்து உள்ளது. அறுவடைக்கு பின் தரம் பிரித்து விற்பனை செய்தால் கூடுதல் விலை பெறலாம்.`
+      );
     }
     return `Live APMC / e-NAM Mandi Market Realization for ${currentCrop}:\n\n• Sivagiri / Tenkasi Benchmark: ₹2,450 - ₹2,850 / quintal\n• Market Trend: Firm with steady arrivals. Grade and dry produce before transport to capture premium prices.`;
   }
 
-  // 5. Weather / Spraying Question (வானிலை / தெளிப்பு / மழை / weather / spray / rain)
-  if (message.includes('வானிலை') || message.includes('தெளிப்பு') || message.includes('மழை') || mLower.includes('weather') || mLower.includes('spray') || mLower.includes('rain')) {
+  // 7. Weather / Spraying Question (வானிலை / தெளிப்பு / மழை / weather / spray / rain)
+  if (message.includes('வானிலை') || message.includes('தெளிப்பு') || message.includes('மழை') || message.includes('காற்று') || mLower.includes('weather') || mLower.includes('spray') || mLower.includes('rain') || mLower.includes('wind')) {
     if (isTa) {
-      return `புல எண் #${sNo} நேரடி வானிலை முன்னறிவிப்பு (ECMWF):\n\n• வெப்பநிலை: 28.5°C | காற்றின் வேகம்: 3.2 கி.மீ/மணி | ஈரப்பதம்: 74%\n• தெளிப்பு அனுமதி: பாதுகாப்பானது (Safe Spray Window). காற்றின் வேகம் குறைவாக உள்ளதால் இலைவழி தெளிப்பு செய்ய உகந்த நேரம்.`;
+      return ensureTamilChatReply(
+        `புல எண் #${sNo} நேரடி வானிலை முன்னறிவிப்பு (ECMWF):\n\n• வெப்பநிலை: 28.5°C | காற்றின் வேகம்: 3.2 கி.மீ/மணி | ஈரப்பதம்: 74%\n• தெளிப்பு அனுமதி: பாதுகாப்பானது (பாதுகாப்பான தெளிப்பு நேரம்). காற்றின் வேகம் குறைவாக உள்ளதால் இலைவழி தெளிப்பு செய்ய உகந்த நேரம்.`
+      );
     }
     return `Live ECMWF Agro-Meteorological Telemetry for Parcel #${sNo}:\n\n• Temperature: 28.5°C | Wind Speed: 3.2 km/h | Humidity: 74%\n• Spray Window: SAFE. Wind speed is well below the 14 km/h drift limit with zero rain forecast for the next 48 hours.`;
   }
 
   // General fallback response
   if (isTa) {
-    return `உழவன் AI ஆலோசனை (புல எண் #${sNo}, ${parcel.village_name}):\nஉங்கள் பயிர்: ${currentCrop} (${currentStage}). மண் வகை: ${soil.soil_type} (pH ${soil.ph}).\n${soil.fertilizer_adjustments[0]}\n\nவிரிவான ஆலோசனைகளுக்கு உரம், மருந்து தெளிக்கும் நேரம் அல்லது சந்தை விலை பற்றி கேளுங்கள்.`;
+    return ensureTamilChatReply(
+      `உழவன் AI ஆலோசனை (புல எண் #${sNo}, ${villageTa}):\n• தற்போதைய பயிர்: **${cropTa}** (${stageTa})\n• நில மண் வகை: **${soilTypeTa}** (மண் pH ${soil.ph})\n• பரிந்துரை: ${adjustmentTa}\n\nஉரம், பூச்சி கட்டுப்பாடு, பாசனம் அல்லது சந்தை விலை பற்றி மேலும் விளக்கம் பெற நீங்கள் கேட்கலாம்.`
+    );
   }
   return `Farmer Advisory for Parcel #${sNo} (${parcel.village_name}):\nYour stand is ${currentCrop} (${currentStage}) on ${soil.soil_type} (pH ${soil.ph}).\n${soil.fertilizer_adjustments[0]}\n\nYou can ask about fertilizer dosages, spray times, or live mandi prices.`;
 }
@@ -1090,10 +1169,16 @@ CONFIDENCE: <0.85 to 0.99>`;
   },
 
   // AI Chatbot with optional photo & multi-turn history
-  async chatAdvisor(message, surveyNumber = null, imageFile = null, history = []) {
+  async chatAdvisor(message, surveyNumber = null, imageFile = null, history = [], lang = 'en') {
     const sNo = surveyNumber || "1342";
     const parcel = DEFAULT_PARCELS[sNo] || DEFAULT_PARCELS["1342"];
     const currentCrop = _lastUploadedCropAnalysis?.crop_name || parcel.recorded_crop;
+    const isTa = (lang === 'ta') || /[\u0B80-\u0BFF]/.test(message);
+    const cropTa = tCrop(currentCrop, 'ta');
+    const stageTa = tStage(_lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage, 'ta');
+    const villageTa = tVillage(parcel.village_name, 'ta');
+    const districtTa = tDistrict(parcel.district, 'ta');
+    const soilTypeTa = tSoilType(parcel.soil_profile.soil_type, 'ta');
 
     // 1. Try local/cloud backend with clean JSON payload (including multi-turn history)
     try {
@@ -1102,14 +1187,14 @@ CONFIDENCE: <0.85 to 0.99>`;
         query: String(message || '').trim(),
         survey_number: sNo,
         history: Array.isArray(history) ? history : [],
-        language: /[\u0B80-\u0BFF]/.test(message) ? 'ta' : 'en',
+        language: isTa ? 'ta' : 'en',
         parcelContext: {
           surveyNumber: sNo,
-          cropName: currentCrop,
-          growthStage: _lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage,
-          village: parcel.village_name || 'Sivagiri',
-          district: parcel.district || 'Tenkasi',
-          soilType: parcel.soil_profile?.soil_type || 'Sandy Loam'
+          cropName: isTa ? cropTa : currentCrop,
+          growthStage: isTa ? stageTa : (_lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage),
+          village: isTa ? villageTa : (parcel.village_name || 'Sivagiri'),
+          district: isTa ? districtTa : (parcel.district || 'Tenkasi'),
+          soilType: isTa ? soilTypeTa : (parcel.soil_profile?.soil_type || 'Sandy Loam')
         }
       };
 
@@ -1121,10 +1206,11 @@ CONFIDENCE: <0.85 to 0.99>`;
       if (res.data) {
         const replyText = res.data.reply || res.data.response || res.data.message || res.data.answer;
         if (replyText && typeof replyText === 'string' && replyText.trim().length > 0) {
+          const finalReply = isTa ? ensureTamilChatReply(replyText.trim()) : replyText.trim();
           return {
             ...res.data,
-            reply: replyText.trim(),
-            response: replyText.trim(),
+            reply: finalReply,
+            response: finalReply,
             model_used: res.data.model_used || res.data.modelUsed || "Ministral-8B + TNAU RAG",
             confidence_score: res.data.confidence_score || res.data.confidence || 0.97
           };
@@ -1138,8 +1224,20 @@ CONFIDENCE: <0.85 to 0.99>`;
     const geminiApiKey = getGeminiApiKey();
     if (geminiApiKey) {
       try {
-        const isTa = /[\u0B80-\u0BFF]/.test(message);
-        const systemPrompt = `You are FarmWise AI (உழவன் AI), an expert agricultural advisory agent specialized in South Indian agriculture, TNAU crop production guidelines, and Tamil Nadu farming practices.
+        const systemPrompt = isTa
+          ? `நீங்கள் உழவன் AI (FarmWise AI) - தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழக (TNAU) பயிர் உற்பத்தி கையேடு மற்றும் தென்னிந்திய விவசாய நடைமுறைகளில் நிபுணத்துவம் பெற்ற முன்னணி வேளாண்மை AI ஆலோசகர்.
+தற்போதைய கள & நில விவரங்கள்:
+- புல எண்: #${sNo} (${villageTa}, ${districtTa})
+- தற்போதைய பயிர்: ${cropTa} (${stageTa})
+- மண் வகை: ${soilTypeTa} (மண் pH ${parcel.soil_profile.ph})
+
+விவசாயியின் கேள்விக்கு முழுமையான, துல்லியமான, பரிவுணர்வுடன் கூடிய எளிய ஆலோசனையை வழங்கவும்.
+முக்கியமான கட்டளை (Strict Language Requirement):
+விவசாயி தமிழில் தொடர்பு கொண்டுள்ளார். எனவே உங்கள் முழு பதிலும் 100% தூய, எளிய தமிழில் மட்டுமே இருக்க வேண்டும்!
+- எக்காரணத்தைக் கொண்டும் பயிர் பெயர்கள் (எ.கா: தென்னை, நெல், மக்காச்சோளம்), வளர்ச்சி நிலைகள், மண் வகைகள் அல்லது ஊர் பெயர்களை ஆங்கிலத்தில் எழுதக் கூடாது.
+- எந்த ஆங்கில வார்த்தைகளையும் (Coconut, Full Growth, Laterite Loamy Sand, Sivagiri போன்றவை) தமிழில் கலந்து எழுதக் கூடாது.
+- தேவையான தகவல்களை எளிய தமிழில் புல்லட் புள்ளிகளுடன் தெளிவாக வழங்கவும்.`
+          : `You are FarmWise AI, an expert agricultural advisory agent specialized in South Indian agriculture, TNAU crop production guidelines, and Tamil Nadu farming practices.
 Current Field & Land Context:
 - Survey Parcel: #${sNo} (${parcel.village_name}, ${parcel.district})
 - Current Stand Crop: ${currentCrop} (${_lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage})
@@ -1147,7 +1245,6 @@ Current Field & Land Context:
 
 Answer the farmer's question thoroughly, accurately, and compassionately based on TNAU recommendations.
 Remember previous conversation context and answer follow-up questions accurately.
-If the question is in Tamil, reply in clear, professional, friendly Tamil with bullet points.
 If the question is in English, reply in English.`;
 
         // Format multi-turn conversation contents for Gemini
@@ -1186,21 +1283,22 @@ If the question is in English, reply in English.`;
 
         const geminiReply = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (geminiReply && geminiReply.trim().length > 0) {
+          const finalGeminiReply = isTa ? ensureTamilChatReply(geminiReply.trim()) : geminiReply.trim();
           return {
-            reply: geminiReply.trim(),
-            response: geminiReply.trim(),
+            reply: finalGeminiReply,
+            response: finalGeminiReply,
             model_used: "Gemini 3.5 Flash-Lite + TNAU RAG Live",
             confidence_score: 0.98,
             sources: ["TNAU Crop Production Guide 2024", "Open-Meteo Agro-Met", "eNAM APMC Mandi"],
             crop_analysis: {
-              crop_name: currentCrop,
+              crop_name: isTa ? cropTa : currentCrop,
               model_attribution: "Gemini 3.5 Flash-Lite + TNAU RAG Live"
             },
             grounding: {
               survey_number: sNo,
-              soil_type: parcel.soil_profile.soil_type,
+              soil_type: isTa ? soilTypeTa : parcel.soil_profile.soil_type,
               ph: parcel.soil_profile.ph,
-              recommendation: parcel.soil_profile.fertilizer_adjustments[0]
+              recommendation: isTa ? tSoilSentence(parcel.soil_profile.fertilizer_adjustments[0], 'ta') : parcel.soil_profile.fertilizer_adjustments[0]
             }
           };
         }
@@ -1210,23 +1308,24 @@ If the question is in English, reply in English.`;
     }
 
     // 3. High-Fidelity Grounded Conversational Advisor Engine (Fail-safe)
-    const groundedReply = getGroundedChatReply(message, sNo);
+    const groundedReply = getGroundedChatReply(message, sNo, isTa ? 'ta' : 'en');
+    const finalGroundedReply = isTa ? ensureTamilChatReply(groundedReply) : groundedReply;
 
     return {
-      reply: groundedReply,
-      response: groundedReply,
+      reply: finalGroundedReply,
+      response: finalGroundedReply,
       model_used: "Gemini 3.5 Flash-Lite + TNAU RAG",
       confidence_score: 0.97,
       sources: ["TNAU Crop Production Guide", "Open-Meteo ECMWF", "eNAM Mandi Rates"],
       crop_analysis: {
-        crop_name: currentCrop,
+        crop_name: isTa ? cropTa : currentCrop,
         model_attribution: "Gemini 3.8 Flash + TNAU RAG"
       },
       grounding: {
         survey_number: sNo,
-        soil_type: parcel.soil_profile.soil_type,
+        soil_type: isTa ? soilTypeTa : parcel.soil_profile.soil_type,
         ph: parcel.soil_profile.ph,
-        recommendation: parcel.soil_profile.fertilizer_adjustments[0]
+        recommendation: isTa ? tSoilSentence(parcel.soil_profile.fertilizer_adjustments[0], 'ta') : parcel.soil_profile.fertilizer_adjustments[0]
       }
     };
   },

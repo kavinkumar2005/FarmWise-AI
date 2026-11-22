@@ -76,6 +76,30 @@ function isGreeting(q: string): boolean { return GREETING_RE.test(q.trim()); }
 function isAgriQuery(q: string): boolean { return AGRI_PATTERNS.some(p => p.test(q)); }
 function isExplicitNonAgri(q: string): boolean { return EXPLICIT_NON_AGRI_RE.test(q.trim()); }
 
+function toTamilCrop(crop?: string): string {
+  if (!crop) return 'நெல்';
+  const c = crop.toLowerCase();
+  if (c.includes('coconut')) return 'தென்னை';
+  if (c.includes('paddy') || c.includes('rice')) return 'நெல்';
+  if (c.includes('maize')) return 'மக்காச்சோளம்';
+  if (c.includes('sugarcane')) return 'கரும்பு';
+  if (c.includes('cotton')) return 'பருத்தி';
+  if (c.includes('banana')) return 'வாழை';
+  if (c.includes('groundnut')) return 'நிலக்கடலை';
+  return crop;
+}
+
+function toTamilVillage(village?: string): string {
+  if (!village) return '';
+  const v = village.toLowerCase();
+  if (v.includes('sivagiri')) return 'சிவகிரி';
+  if (v.includes('tenkasi')) return 'தென்காசி';
+  if (v.includes('kovilpatti')) return 'கோவில்பட்டி';
+  if (v.includes('tirunelveli')) return 'திருநெல்வேலி';
+  if (v.includes('sankarankovil')) return 'சங்கரன்கோவில்';
+  return village;
+}
+
 // ---------------------------------------------------------------------------
 
 export class AgriChatbot {
@@ -275,7 +299,7 @@ export class AgriChatbot {
   private handleProcurement(lang: 'ta' | 'en', ctx?: ActiveParcelContext, startTime: number = Date.now()): ChatResponse {
     const isTa = lang === 'ta';
     const contextPrefix = ctx?.surveyNumber
-      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${ctx.village || ''}), பயிர்: ${ctx.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
+      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${toTamilVillage(ctx.village)}), பயிர்: ${toTamilCrop(ctx.cropName)}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
       : '';
     const procReply = contextPrefix + (isTa
       ? '**அங்கீகரிக்கப்பட்ட உழவர் இடுபொருள் கொள்முதல் மையங்கள்**\n\nதரமான சான்று பெற்ற உரங்கள், விதைகள் மற்றும் பயிர் பாதுகாப்பு மருந்துகளை பின்வரும் அரசு அங்கீகாரம் பெற்ற மையங்களில் பெறலாம்:\n1. **தொடக்க வேளாண்மை கூட்டுறவு கடன் சங்கம் (PACCS)**: மானிய விலையிலான வேப்பம்பூசப்பட்ட யூரியா, டிஏபி மற்றும் பொட்டாஷ் உரம்.\n2. **வட்டார வேளாண் விரிவாக்க மையம் (AEC Depot)**: அரசு சான்று பெற்ற தரமான விதைகள் மற்றும் உயிர் உரங்கள்.\n3. **அரசு உரிமம் பெற்ற வேளாண் விற்பனையாளர்கள் (Licensed Dealers)**: பூச்சிக்கொல்லிகளை வாங்கும் போது எப்போதும் அரசு உரிமம் உள்ள கடைகளில் அசல் ரசீது மற்றும் காலாவதி தேதியைச் சரிபார்த்து வாங்கவும்.'
@@ -292,7 +316,7 @@ export class AgriChatbot {
   private handleMarketInquiry(lang: 'ta' | 'en', ctx?: ActiveParcelContext, startTime: number = Date.now()): ChatResponse {
     const isTa = lang === 'ta';
     const contextPrefix = ctx?.surveyNumber
-      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${ctx.village || ''}), பயிர்: ${ctx.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
+      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${toTamilVillage(ctx.village)}), பயிர்: ${toTamilCrop(ctx.cropName)}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
       : '';
     const marketReply = contextPrefix + (isTa
       ? '**சந்தை விலை மற்றும் மண்டி நிலவரம்**\n\nதினசரி காய்கறி மற்றும் பயிர் சந்தை விலைகள் (உழவர் சந்தை / e-NAM மண்டி) உள்ளூர் வரத்து அடிப்படையில் தினமும் மாறுபடும். தற்போதைய நேரடி கொள்முதல் விலைகளை அறிய உங்கள் அருகிலுள்ள ஒழுங்குமுறை விற்பனைக் கூடம் (Regulated Market Committee) அல்லது உழவர் சந்தையைத் தொடர்பு கொள்ளவும்.'
@@ -307,7 +331,7 @@ export class AgriChatbot {
   }
 
   private greetingReply(lang: 'ta' | 'en', ctx?: ActiveParcelContext): string {
-    const crop = ctx?.cropName ? (lang === 'ta' ? ` (பயிர்: ${ctx.cropName})` : ` (Crop: ${ctx.cropName})`) : '';
+    const crop = ctx?.cropName ? (lang === 'ta' ? ` (பயிர்: ${toTamilCrop(ctx.cropName)})` : ` (Crop: ${ctx.cropName})`) : '';
     const survey = ctx?.surveyNumber ? (lang === 'ta' ? `, புல எண்: ${ctx.surveyNumber}` : `, Survey: ${ctx.surveyNumber}`) : '';
     if (lang === 'ta') {
       return `வணக்கம்! நான் FarmwiseAI வேளாண்மை உதவியாளர்${crop}${survey}. 🌾\n\nகீழ்க்கண்டவற்றை நான் உதவ முடியும்:\n• பயிர் நோய்கள் மற்றும் பூச்சி மேலாண்மை\n• உர அளவு மற்றும் பயன்பாட்டு அட்டவணை\n• பாசன திட்டமிடல்\n• வானிலை & தெளிப்பு நேரம்\n• அரசு திட்டங்கள் (PMKSY, PM-KISAN)\n\nநீங்கள் என்ன அறிய விரும்புகிறீர்கள்?`;
@@ -337,7 +361,7 @@ export class AgriChatbot {
   ): string {
     const isTa = lang === 'ta';
     const contextPrefix = ctx?.surveyNumber
-      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${ctx.village || ''}), பயிர்: ${ctx.cropName || 'நெல்'}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
+      ? (isTa ? `[புல எண்: ${ctx.surveyNumber} (${toTamilVillage(ctx.village)}), பயிர்: ${toTamilCrop(ctx.cropName)}]:\n\n` : `[Survey No: ${ctx.surveyNumber} (${ctx.village || ''}), Crop: ${ctx.cropName || 'Paddy'}]:\n\n`)
       : '';
 
     if (chunks.length === 0) {

@@ -667,3 +667,157 @@ export function tSoilSentence(text, lang = 'en') {
   }
   return cleanEnglishText(text);
 }
+
+// ─── Village & District Translations ───
+export const VILLAGES_TA = {
+  "Sivagiri": "சிவகிரி",
+  "Kovilpatti": "கோவில்பட்டி",
+  "Vasudevanallur": "வாசுதேவநல்லூர்",
+  "Sankarankovil": "சங்கரன்கோவில்",
+  "Tenkasi": "தென்காசி",
+  "Tirunelveli": "திருநெல்வேலி",
+  "Kadayanallur": "கடையநல்லூர்",
+  "Ambasamudram": "அம்பாசமுத்திரம்",
+  "Alangulam": "ஆலங்குளம்",
+  "Rajapalayam": "ராஜபாளையம்"
+};
+
+export const DISTRICTS_TA = {
+  "Tenkasi": "தென்காசி",
+  "Tirunelveli": "திருநெல்வேலி",
+  "Virudhunagar": "விருதுநகர்",
+  "Thoothukudi": "தூத்துக்குடி",
+  "Madurai": "மதுரை"
+};
+
+export function tVillage(name, lang = 'en') {
+  if (!name) return '';
+  if (lang === 'ta') {
+    return VILLAGES_TA[name] || name;
+  }
+  return name;
+}
+
+export function tDistrict(name, lang = 'en') {
+  if (!name) return '';
+  if (lang === 'ta') {
+    return DISTRICTS_TA[name] || name;
+  }
+  return name;
+}
+
+// ─── Comprehensive Tamil Chat Sanitizer & Translator ───
+export function ensureTamilChatReply(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  let out = text;
+  
+  const replacements = [
+    // Locations
+    [/\bSivagiri\b/gi, 'சிவகிரி'],
+    [/\bTenkasi\b/gi, 'தென்காசி'],
+    [/\bTirunelveli\b/gi, 'திருநெல்வேலி'],
+    [/\bKovilpatti\b/gi, 'கோவில்பட்டி'],
+    [/\bSankarankovil\b/gi, 'சங்கரன்கோவில்'],
+    [/\bRajapalayam\b/gi, 'ராஜபாளையம்'],
+    [/\bVasudevanallur\b/gi, 'வாசுதேவநல்லூர்'],
+    [/\bKadayanallur\b/gi, 'கடையநல்லூர்'],
+    [/\bAmbasamudram\b/gi, 'அம்பாசமுத்திரம்'],
+    [/\bAlangulam\b/gi, 'ஆலங்குளம்'],
+    
+    // Growth Stages (compound phrases first)
+    [/\bFull\s*Growth\b/gi, 'முழு வளர்ச்சிப் பருவம் (காய்த்தல்)'],
+    [/\bBearing\s*\/\s*Mature\s*Stage\b/gi, 'காய்க்கும் / முதிர்ச்சி நிலை'],
+    [/\bBearing\s*Stage\b/gi, 'காய்த்தல் நிலை'],
+    [/\bMature\s*Stage\b/gi, 'முதிர்ச்சி நிலை'],
+    [/\bGrand\s*Growth\s*(&|and)\s*Yield\b/gi, 'தீவிர வளர்ச்சி மற்றும் மகசூல் பருவம்'],
+    [/\bGrand\s*Growth\b/gi, 'தீவிர வளர்ச்சிப் பருவம்'],
+    [/\bVegetative\s*Stage\b/gi, 'இலைவளர்ச்சிப் பருவம்'],
+    [/\bVegetation\b/gi, 'இலைவளர்ச்சிப் பருவம்'],
+    [/\bTillering\s*Stage\b/gi, 'தூர்கட்டும் பருவம்'],
+    [/\bTillering\b/gi, 'தூர்கட்டும் பருவம்'],
+    [/\bFlowering\s*Stage\b/gi, 'பூக்கும் பருவம்'],
+    [/\bFlowering\b/gi, 'பூக்கும் பருவம்'],
+    [/\bHarvesting\s*Stage\b/gi, 'அறுவடைப் பருவம்'],
+    [/\bHarvesting\b/gi, 'அறுவடைப் பருவம்'],
+    [/\bNursery\s*Stage\b/gi, 'நாற்றங்கால் பருவம்'],
+    [/\bSeedling\s*Stage\b/gi, 'நாற்றுப் பருவம்'],
+    
+    // Crops
+    [/\bCoconut\b/gi, 'தென்னை'],
+    [/\bRice\s*\(Paddy\)\b/gi, 'நெல்'],
+    [/\bPaddy\b/gi, 'நெல்'],
+    [/\bRice\b/gi, 'நெல்'],
+    [/\bMaize\b/gi, 'மக்காச்சோளம்'],
+    [/\bSugarcane\b/gi, 'கரும்பு'],
+    [/\bCotton\b/gi, 'பருத்தி'],
+    [/\bBanana\b/gi, 'வாழை'],
+    [/\bGroundnut\b/gi, 'நிலக்கடலை'],
+    [/\bPeanut\b/gi, 'நிலக்கடலை'],
+    [/\bRed\s*Gram\b/gi, 'துவரை'],
+    [/\bPigeon\s*Pea\b/gi, 'துவரை'],
+    [/\bBlack\s*Gram\b/gi, 'உளுந்து'],
+    [/\bGreen\s*Gram\b/gi, 'பாசிப்பயறு'],
+    [/\bChilli\b/gi, 'மிளகாய்'],
+    [/\bChillies\b/gi, 'மிளகாய்'],
+    [/\bTomato\b/gi, 'தக்காளி'],
+    [/\bMillets\b/gi, 'சிறுதானியங்கள்'],
+    [/\bSorghum\b/gi, 'சோளம்'],
+    [/\bPearl\s*Millet\b/gi, 'கம்பு'],
+    [/\bFinger\s*Millet\b/gi, 'கேழ்வரகு'],
+    
+    // Soils (compound names first)
+    [/\bLaterite\s*Loamy\s*Sand\b/gi, 'செம்பொறை சரளை மண்'],
+    [/\bCalcareous\s*Alkaline\s*Loam\b/gi, 'சுண்ணாம்பு கலந்த காரக் களிமண்'],
+    [/\bRed\s*Loamy\s*Soil\b/gi, 'செம்மண்'],
+    [/\bDeep\s*Black\s*Cotton\s*Soil\b/gi, 'கரிசல் மண்'],
+    [/\bBlack\s*Cotton\s*Soil\b/gi, 'கரிசல் மண்'],
+    [/\bClayey\s*Alluvial\s*Soil\b/gi, 'வண்டல் மண்'],
+    [/\bSandy\s*Clay\s*Loam\b/gi, 'மணல் கலந்த களிமண்'],
+    [/\bGravelly\s*Loam\b/gi, 'சரளை கலந்த களிமண்'],
+    [/\bMedium\s*Loam\b/gi, 'நடுத்தர களிமண்'],
+    [/\bSilty\s*Clay\s*Loam\b/gi, 'வண்டல் களிமண்'],
+    
+    // Soil Quality Ratings
+    [/\bAcidic\s*Laterite\s*-\s*Requires\s*Dolomite\s*\(Grade\s*C\)\b/gi, 'அமில செம்பொறை மண் - டோலமைட் தேவை (தரம் C)'],
+    [/\bCalcareous\s*Alkaline\s*-\s*Requires\s*Gypsum\s*\(Grade\s*C\+\)\b/gi, 'சுண்ணாம்பு கார மண் - ஜிப்சம் தேவை (தரம் C+)'],
+    [/\bHigh\s*Productivity\s*\(Grade\s*A\)\b/gi, 'அதிக உற்பத்தித் திறன் (தரம் A)'],
+    [/\bGood\s*Fertility\s*\(Grade\s*B\+\)\b/gi, 'நல்ல மண்வளம் (தரம் B+)'],
+    [/\bSuperior\s*Fertility\s*\(Grade\s*A\+\)\b/gi, 'சிறந்த மண்வளம் (தரம் A+)'],
+    
+    // Fertilizers & Technical Terms
+    [/\bUrea\b/gi, 'யூரியா'],
+    [/\bPotash\b/gi, 'பொட்டாஷ்'],
+    [/\bSingle\s*Super\s*Phosphate\b/gi, 'சூப்பர் பாஸ்பேட் (SSP)'],
+    [/\bMuriate\s*of\s*Potash\b/gi, 'பொட்டாஷ் (MOP)'],
+    [/\bRock\s*Phosphate\b/gi, 'பாறை பாஸ்பேட்'],
+    [/\bAzospirillum\b/gi, 'அசோஸ்பைரில்லம்'],
+    [/\bPhosphobacteria\b/gi, 'பாஸ்போபாக்டீரியா'],
+    [/\bFarm\s*Yard\s*Manure\b/gi, 'தொழுவுரம்'],
+    [/\bFYM\b/g, 'தொழுவுரம்'],
+    [/\bDolomite\b/gi, 'டோலமைட்'],
+    [/\bGypsum\b/gi, 'ஜிப்சம்'],
+    [/\bZinc\s*Sulphate\b/gi, 'துத்தநாக சல்பேட் (ZnSO4)'],
+    [/\bNeem-Coated\s*Urea\b/gi, 'வேப்பம்பூசிய யூரியா'],
+    [/\bTNAU\s*Coconut\s*Tonic\b/gi, 'TNAU தென்னை டானிக்'],
+    
+    // Units & Common terms
+    [/\bSafe\s*Spray\s*Window\b/gi, 'பாதுகாப்பான தெளிப்பு நேரம்'],
+    [/\bSafe\s*window\b/gi, 'பாதுகாப்பான நேரம்'],
+    [/\bSafe\b/gi, 'பாதுகாப்பானது'],
+    [/\bper\s*Quintal\b/gi, 'ஒரு குவிண்டாலுக்கு'],
+    [/\b\/Quintal\b/gi, '/ குவிண்டால்'],
+    [/\bQuintal\b/gi, 'குவிண்டால்'],
+    [/\bper\s*acre\b/gi, 'ஏக்கருக்கு'],
+    [/\b\/acre\b/gi, '/ஏக்கர்'],
+    [/\bkg\/acre\b/gi, 'கிலோ/ஏக்கர்'],
+    [/\btonnes\/acre\b/gi, 'டன்/ஏக்கர்'],
+    [/\bCrop\s*Production\s*Guide\b/gi, 'பயிர் உற்பத்தி வழிகாட்டி']
+  ];
+  
+  for (const [pattern, replacement] of replacements) {
+    out = out.replace(pattern, replacement);
+  }
+  
+  return out;
+}

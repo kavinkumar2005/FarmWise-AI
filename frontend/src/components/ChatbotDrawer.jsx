@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { X, Send, Bot, Camera, Loader2, Mic, MicOff, Globe, RotateCcw, Volume2, VolumeX } from 'lucide-react';
 import { api } from '../services/api';
+import { ensureTamilChatReply } from '../utils/translations';
 
 const QUICK_PROMPTS = [
   "What fertilizer is best for coconut palms in Tenkasi?",
@@ -199,11 +200,15 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
 
   const cleanDisplayText = (text) => {
     if (!text) return '';
-    return text
+    let cleaned = text
       .replace(/^#{1,6}\s*/gm, '')
       .replace(/\*{1,3}([^\*]+)\*{1,3}/g, '$1')
       .replace(/^[-*_]{3,}$/gm, '')
       .trim();
+    if (lang === 'ta' || /[\u0B80-\u0BFF]/.test(cleaned)) {
+      cleaned = ensureTamilChatReply(cleaned);
+    }
+    return cleaned;
   };
 
   // ─── Image helpers ─────────────────────────────────────────────────────────
@@ -228,7 +233,7 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
 
     const userMsg = {
       sender: 'user',
-      text: queryText || 'Uploaded field photograph for multimodal diagnosis.',
+      text: queryText || (lang === 'ta' ? 'களப் புகைப்படம் ஆய்வுக்காக பதிவேற்றப்பட்டது' : 'Uploaded field photograph for multimodal diagnosis.'),
       image: imagePreview,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -245,18 +250,23 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
       }));
 
       const res = await api.chatAdvisor(
-        queryText || 'Analyze this crop image',
+        queryText || (lang === 'ta' ? 'இந்த பயிர் புகைப்படத்தை ஆய்வு செய்யவும்' : 'Analyze this crop image'),
         activeParcel?.survey_number || null,
         selectedImage,
-        chatHistory
+        chatHistory,
+        lang
       );
 
       const rawText = res.reply || res.response || res.message || res.answer || (typeof res === 'string' ? res : '');
       const defaultTamil = `வணக்கம் விவசாயி அவர்களே! புல எண் #${activeParcel?.survey_number || 1342} விவரங்கள் பெறப்பட்டுள்ளன. பயிர் வளர்ச்சி, உரம் அல்லது சந்தை விலை பற்றி கேளுங்கள்.`;
       const defaultEnglish = `Hello Farmer! For Survey Parcel #${activeParcel?.survey_number || 1342}, I am ready to answer your agronomic, fertilizer, weather, or market pricing questions.`;
-      const finalText = (rawText && typeof rawText === 'string' && rawText.trim().length > 0)
+      let finalText = (rawText && typeof rawText === 'string' && rawText.trim().length > 0)
         ? rawText.trim()
         : (lang === 'ta' ? defaultTamil : defaultEnglish);
+
+      if (lang === 'ta' || /[\u0B80-\u0BFF]/.test(finalText)) {
+        finalText = ensureTamilChatReply(finalText);
+      }
 
       const botMsg = {
         sender: 'bot',
@@ -571,14 +581,14 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
         {isLoading && (
           <div className="flex items-center gap-2 p-3 bg-white rounded-2xl border border-slate-200 w-fit text-xs text-slate-600 shadow-2xs">
             <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
-            <span>Agent cluster is reasoning across models &amp; tools...</span>
+            <span>{lang === 'ta' ? 'AI ஆலோசகர் ஆய்வு செய்கிறார்...' : 'Agent cluster is reasoning across models & tools...'}</span>
           </div>
         )}
 
         {isTranscribing && (
           <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-2xl border border-amber-200 w-fit text-xs text-amber-700">
             <Loader2 className="w-4 h-4 animate-spin" />
-            <span>Transcribing audio via Groq Whisper...</span>
+            <span>{lang === 'ta' ? 'குரல் பதிவு உரையாக மாற்றப்படுகிறது...' : 'Transcribing audio via Groq Whisper...'}</span>
           </div>
         )}
 
