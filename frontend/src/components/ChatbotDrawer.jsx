@@ -47,6 +47,8 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [currentlySpeakingIdx, setCurrentlySpeakingIdx] = useState(null);
   const utteranceRef = useRef(null);
+  const audioRef = useRef(null);
+  const audioQueueRef = useRef([]);
 
   useEffect(() => {
     if (propLang) {
@@ -67,6 +69,20 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
         window.speechSynthesis.cancel();
       };
     }
+  }, []);
+
+  // Cleanup audio on unmount
+  useEffect(() => {
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      audioQueueRef.current = [];
+    };
   }, []);
 
   // Update initial message when activeParcel or lang changes if only 1 message
@@ -102,8 +118,75 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    audioQueueRef.current = [];
     setIsSpeaking(false);
     setCurrentlySpeakingIdx(null);
+  }, []);
+
+  const playTamilAudioFallback = useCallback((text, msgIdx) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    audioQueueRef.current = [];
+
+    // Split text into speech chunks (max ~110 chars for Google Translate TTS API)
+    const rawParts = text
+      .split(/([,.;\n!?]+)/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
+
+    const chunks = [];
+    let cur = '';
+    for (const p of rawParts) {
+      if ((cur + ' ' + p).length < 110) {
+        cur = cur ? (cur + ' ' + p) : p;
+      } else {
+        if (cur) chunks.push(cur);
+        cur = p;
+      }
+    }
+    if (cur) chunks.push(cur);
+
+    if (chunks.length === 0) return;
+
+    audioQueueRef.current = chunks;
+    setIsSpeaking(true);
+    setCurrentlySpeakingIdx(msgIdx);
+
+    const playNext = () => {
+      if (audioQueueRef.current.length === 0) {
+        setIsSpeaking(false);
+        setCurrentlySpeakingIdx(null);
+        audioRef.current = null;
+        return;
+      }
+
+      const chunkText = audioQueueRef.current.shift();
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&tl=ta&client=tw-ob&q=${encodeURIComponent(chunkText)}`;
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        playNext();
+      };
+
+      audio.onerror = () => {
+        playNext();
+      };
+
+      audio.play().catch(err => {
+        console.warn('[Audio TTS] Autoplay notice:', err);
+        setIsSpeaking(false);
+        setCurrentlySpeakingIdx(null);
+      });
+    };
+
+    playNext();
   }, []);
 
   const cleanForTTS = (rawText) => {
@@ -121,15 +204,13 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
   };
 
   const speakMessage = useCallback(async (rawText, msgIdx = null) => {
-    if (!('speechSynthesis' in window)) return;
-
     // Toggle off if currently speaking this exact message
     if (isSpeaking && currentlySpeakingIdx === msgIdx) {
       stopSpeaking();
       return;
     }
 
-    window.speechSynthesis.cancel();
+    stopSpeaking();
 
     let textToSpeak = cleanForTTS(rawText);
     if (!textToSpeak) return;
@@ -151,25 +232,39 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
       }
     }
 
+    // Resolve best native voice (e.g. Google Tamil, Microsoft Valluvar, or generic ta-IN)
+    let preferred = null;
+    if ('speechSynthesis' in window) {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices && voices.length > 0) {
+        if (targetLang === 'ta-IN') {
+          preferred = voices.find(v => v.lang === 'ta-IN' || v.lang === 'ta_IN') ||
+                            voices.find(v => v.lang.toLowerCase().startsWith('ta')) ||
+                            voices.find(v => v.name.toLowerCase().includes('tamil'));
+        } else {
+          preferred = voices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN') ||
+                            voices.find(v => v.lang.toLowerCase().startsWith('en'));
+        }
+      }
+    }
+
+    // IF TARGET IS TAMIL AND NO NATIVE TAMIL VOICE IS INSTALLED ON THIS LAPTOP:
+    // Fall back to streaming Tamil audio so English voices don't skip Tamil characters!
+    if (targetLang === 'ta-IN' && !preferred) {
+      playTamilAudioFallback(textToSpeak, msgIdx);
+      return;
+    }
+
+    if (!('speechSynthesis' in window)) {
+      playTamilAudioFallback(textToSpeak, msgIdx);
+      return;
+    }
+
     const utterance = new SpeechSynthesisUtterance(textToSpeak);
     utterance.lang = targetLang;
     utterance.rate = targetLang === 'ta-IN' ? 0.92 : 0.98;
     utterance.pitch = 1.0;
-
-    // Resolve best native voice (e.g. Google Tamil, Microsoft Valluvar, or generic ta-IN)
-    const voices = window.speechSynthesis.getVoices();
-    if (voices && voices.length > 0) {
-      if (targetLang === 'ta-IN') {
-        const preferred = voices.find(v => v.lang === 'ta-IN' || v.lang === 'ta_IN') ||
-                          voices.find(v => v.lang.toLowerCase().startsWith('ta')) ||
-                          voices.find(v => v.name.toLowerCase().includes('tamil'));
-        if (preferred) utterance.voice = preferred;
-      } else {
-        const preferred = voices.find(v => v.lang === 'en-IN' || v.lang === 'en_IN') ||
-                          voices.find(v => v.lang.toLowerCase().startsWith('en'));
-        if (preferred) utterance.voice = preferred;
-      }
-    }
+    if (preferred) utterance.voice = preferred;
 
     utterance.onstart = () => {
       setIsSpeaking(true);
@@ -182,14 +277,18 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
     };
 
     utterance.onerror = (e) => {
-      console.warn('[TTS] Synthesis error:', e);
-      setIsSpeaking(false);
-      setCurrentlySpeakingIdx(null);
+      console.warn('[TTS] Synthesis error, trying audio fallback:', e);
+      if (targetLang === 'ta-IN') {
+        playTamilAudioFallback(textToSpeak, msgIdx);
+      } else {
+        setIsSpeaking(false);
+        setCurrentlySpeakingIdx(null);
+      }
     };
 
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
-  }, [isSpeaking, currentlySpeakingIdx, lang, stopSpeaking]);
+  }, [isSpeaking, currentlySpeakingIdx, lang, stopSpeaking, playTamilAudioFallback]);
 
   const handleResetChat = () => {
     stopSpeaking();

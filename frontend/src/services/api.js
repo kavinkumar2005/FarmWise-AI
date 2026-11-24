@@ -789,6 +789,27 @@ export function getGroundedChatReply(message, surveyNumber = "1342", lang = null
   const amendmentTa = tSoilSentence(soil.amendments_needed[0], 'ta');
   const adjustmentTa = tSoilSentence(soil.fertilizer_adjustments[0], 'ta');
 
+  // Resolve intended crop: prioritize explicit crop mentioned in user query over default parcel crop
+  let targetCrop = '';
+  if (message.includes('தென்னை') || mLower.includes('coconut')) targetCrop = 'coconut';
+  else if (message.includes('நெல்') || mLower.includes('paddy') || mLower.includes('rice')) targetCrop = 'paddy';
+  else if (message.includes('கரும்பு') || mLower.includes('sugarcane')) targetCrop = 'sugarcane';
+  else if (message.includes('மக்காச்சோளம்') || mLower.includes('maize')) targetCrop = 'maize';
+  else if (message.includes('பருத்தி') || mLower.includes('cotton')) targetCrop = 'cotton';
+  else if (message.includes('வாழை') || mLower.includes('banana')) targetCrop = 'banana';
+  else if (message.includes('நிலக்கடலை') || mLower.includes('groundnut') || mLower.includes('peanut')) targetCrop = 'groundnut';
+  else {
+    const c = (currentCrop || '').toLowerCase();
+    if (c.includes('coconut')) targetCrop = 'coconut';
+    else if (c.includes('paddy') || c.includes('rice')) targetCrop = 'paddy';
+    else if (c.includes('sugarcane')) targetCrop = 'sugarcane';
+    else if (c.includes('maize')) targetCrop = 'maize';
+    else if (c.includes('cotton')) targetCrop = 'cotton';
+    else if (c.includes('banana')) targetCrop = 'banana';
+    else if (c.includes('groundnut')) targetCrop = 'groundnut';
+    else targetCrop = 'general';
+  }
+
   // 1. Greetings (hello, hi, வணக்கம்)
   if (mLower.includes('hello') || mLower.includes('hi') || mLower.includes('hey') || message.includes('வணக்கம்')) {
     if (isTa) {
@@ -812,65 +833,126 @@ export function getGroundedChatReply(message, surveyNumber = "1342", lang = null
   // 3. Pest & Disease Management Question (பூச்சி / நோய் / புழு / வண்டு / pest / disease)
   if (message.includes('பூச்சி') || message.includes('நோய்') || message.includes('புழு') || message.includes('வண்டு') || mLower.includes('pest') || mLower.includes('disease') || mLower.includes('insect') || mLower.includes('worm')) {
     if (isTa) {
-      if (cropTa.includes('தென்னை') || currentCrop.toLowerCase().includes('coconut')) {
+      if (targetCrop === 'coconut') {
         return ensureTamilChatReply(
           `தென்னை பயிருக்கான ஒருங்கிணைந்த பூச்சி மற்றும் நோய் மேலாண்மை (TNAU CPG பரிந்துரை):\n\n1. காண்டாமிருக வண்டு (Rhinoceros Beetle):\n• மரத்தின் நடுக்குருத்தில் மணல் மற்றும் வேப்பங்கொட்டை தூள் (1:1) சமஅளவு கலந்து குருத்து இடுக்குகளில் வைக்கவும்.\n• ரைனோலூர் (Rhino-lure) இனக்கவர்ச்சி பொறி ஏக்கருக்கு 2 வீதம் அமைக்கவும்.\n\n2. சிவப்பு கூன் வண்டு (Red Palm Weevil):\n• வேப்பங்கொட்டை சாறு 5% அல்லது பரிந்துரைக்கப்பட்ட கரைசலை வேர் வழியாக செலுத்தவும்.\n\n3. தஞ்சாவூர் வாடல் நோய் (Thanjavur Wilt):\n• மரத்திற்கு வேப்பம் புண்ணாக்கு 5 கிலோ + டிரைக்கோடெர்மா விரிடி 50 கிராம் இடவும். நோய் தீவிரமானால் 100 மி.லி தண்ணீரில் பரிந்துரைக்கப்பட்ட பூசணக்கொல்லியை வேர் மூலம் செலுத்தவும்.`
         );
       }
-      if (cropTa.includes('மக்காச்சோளம்') || currentCrop.toLowerCase().includes('maize')) {
+      if (targetCrop === 'maize') {
         return ensureTamilChatReply(
-          `மக்காச்சோளத்தில் படைப்புழு (Fall Armyworm) மேலாண்மை:\n\n1. ஆரம்ப நிலை (விதைத்த 15-20 நாட்கள்):\n• ஏக்கருக்கு 5 இனக்கவர்ச்சி பொறி அமைக்கவும்.\n• வேப்பங்கொட்டை கரைசல் (NSKE 5%) அல்லது அசாடிராக்டின் இலைகளில் தெளிக்கவும்.\n\n2. தீவிர தாக்குதல் இருப்பின்:\n• குருத்தில் படும்படி பரிந்துரைக்கப்பட்ட பூச்சிக்கொல்லியை மாலை வேளையில் தெளிக்கவும்.`
+          `மக்காச்சோளத்தில் படைப்புழு (Fall Armyworm) மேலாண்மை:\n\n1. ஆரம்ப நிலை (விதைத்த 15-20 நாட்கள்):\n• ஏக்கருக்கு 5 இனக்கவர்ச்சி பொறி அமைக்கவும்.\n• வேப்பங்கொட்டை கரைசல் (NSKE 5%) அல்லது அசாடிராக்டின் இலைகளில் தெளிக்கவும்.\n\n2. தீவிர தாக்குதல் இருப்பின்:\n• குருத்தில் படும்படி பரிந்துரைக்கப்பட்ட பூச்சிக்கொல்லியை (குளோரான்ட்ரானிலிப்ரோல் 0.4 மி.லி/லிட்டர்) மாலை வேளையில் தெளிக்கவும்.`
         );
       }
-      if (cropTa.includes('நெல்') || currentCrop.toLowerCase().includes('rice') || currentCrop.toLowerCase().includes('paddy')) {
+      if (targetCrop === 'paddy') {
         return ensureTamilChatReply(
-          `நெல் பயிருக்கான பூச்சி மற்றும் நோய் மேலாண்மை:\n\n• தண்டுத்துளைப்பான் & இலைமடக்கு புழு: வேப்பங்கொட்டை சாறு 5% தெளிக்கவும். விளக்கு பொறி அமைத்து தாய் அந்துப்பூச்சிகளைக் கவரவும்.\n• குலை நோய் & இலைக்கருகல்: டிரைசைக்ளோசோல் அல்லது சூடோமோனாஸ் புளோரசன்ஸ் இலைவழியாக தெளிக்கவும்.`
+          `நெல் பயிருக்கான பூச்சி மற்றும் நோய் மேலாண்மை (TNAU வழிகாட்டுதல்):\n\n• தண்டுத்துளைப்பான் & இலைமடக்கு புழு: வேப்பங்கொட்டை சாறு 5% தெளிக்கவும். விளக்கு பொறி அமைத்து தாய் அந்துப்பூச்சிகளைக் கவரவும்.\n• குலை நோய் & இலைக்கருகல்: டிரைசைக்ளோசோல் அல்லது சூடோமோனாஸ் புளோரசன்ஸ் இலைவழியாக தெளிக்கவும்.`
+        );
+      }
+      if (targetCrop === 'sugarcane') {
+        return ensureTamilChatReply(
+          `கரும்பு பயிரில் ஆரம்ப குருத்து துளைப்பான் மற்றும் செவ்வழுகல் நோய் மேலாண்மை:\n\n• நடவுக்கு முன் செவிகளை கார்பென்டாசிம் கரைசலில் நனைத்து நடவும்.\n• நிலத்தில் மண்ணணைத்து (Earthing-up) காய்ந்த சோகைகளை உரித்து அகற்றவும்.\n• டிரைக்கோடெர்மா விரிடி ஏக்கருக்கு 2.5 கிலோ தொழுவுரத்துடன் கலந்து இடவும்.`
+        );
+      }
+      if (targetCrop === 'cotton') {
+        return ensureTamilChatReply(
+          `பருத்தி பயிருக்கான காய் புழு மற்றும் சாறு உறிஞ்சும் பூச்சி கட்டுப்பாடு:\n\n• மஞ்சள் ஒட்டும் பொறிகளை ஏக்கருக்கு 10 அமைத்து வெள்ளை ஈ மற்றும் தத்துப்பூச்சிகளைக் கண்காணிக்கவும்.\n• வேப்பங்கொட்டை கரைசல் 5% இலைவழியாக தெளித்து ஆரம்ப நிலை பூச்சிகளைக் கட்டுப்படுத்தவும்.`
         );
       }
       return ensureTamilChatReply(
         `பயிர் பாதுகாப்பு ஆலோசனை (${cropTa}):\n\n• இயற்கை முறை: வேப்பங்கொட்டை பருப்பு சாறு (NSKE 5%) இலைவழியாக தெளித்து ஆரம்ப கட்ட பூச்சிகளைக் கட்டுப்படுத்தவும்.\n• மஞ்சள் மற்றும் நீல ஒட்டும் பொறிகளை ஏக்கருக்கு 10 அமைத்து உறிஞ்சும் பூச்சிகளைக் கண்காணிக்கவும்.\n• ஏதேனும் தீவிர அறிகுறிகள் இருப்பின் பயிரின் புகைப்படத்தை பதிவேற்றி கூடுதல் ஆலோசனை பெறலாம்.`
       );
     }
+
+    // English Pest & Disease
+    if (targetCrop === 'coconut') {
+      return `Integrated Pest & Disease Management for Coconut Palms (TNAU CPG Guidelines):\n\n1. Rhinoceros Beetle: Place sand + neem seed powder (1:1) in top leaf axils. Set up 2 Rhino-lure pheromone traps per acre.\n2. Red Palm Weevil: Root-feed with 10 ml monocrotophos or neem formulation diluted in 100 ml water.\n3. Thanjavur Wilt: Apply 5 kg neem cake + 50 g Trichoderma viride around the root basin annually.`;
+    }
+    if (targetCrop === 'maize') {
+      return `Fall Armyworm (Spodoptera frugiperda) Management in Maize:\n\n1. Early Whorl Stage (15-20 DAS): Install 5 pheromone traps/acre. Spray Neem Seed Kernel Extract (NSKE 5%) or Azadirachtin 10000 ppm @ 2 ml/L.\n2. Peak Infestation: Apply Chlorantraniliprole 18.5 SC @ 0.4 ml/L or Emamectin Benzoate 5 SG @ 0.4 g/L directly into leaf whorls.`;
+    }
+    if (targetCrop === 'paddy') {
+      return `Paddy Stem Borer & Blast Management:\n\n1. Stem Borer: Set up light traps. Apply Cartap Hydrochloride 4G @ 10 kg/acre or spray Chlorantraniliprole 0.3 ml/L.\n2. Blast & Sheath Blight: Spray Tricyclazole 75 WP @ 1 g/L or foliar Pseudomonas fluorescens @ 5 g/L at early tillering and panicle emergence.`;
+    }
+    return `Integrated Crop Protection Advisory for ${currentCrop}:\n\n• Biological Monitoring: Install yellow sticky traps (10/acre) for sucking pests.\n• Eco-Friendly Baseline: Spray NSKE 5% or neem oil at first sign of foliar nibbling.\n• Upload a leaf close-up photo in the chat for precision computer vision diagnosis.`;
   }
 
   // 4. Irrigation / Water Question (பாசனம் / தண்ணீர் / நீர் / water / irrigation)
   if (message.includes('பாசனம்') || message.includes('தண்ணீர்') || message.includes('நீர்') || mLower.includes('water') || mLower.includes('irrigation')) {
     if (isTa) {
-      if (cropTa.includes('தென்னை') || currentCrop.toLowerCase().includes('coconut')) {
+      if (targetCrop === 'coconut') {
         return ensureTamilChatReply(
           `தென்னை மர பாசன வழிகாட்டுதல் (${villageTa} பகுதி):\n\n• சொட்டு நீர் பாசனம் மூலம் ஒரு காய்க்கும் மரத்திற்கு நாள் ஒன்றுக்கு 60 முதல் 80 லிட்டர் தண்ணீர் போதுமானது.\n• வட்டப்பாத்தியில் ஈரப்பதத்தைப் பாதுகாக்க காய்ந்த தென்னை மட்டைகள் அல்லது சோகை இலைகளை 1.8 மீ வட்டத்திற்கு மூடாக்காக இடவும்.\n• மழைக்காலத்தில் மரத்தைச் சுற்றி தண்ணீர் தேங்காமல் வடிகால் வசதி உறுதி செய்யவும்.`
+        );
+      }
+      if (targetCrop === 'paddy') {
+        return ensureTamilChatReply(
+          `நெல் பயிருக்கான பாசன நீர் மேலாண்மை (TNAU வழிகாட்டுதல்):\n\n• தூர்கட்டும் மற்றும் கதிர் உருவாகும் முக்கியமான தருணங்களில் 2-3 செ.மீ நீர் இருக்குமாறு பார்த்துக் கொள்ளவும்.\n• அறுவடைக்கு 10-15 நாட்களுக்கு முன் பாசனத்தை முழுமையாக நிறுத்தி வயலை உலர விடவும்.`
+        );
+      }
+      if (targetCrop === 'maize') {
+        return ensureTamilChatReply(
+          `மக்காச்சோளம் பாசன வழிகாட்டுதல்:\n\n• முழங்கால் உயர பருவம் (விதைத்த 25-30 நாட்கள்), ஆண் பூ மற்றும் பெண் பூ உருவாகும் பருவம் (45-60 நாட்கள்) ஆகிய முக்கிய தருணங்களில் நீர் பற்றாக்குறை ஏற்படக் கூடாது.\n• பாசனத்தின் போது தண்ணீர் தேங்காமல் பார்த்துக் கொள்ளவும்.`
         );
       }
       return ensureTamilChatReply(
         `${cropTa} பாசன வழிகாட்டுதல்:\n\n• நிலத்தில் இயற்கை ஈரப்பதம் போதுமான அளவு உள்ளதால் மிதமான பாசனம் பரிந்துரைக்கப்படுகிறது.\n• பூக்கும் பருவம் மற்றும் காய்/கதிர் பிடிக்கும் முக்கியமான தருணங்களில் நீர் பற்றாக்குறை ஏற்படாமல் பார்த்துக் கொள்ளவும்.`
       );
     }
+
+    if (targetCrop === 'coconut') {
+      return `Coconut Irrigation Protocol (Tenkasi / Sivagiri Region):\n\n• Drip Requirement: 60-80 Liters per bearing palm per day.\n• Soil Moisture Conservation: Coir pith mulching or dried palm fronds arranged in a 1.8 m radius around trunk.\n• Drainage: Ensure zero water-logging during monsoon showers.`;
+    }
+    if (targetCrop === 'paddy') {
+      return `Paddy Water Management Guidelines:\n\n• Vegetative to Heading: Maintain 2-3 cm shallow water layer.\n• Terminal Drainage: Completely drain standing water 10-14 days prior to harvest to ensure uniform ripening.`;
+    }
+    return `Irrigation Advisory for ${currentCrop}:\n\n• Current Soil Moisture: Adequate based on ECMWF telemetry.\n• Schedule: Provide light irrigation at critical flowering and fruit/seed formation stages. Avoid water stagnation.`;
   }
 
   // 5. Fertilizer / Soil Question (உரம் / fertilizer / urea / dap / potash / npk)
   if (message.includes('உரம்') || message.includes('மண்') || mLower.includes('fertilizer') || mLower.includes('urea') || mLower.includes('dap') || mLower.includes('npk') || mLower.includes('potash')) {
     if (isTa) {
-      if (message.includes('தென்னை') || mLower.includes('coconut') || cropTa.includes('தென்னை') || currentCrop.toLowerCase().includes('coconut')) {
+      if (targetCrop === 'coconut') {
         return ensureTamilChatReply(
           `${districtTa} மற்றும் சுற்றுவட்டாரப் பகுதிகளுக்கான தென்னை மர உரப் பரிந்துரை (TNAU CPG வழிகாட்டுதல்):\n\n1. ரசாயன உரங்கள் (ஒரு காய்க்கும் மரத்திற்கு / ஆண்டுக்கு):\n• யூரியா: 1.3 கிலோ\n• சூப்பர் பாஸ்பேட் (SSP): 2.0 கிலோ\n• பொட்டாஷ் (MOP): 2.0 கிலோ (கொப்பரை எடை மற்றும் தேங்காய் எண்ணிக்கைக்கு மிகவும் இன்றியமையாதது)\n\n2. இடும் முறை:\n• மரத்தைச் சுற்றி 1.8 மீ (6 அடி) தூரத்தில் வட்டப்பாத்தி அமைத்து உரங்களை இடவும்.\n• ஆண்டுக்கு இருமுறை (ஜூன்-ஜூலை தென்மேற்கு பருவமழை, டிசம்பர்-ஜனவரி வடகிழக்கு பருவமழை) பிரித்து இடவும்.\n\n3. நுண்ணூட்டம்:\n• குரும்பை உதிர்வதைத் தடுக்க ஆண்டுதோறும் 50 கிலோ தொழுவுரம் மற்றும் TNAU தென்னை டானிக் 200 மி.லி வேர் வழியாக செலுத்தவும்.`
         );
       }
-      if (message.includes('கரும்பு') || mLower.includes('sugarcane') || cropTa.includes('கரும்பு') || currentCrop.toLowerCase().includes('sugarcane')) {
+      if (targetCrop === 'sugarcane') {
         return ensureTamilChatReply(
           `கரும்பு பயிருக்கான TNAU CPG உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: நடவு பாரில் 100 கிலோ DAP + 25 கிலோ பொட்டாஷ் + 10 டன் மட்கிய தொழுவுரம்.\n2. முதல் மேலுரம் (30-45 ஆம் நாள்): 60 கிலோ வேப்பம்பூசிய யூரியா.\n3. இரண்டாம் மேலுரம் (75-90 ஆம் நாள்): 60 கிலோ யூரியா + 25 கிலோ பொட்டாஷ்.\n4. இறுதி உரம் (120-150 ஆம் நாள்): 30 கிலோ யூரியா இட்டு மண் அணைக்கவும் (Earthing-up).\n\nகரும்பு தண்டு தடிமன் மற்றும் சர்க்கரைச் சத்தை அதிகரிக்க பொட்டாஷ் மிக முக்கியம்.`
         );
       }
-      if (message.includes('நெல்') || mLower.includes('paddy') || mLower.includes('rice') || cropTa.includes('நெல்') || currentCrop.toLowerCase().includes('rice') || currentCrop.toLowerCase().includes('paddy')) {
+      if (targetCrop === 'paddy') {
         return ensureTamilChatReply(
           `நெல் பயிருக்கான TNAU CPG உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: 35 கிலோ DAP + 15 கிலோ பொட்டாஷ் + 10 கிலோ துத்தநாக சல்பேட்.\n2. முதல் மேலுரம் (தூர்கட்டும் பருவம்): 30 கிலோ வேப்பம்பூசிய யூரியா.\n3. இரண்டாம் மேலுரம் (கதிர் உருவாகும் பருவம்): 25 கிலோ யூரியா + 15 கிலோ பொட்டாஷ்.\n\nஅடி உரமாக துத்தநாக சல்பேட் இடுவது இலை வெளிரலைத் தடுத்து விளைச்சலை 15% அதிகரிக்கும்.`
+        );
+      }
+      if (targetCrop === 'maize') {
+        return ensureTamilChatReply(
+          `மக்காச்சோளம் பயிருக்கான TNAU CPG உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: 55 கிலோ DAP + 20 கிலோ பொட்டாஷ் + 10 கிலோ துத்தநாக சல்பேட்.\n2. முதல் மேலுரம் (25 ஆம் நாள்): 40 கிலோ வேப்பம்பூசிய யூரியா.\n3. இரண்டாம் மேலுரம் (45 ஆம் நாள் - ஆண் பூ வரும் பருவம்): 30 கிலோ யூரியா + 10 கிலோ பொட்டாஷ்.\n\nகதிர் மணிகள் முழுமையாக நிரம்புவதற்கு பொட்டாஷ் உரம் மிகவும் அவசியம்.`
+        );
+      }
+      if (targetCrop === 'cotton') {
+        return ensureTamilChatReply(
+          `பருத்தி பயிருக்கான TNAU CPG உரப் பரிந்துரை (ஏக்கருக்கு):\n\n1. அடி உரம்: 40 கிலோ DAP + 15 கிலோ பொட்டாஷ் + 5 டன் தொழுவுரம்.\n2. முதல் மேலுரம் (40-45 ஆம் நாள்): 25 கிலோ யூரியா.\n3. இரண்டாம் மேலுரம் (60-65 ஆம் நாள்): 20 கிலோ யூரியா + 15 கிலோ பொட்டாஷ்.`
         );
       }
       return ensureTamilChatReply(
         `புல எண் #${sNo} மண் பரிசோதனை அட்டை (SHC #${soil.soil_health_card_id}) மற்றும் TNAU CPG பரிந்துரை:\n\n1. நில சீரமைப்பு: ${amendmentTa}\n2. அடி உரம்: ${adjustmentTa}\n3. நுண்ணுயிர் உரம்: அசோஸ்பைரில்லம் மற்றும் பாஸ்போபாக்டீரியா தலா 2 கிலோ/ஏக்கர் இட்டு தழை மற்றும் மணிச்சத்து பயன்பாட்டை அதிகரிக்கவும்.\n• மண் தரம்: ${soilRatingTa}.`
       );
     }
-    if (mLower.includes('coconut')) {
+
+    // English Fertilizer Responses
+    if (targetCrop === 'coconut') {
       return `TNAU Recommended Fertilizer Schedule for Bearing Coconut Palms (Tenkasi / Sivagiri Region):\n\n1. Chemical Nutrients (Per Palm / Year):\n• Urea: 1.3 kg\n• Single Super Phosphate (SSP): 2.0 kg\n• Muriate of Potash (MOP): 2.0 kg (critical for nut size and copra yield)\n\n2. Application Timing & Method:\n• Form a circular basin 1.8 m (6 ft) around the trunk.\n• Apply in two split doses: June-July (South-West Monsoon) and December-January (North-East Monsoon).\n\n3. Micronutrient Care:\n• Apply 50 kg well-decomposed FYM annually and root-feed TNAU Coconut Tonic (200 ml tonic + 200 ml water) every 6 months.`;
+    }
+    if (targetCrop === 'paddy') {
+      return `TNAU CPG Nutrient Schedule for Paddy (Per Acre):\n\n1. Basal Dosage: 35 kg DAP + 15 kg MOP + 10 kg Zinc Sulphate (ZnSO4).\n2. First Top-Dress (Active Tillering, 20-25 DAT): 30 kg Neem-Coated Urea.\n3. Second Top-Dress (Panicle Initiation, 40-45 DAT): 25 kg Urea + 15 kg MOP.`;
+    }
+    if (targetCrop === 'maize') {
+      return `TNAU Recommended Fertilizer Dosage for Hybrid Maize (Per Acre):\n\n1. Basal: 55 kg DAP + 20 kg Potash (MOP) + 10 kg Zinc Sulphate + 5 tonnes FYM.\n2. First Top-Dress (Knee-high, 25 DAS): 40 kg Neem-Coated Urea.\n3. Second Top-Dress (Tasseling, 45 DAS): 30 kg Urea + 10 kg Potash.`;
+    }
+    if (targetCrop === 'sugarcane') {
+      return `TNAU CPG 2024 Sugarcane Nutrient Schedule (Per Acre):\n\n1. Basal: 100 kg DAP + 25 kg Potash + 10 tonnes FYM in planting furrows.\n2. Top-Dressing 1 (30-45 days): 60 kg Neem-Coated Urea.\n3. Top-Dressing 2 (75-90 days): 60 kg Urea + 25 kg Potash.\n4. Earthing-up (120-150 days): 30 kg Urea followed by soil mounting.`;
     }
     return `TNAU CPG 2024 Soil & Nutrient Schedule for Parcel #${sNo} (Soil Health Card #${soil.soil_health_card_id}):\n\n1. Soil Reclamation: ${soil.amendments_needed[0]}\n2. Basal Dosage: ${soil.fertilizer_adjustments[0]}\n3. Biofertilizer: Co-inoculate with Azospirillum and Phosphobacteria @ 2 kg/acre to boost microbial nutrient solubilization.\n• Rating: ${soil.soil_quality_rating}.`;
   }
@@ -1023,7 +1105,7 @@ FOLIAR_SYMPTOMS: <Any visible foliar symptoms or clean healthy leaves>
 CONFIDENCE: <0.85 to 0.99>`;
 
           const geminiRes = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiApiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
             {
               contents: [{
                 parts: [
@@ -1273,7 +1355,7 @@ If the question is in English, reply in English.`;
         }
 
         const geminiRes = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
           {
             contents: formattedContents,
             generationConfig: { temperature: 0.3, maxOutputTokens: 800 }
