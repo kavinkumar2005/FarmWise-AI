@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Sparkles, TrendingUp, ChevronRight,
-  Beaker, Bug, Play, Square, Loader2, Languages,
+  Beaker, Play, Square, Loader2, Languages,
   MapPin, CloudSun
 } from 'lucide-react';
 import { api } from '../services/api';
 import {
   translations, tCrop, tStage,
-  FERTILIZER_NAMES_TA, PEST_ADVICE_TA,
+  FERTILIZER_NAMES_TA,
   tSoilType, tWeatherCondition, tVillage, tDistrict
 } from '../utils/translations';
 
@@ -293,7 +293,6 @@ export default function AdvisoryCard({ advisoryData, lang = 'en', onOpenTrace })
   const t = translations[lang] || translations.en;
 
   const schedule = advisoryData.fertilizer_schedule || [];
-  const market = advisoryData.market_prices;
 
   // Build structured small summarized bullet points
   const bulletGroups = buildAdvisoryBulletGroups(advisoryData, lang);
@@ -436,60 +435,6 @@ export default function AdvisoryCard({ advisoryData, lang = 'en', onOpenTrace })
           </div>
         </div>
       )}
-
-      {/* Grid: Pest Alerts & Mandi Pricing */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-        {/* Pest Management */}
-        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200">
-          <div className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-slate-800 mb-2.5">
-            <Bug className="w-4 h-4 text-amber-600" />
-            <span>{t.pestTitle || "Pest & Disease Advisory"}</span>
-          </div>
-          <ul className="space-y-2 text-xs text-slate-600">
-            {(lang === 'ta' ? PEST_ADVICE_TA : [
-              "Monitor crown and leaf axils weekly for early signs of beetle/borer entry.",
-              "Avoid excess water stagnancy to mitigate bacterial and sheath blight risks.",
-              "Spray neem oil formulation (3%) during evening hours as preventive repellent."
-            ]).map((point, i) => (
-              <li key={i} className="flex items-start gap-2">
-                <span className="text-emerald-600 font-bold">•</span>
-                <span>{point}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Mandi Market Price */}
-        {market && (
-          <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200 flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="flex items-center gap-2 font-bold text-xs uppercase tracking-wider text-emerald-950">
-                  <TrendingUp className="w-4 h-4 text-emerald-700" />
-                  {t.mandiTitle || "Mandi Commodity Rates"}
-                </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold">
-                  {lang === 'ta' ? 'நிலையானது (பண்டிகை தேவை)' : market.trend}
-                </span>
-              </div>
-              <div className="text-lg font-black text-slate-900">
-                {lang === 'ta' && market.modal_price?.includes('/ Nut') 
-                  ? '₹32 / காய் (₹3,200 / 100 காய்கள்)' 
-                  : market.modal_price}
-              </div>
-              <div className="text-xs text-slate-600 mt-1">
-                {t.marketLabel || "Market:"} <span className="font-semibold text-slate-800">{market.market}</span>
-              </div>
-              <div className="text-[11px] text-slate-500 mt-0.5">
-                {t.rangeLabel || "Range:"} {market.min_price} – {market.max_price}
-              </div>
-            </div>
-            <div className="mt-3 pt-2 border-t border-emerald-200/60 text-[10px] text-emerald-800 font-medium">
-              {t.mandiSource || "Source: APMC Tamil Nadu / eNAM Mandi Benchmark"}
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
