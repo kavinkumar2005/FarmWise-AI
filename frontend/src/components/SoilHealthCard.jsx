@@ -1,13 +1,12 @@
 import React from 'react';
-import { FlaskConical, Activity, Sparkles, CheckCircle2, ShieldCheck, Layers, Gauge } from 'lucide-react';
+import { FlaskConical, Activity, ShieldCheck, Layers, Gauge } from 'lucide-react';
 import { 
   translations, 
   tSoilType, 
   tSoilTexture, 
   tPhStatus, 
   tNutrientStatus, 
-  tSoilRating, 
-  tSoilSentence 
+  tSoilRating 
 } from '../utils/translations';
 
 export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
@@ -203,41 +202,6 @@ export default function SoilHealthCard({ soilProfile, lang = 'en' }) {
               {kStatus}
             </span>
           </div>
-        </div>
-      </div>
-
-      {/* Dynamic Soil Amendments & Fertilizer Adjustments */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-        {/* Soil Amendments */}
-        <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200/80">
-          <div className="flex items-center gap-2 mb-2 font-bold text-amber-900 text-xs uppercase tracking-wider">
-            <Sparkles className="w-4 h-4 text-amber-700" />
-            <span>{isTamil ? "மண்வள மேம்பாட்டு பரிந்துரைகள்" : "Soil Amendments & Reclamation"}</span>
-          </div>
-          <ul className="space-y-1.5 text-xs text-amber-950">
-            {(soilProfile.amendments_needed || []).map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-amber-600 mt-0.5 font-bold">•</span>
-                <span>{tSoilSentence(item, lang)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Dynamic Fertilizer Adjustments */}
-        <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200/80">
-          <div className="flex items-center gap-2 mb-2 font-bold text-emerald-900 text-xs uppercase tracking-wider">
-            <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-            <span>{isTamil ? "மண் சார்ந்த உர அளவு மாற்றங்கள்" : "Dynamic Soil-Based Fertilizer Calibration"}</span>
-          </div>
-          <ul className="space-y-1.5 text-xs text-emerald-950">
-            {(soilProfile.fertilizer_adjustments || []).map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2">
-                <span className="text-emerald-600 mt-0.5 font-bold">✓</span>
-                <span>{tSoilSentence(item, lang)}</span>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </div>
