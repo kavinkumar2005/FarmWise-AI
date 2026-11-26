@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Calendar, Layers, Share2, Printer, ChevronRight, Camera, Sparkles, X, ExternalLink } from 'lucide-react';
+import { MapPin, Calendar, Layers, Share2, Printer, ChevronRight, Camera, X, ExternalLink } from 'lucide-react';
 import ParcelMap from './ParcelMap';
 import CropAnalysisCard from './CropAnalysisCard';
 import WeatherCard from './WeatherCard';
@@ -65,13 +65,6 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
 
             {/* Action CTAs */}
             <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => setIsTraceOpen(true)}
-                className="px-4 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap"
-              >
-                <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>{t.aiTraceBtn || "View AI Decision Trace"}</span>
-              </button>
               <button
                 onClick={() => window.print()}
                 className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold shadow-2xs hover:shadow-xs whitespace-nowrap"
