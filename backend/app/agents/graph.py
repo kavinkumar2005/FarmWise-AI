@@ -54,20 +54,15 @@ def synthesize_advisory_node(state: AgentState) -> AgentState:
         adjusts = soil_info.get("fertilizer_adjustments", [])
         adj_str = " ".join(adjusts[:2]) if adjusts else "Standard TNAU Crop Production Guide NPK dosages apply."
         soil_text = (
-            f"Soil Health Card Grounding (Card #{shc}): Classified as {stype} with a pH of {sph} "
-            f"and calculated fertilizer uptake efficiency of {seff}%. {adj_str}\n\n"
+            f"• Soil Grounding (Card #{shc}): Classified as {stype} (pH {sph}) with {seff}% uptake efficiency. {adj_str}\n"
         )
 
     summary_text = (
-        f"Parcel & Stand Assessment: Cadastral Survey #{s_no} in {village} ({taluk} Taluk, {district} District) "
-        f"is verified with an active stand of {crop_name} currently in the {stage} stage. "
-        f"Multimodal canopy evaluation confirms {crop_info.get('crop_health', 'Healthy & Vigorous')} vigor with uniform chlorophyll reflectance and no acute foliar pathogen clusters.\n\n"
+        f"• Parcel & Stand: Cadastral Survey #{s_no} in {village} ({district}) verified with active stand of {crop_name} ({stage}). "
+        f"Canopy health: {crop_info.get('crop_health', 'Healthy & Vigorous')} with uniform chlorophyll.\n"
         f"{soil_text}"
-        f"Agro-Met & Field Operations This Week: Live ECMWF micro-climate telemetry records {temp}°C ({cond}), "
-        f"{hum}% relative humidity, and {wind} km/h wind speed. {spray_rec} {irrig_rec} "
-        f"Follow the TNAU/ICAR stage-specific NPK nutrient schedule below and scout lower leaf axils weekly.\n\n"
-        f"Mandi Market Outlook: Current commodity benchmark for {crop_name} at {market_name} stands at {modal_price} "
-        f"({trend}). Stagger harvesting and grading to capture optimal APMC/eNAM realizations."
+        f"• Agro-Met & Field Operations: Live micro-climate records {temp}°C ({cond}), {hum}% humidity, {wind} km/h wind. {spray_rec} {irrig_rec}\n"
+        f"• Mandi Market Outlook: Benchmark for {crop_name} at {market_name} stands at {modal_price} ({trend}). Stagger harvest by grade for optimal APMC realizations."
     )
 
     elapsed_ms = max(65, int((time.time() - start_time) * 1000))
