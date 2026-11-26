@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Sparkles, ShieldCheck, TrendingUp, ChevronRight,
+  Sparkles, TrendingUp, ChevronRight,
   Beaker, Bug, Play, Square, Loader2, Languages,
   MapPin, CloudSun
 } from 'lucide-react';
 import { api } from '../services/api';
 import {
-  translations, tCrop, tStage, tStatus,
+  translations, tCrop, tStage,
   FERTILIZER_NAMES_TA, PEST_ADVICE_TA,
   tSoilType, tWeatherCondition, tVillage, tDistrict
 } from '../utils/translations';
@@ -294,7 +294,6 @@ export default function AdvisoryCard({ advisoryData, lang = 'en', onOpenTrace })
 
   const schedule = advisoryData.fertilizer_schedule || [];
   const market = advisoryData.market_prices;
-  const verification = advisoryData.verification;
 
   // Build structured small summarized bullet points
   const bulletGroups = buildAdvisoryBulletGroups(advisoryData, lang);
@@ -334,12 +333,6 @@ export default function AdvisoryCard({ advisoryData, lang = 'en', onOpenTrace })
             <h2 className="text-xl font-bold text-slate-900">
               {t.advisoryTitle || "Personalized Agronomic Advisory"}
             </h2>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-                {tStatus(verification?.status, lang) || 'AI சரிபார்க்கப்பட்டது'} ({verification?.score_percentage || 95}% score)
-              </span>
-            </div>
           </div>
         </div>
 
