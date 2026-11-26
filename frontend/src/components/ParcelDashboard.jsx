@@ -24,7 +24,7 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
   const verification = advisoryData.verification;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div id="parcel-dashboard-results" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
       {/* ─── ON-SCREEN INTERACTIVE DASHBOARD (Hidden on Print) ─── */}
       <div className="screen-only-dashboard space-y-6">
         {/* Top Breadcrumb & Parcel Identity Banner */}

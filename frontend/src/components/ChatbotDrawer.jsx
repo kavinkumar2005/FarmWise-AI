@@ -357,8 +357,12 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
       );
 
       const rawText = res.reply || res.response || res.message || res.answer || (typeof res === 'string' ? res : '');
-      const defaultTamil = `வணக்கம் விவசாயி அவர்களே! புல எண் #${activeParcel?.survey_number || 1342} விவரங்கள் பெறப்பட்டுள்ளன. பயிர் வளர்ச்சி, உரம் அல்லது சந்தை விலை பற்றி கேளுங்கள்.`;
-      const defaultEnglish = `Hello Farmer! For Survey Parcel #${activeParcel?.survey_number || 1342}, I am ready to answer your agronomic, fertilizer, weather, or market pricing questions.`;
+      const defaultTamil = activeParcel?.survey_number
+        ? `வணக்கம் விவசாயி அவர்களே! புல எண் #${activeParcel.survey_number} விவரங்கள் பெறப்பட்டுள்ளன. பயிர் வளர்ச்சி, உரம் அல்லது சந்தை விலை பற்றி கேளுங்கள்.`
+        : `வணக்கம் விவசாயி அவர்களே! பயிர் வளர்ச்சி, உரம், பூச்சி மேலாண்மை அல்லது சந்தை விலை பற்றி கேளுங்கள்.`;
+      const defaultEnglish = activeParcel?.survey_number
+        ? `Hello Farmer! For Survey Parcel #${activeParcel.survey_number}, I am ready to answer your agronomic, fertilizer, weather, or market pricing questions.`
+        : `Hello Farmer! I am ready to answer your agronomic, fertilizer, weather, or market pricing questions.`;
       let finalText = (rawText && typeof rawText === 'string' && rawText.trim().length > 0)
         ? rawText.trim()
         : (lang === 'ta' ? defaultTamil : defaultEnglish);

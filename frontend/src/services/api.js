@@ -770,10 +770,11 @@ export function createGroundedAdvisory(surveyNumber, imageFilename = null, query
 }
 
 // ─── DYNAMIC GROUNDED CHATBOT ENGINE (Tamil & English) ───
-export function getGroundedChatReply(message, surveyNumber = "1342", lang = null) {
+export function getGroundedChatReply(message, surveyNumber = null, lang = null) {
   const isTa = (lang === 'ta') || /[\u0B80-\u0BFF]/.test(message);
-  const sNo = String(surveyNumber || "1342").replace(/[^a-zA-Z0-9]/g, '');
-  const parcel = DEFAULT_PARCELS[sNo] || DEFAULT_PARCELS["1342"];
+  const hasSurvey = Boolean(surveyNumber);
+  const sNo = hasSurvey ? String(surveyNumber).replace(/[^a-zA-Z0-9]/g, '') : null;
+  const parcel = (sNo && DEFAULT_PARCELS[sNo]) ? DEFAULT_PARCELS[sNo] : DEFAULT_PARCELS["1342"];
   const currentCrop = _lastUploadedCropAnalysis?.crop_name || parcel.recorded_crop;
   const currentStage = _lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage;
   const soil = parcel.soil_profile;
@@ -813,15 +814,31 @@ export function getGroundedChatReply(message, surveyNumber = "1342", lang = null
   // 1. Greetings (hello, hi, வணக்கம்)
   if (mLower.includes('hello') || mLower.includes('hi') || mLower.includes('hey') || message.includes('வணக்கம்')) {
     if (isTa) {
+      if (hasSurvey) {
+        return ensureTamilChatReply(
+          `வணக்கம் விவசாயி அவர்களே! நான் உங்கள் பார்ம்வைஸ் AI வேளாண் ஆலோசகர். உங்கள் நிலப் புல எண் #${sNo} (${villageTa}, ${districtTa}) விவரங்கள் சரிபார்க்கப்பட்டுள்ளன.\n\n• தற்போதைய பயிர்: **${cropTa}** (${stageTa})\n• நில மண் வகை: **${soilTypeTa}** (மண் pH ${soil.ph})\n\nஉரம், பூச்சி மேலாண்மை, மருந்து தெளிக்கும் நேரம் அல்லது நேரடி சந்தை விலை பற்றி ஏதேனும் கேட்க விரும்புகிறீர்களா?`
+        );
+      }
       return ensureTamilChatReply(
-        `வணக்கம் விவசாயி அவர்களே! நான் உங்கள் பார்ம்வைஸ் AI வேளாண் ஆலோசகர். உங்கள் நிலப் புல எண் #${sNo} (${villageTa}, ${districtTa}) விவரங்கள் சரிபார்க்கப்பட்டுள்ளன.\n\n• தற்போதைய பயிர்: **${cropTa}** (${stageTa})\n• நில மண் வகை: **${soilTypeTa}** (மண் pH ${soil.ph})\n\nஉரம், பூச்சி மேலாண்மை, மருந்து தெளிக்கும் நேரம் அல்லது நேரடி சந்தை விலை பற்றி ஏதேனும் கேட்க விரும்புகிறீர்களா?`
+        `வணக்கம் விவசாயி அவர்களே! நான் உங்கள் பார்ம்வைஸ் AI நேரடி வேளாண் ஆலோசகர்.\n\nஉங்களுக்கு உதவக்கூடிய சேவைகள்:\n• உரம் & ஊட்டச்சத்து பரிந்துரைகள் (TNAU / ICAR அளவுகள்)\n• பூச்சி மற்றும் நோய் மேலாண்மை\n• வானிலை & மருந்து தெளிக்கும் நேரம்\n• நேரடி மண்டி சந்தை நிலவரம்\n\nகுறிப்பிட்ட நிலத்தின் விவரங்களை அறிய மேலே உள்ள தேடல் பட்டியில் உங்கள் நில புல எண்ணை (Survey Number) உள்ளிடவும்!`
       );
     }
-    return `Hello Farmer! I am your FarmWise AI Agricultural Advisor. For Survey Parcel #${sNo} in ${parcel.village_name}, ${parcel.district}, your crop stand is verified as ${currentCrop} (${currentStage}). How can I assist you with fertilizer schedules, pest scouting, spray windows, or live mandi prices today?`;
+    if (hasSurvey) {
+      return `Hello Farmer! I am your FarmWise AI Agricultural Advisor. For Survey Parcel #${sNo} in ${parcel.village_name}, ${parcel.district}, your crop stand is verified as ${currentCrop} (${currentStage}). How can I assist you with fertilizer schedules, pest scouting, spray windows, or live mandi prices today?`;
+    }
+    return `Hello Farmer! I am your FarmWise AI Agricultural Advisor. I can help you with crop fertilizer schedules, pest diagnostics, spray windows, and live mandi prices. To link your specific field parcel, enter your Survey Number in the search box above!`;
   }
 
   // 2. Crop Identification Question (என்ன பயிர் / what crop / என்னிடத்தில் என்ன பயிர் உள்ளது)
   if (message.includes('பயிர்') || mLower.includes('what crop') || mLower.includes('which crop') || mLower.includes('identify')) {
+    if (!hasSurvey) {
+      if (isTa) {
+        return ensureTamilChatReply(
+          `உங்கள் நிலத்தில் உள்ள பயிரைக் கண்டறிய, மேலே உள்ள தேடல் பட்டியில் உங்கள் நிலத்தின் புல எண்ணை (Survey Number) உள்ளிடவும், அல்லது கேமரா பொத்தானை அழுத்தி களப் புகைப்படத்தைப் பதிவேற்றவும்.`
+        );
+      }
+      return `To identify your crop stand, please enter your Survey Number in the search box above, or upload a field photograph using the camera button.`;
+    }
     if (isTa) {
       return ensureTamilChatReply(
         `உங்கள் நிலத்தில் (புல எண் #${sNo}, ${villageTa}) கண்டறியப்பட்ட பயிர் விவரம்:\n\n• பயிர் பெயர்: **${cropTa}**\n• வளர்ச்சி நிலை: **${stageTa}**\n• நில மண் வகை: **${soilTypeTa}** (மண் pH ${soil.ph})\n• உர ஏற்பு திறன்: **${soil.fertilizer_efficiency_score}%**\n\nகளப் புகைப்பட ஆய்வு மற்றும் தமிழ்நாடு நில வருவாய் ஆவணத்தின்படி உங்கள் பயிர் தழைத்து ஆரோக்கியமாக உள்ளது.`
@@ -1252,8 +1269,9 @@ CONFIDENCE: <0.85 to 0.99>`;
 
   // AI Chatbot with optional photo & multi-turn history
   async chatAdvisor(message, surveyNumber = null, imageFile = null, history = [], lang = 'en') {
-    const sNo = surveyNumber || "1342";
-    const parcel = DEFAULT_PARCELS[sNo] || DEFAULT_PARCELS["1342"];
+    const hasSurvey = Boolean(surveyNumber);
+    const sNo = hasSurvey ? String(surveyNumber).replace(/[^a-zA-Z0-9]/g, '') : null;
+    const parcel = (sNo && DEFAULT_PARCELS[sNo]) ? DEFAULT_PARCELS[sNo] : DEFAULT_PARCELS["1342"];
     const currentCrop = _lastUploadedCropAnalysis?.crop_name || parcel.recorded_crop;
     const isTa = (lang === 'ta') || /[\u0B80-\u0BFF]/.test(message);
     const cropTa = tCrop(currentCrop, 'ta');
@@ -1270,14 +1288,14 @@ CONFIDENCE: <0.85 to 0.99>`;
         survey_number: sNo,
         history: Array.isArray(history) ? history : [],
         language: isTa ? 'ta' : 'en',
-        parcelContext: {
+        parcelContext: hasSurvey ? {
           surveyNumber: sNo,
           cropName: isTa ? cropTa : currentCrop,
           growthStage: isTa ? stageTa : (_lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage),
           village: isTa ? villageTa : (parcel.village_name || 'Sivagiri'),
           district: isTa ? districtTa : (parcel.district || 'Tenkasi'),
           soilType: isTa ? soilTypeTa : (parcel.soil_profile?.soil_type || 'Sandy Loam')
-        }
+        } : null
       };
 
       const res = await axios.post(`${API_BASE}/chat`, chatPayload, {
@@ -1308,10 +1326,10 @@ CONFIDENCE: <0.85 to 0.99>`;
       try {
         const systemPrompt = isTa
           ? `நீங்கள் உழவன் AI (FarmWise AI) - தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழக (TNAU) பயிர் உற்பத்தி கையேடு மற்றும் தென்னிந்திய விவசாய நடைமுறைகளில் நிபுணத்துவம் பெற்ற முன்னணி வேளாண்மை AI ஆலோசகர்.
-தற்போதைய கள & நில விவரங்கள்:
+${hasSurvey ? `தற்போதைய கள & நில விவரங்கள்:
 - புல எண்: #${sNo} (${villageTa}, ${districtTa})
 - தற்போதைய பயிர்: ${cropTa} (${stageTa})
-- மண் வகை: ${soilTypeTa} (மண் pH ${parcel.soil_profile.ph})
+- மண் வகை: ${soilTypeTa} (மண் pH ${parcel.soil_profile.ph})` : `குறிப்பு: விவசாயி குறிப்பிட்ட புல எண் ஏதும் இன்னும் உள்ளிடவில்லை. பொதுவான வேளாண்மை, பயிர், உரம், பூச்சி மற்றும் சந்தை கேள்விகளுக்கு தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழக (TNAU) பரிந்துரைகளின்படி எளிய தமிழில் பதிலளிக்கவும்.`}
 
 விவசாயியின் கேள்விக்கு முழுமையான, துல்லியமான, பரிவுணர்வுடன் கூடிய எளிய ஆலோசனையை வழங்கவும்.
 முக்கியமான கட்டளை (Strict Language Requirement):
@@ -1320,10 +1338,10 @@ CONFIDENCE: <0.85 to 0.99>`;
 - எந்த ஆங்கில வார்த்தைகளையும் (Coconut, Full Growth, Laterite Loamy Sand, Sivagiri போன்றவை) தமிழில் கலந்து எழுதக் கூடாது.
 - தேவையான தகவல்களை எளிய தமிழில் புல்லட் புள்ளிகளுடன் தெளிவாக வழங்கவும்.`
           : `You are FarmWise AI, an expert agricultural advisory agent specialized in South Indian agriculture, TNAU crop production guidelines, and Tamil Nadu farming practices.
-Current Field & Land Context:
+${hasSurvey ? `Current Field & Land Context:
 - Survey Parcel: #${sNo} (${parcel.village_name}, ${parcel.district})
 - Current Stand Crop: ${currentCrop} (${_lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage})
-- Soil Type: ${parcel.soil_profile.soil_type} (pH ${parcel.soil_profile.ph})
+- Soil Type: ${parcel.soil_profile.soil_type} (pH ${parcel.soil_profile.ph})` : `Note: The farmer has not entered a specific Survey Parcel number yet. Provide general South Indian and TNAU agronomic recommendations.`}
 
 Answer the farmer's question thoroughly, accurately, and compassionately based on TNAU recommendations.
 Remember previous conversation context and answer follow-up questions accurately.
@@ -1399,16 +1417,16 @@ If the question is in English, reply in English.`;
       model_used: "Gemini 3.5 Flash-Lite + TNAU RAG",
       confidence_score: 0.97,
       sources: ["TNAU Crop Production Guide", "Open-Meteo ECMWF", "eNAM Mandi Rates"],
-      crop_analysis: {
+      crop_analysis: hasSurvey ? {
         crop_name: isTa ? cropTa : currentCrop,
         model_attribution: "Gemini 3.8 Flash + TNAU RAG"
-      },
-      grounding: {
+      } : null,
+      grounding: hasSurvey ? {
         survey_number: sNo,
         soil_type: isTa ? soilTypeTa : parcel.soil_profile.soil_type,
         ph: parcel.soil_profile.ph,
         recommendation: isTa ? tSoilSentence(parcel.soil_profile.fertilizer_adjustments[0], 'ta') : parcel.soil_profile.fertilizer_adjustments[0]
-      }
+      } : null
     };
   },
 

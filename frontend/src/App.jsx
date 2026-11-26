@@ -51,10 +51,8 @@ export default function App() {
     return () => clearInterval(interval);
   }, [isLoading]);
 
-  // Load default representative parcel on startup
-  useEffect(() => {
-    loadParcelAdvisory("1342");
-  }, []);
+  // Startup: clean landing view (no parcel pre-loaded)
+  // Parcel advisory loads down below only after user enters a survey number or selects a sample
 
   const loadParcelAdvisory = async (surveyNumber) => {
     setIsLoading(true);
@@ -96,6 +94,12 @@ export default function App() {
       // 2. Fetch full agent pipeline advisory
       const res = await api.runAdvisory(surveyNumber, "Full parcel agricultural audit and advisory");
       setAdvisoryData(res);
+      setTimeout(() => {
+        const el = document.getElementById('parcel-dashboard-results');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 150);
     } catch (err) {
       console.error("Advisory error:", err);
       // Fallback: ensure parcel, weather, and crop_analysis remain displayed
@@ -119,6 +123,12 @@ export default function App() {
           fertilizer_schedule: prev?.fertilizer_schedule || [],
           execution_trace: prev?.execution_trace || []
         }));
+        setTimeout(() => {
+          const el = document.getElementById('parcel-dashboard-results');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 150);
       } catch (e2) {
         setErrorMsg(`Survey #${surveyNumber} was not found in the dataset. Try: 1342, 1476, 870, 584, 386, or 876.`);
 
@@ -151,11 +161,19 @@ export default function App() {
       }
     }
     setAdvisoryData({ ...advisoryResult });
+    setTimeout(() => {
+      const el = document.getElementById('parcel-dashboard-results');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 150);
   };
 
 
   const handleResetHome = () => {
-    loadParcelAdvisory("1342");
+    setAdvisoryData(null);
+    setSelectedSurvey(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleOpenChat = () => {
