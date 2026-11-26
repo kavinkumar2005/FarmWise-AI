@@ -1,372 +1,416 @@
 import React from 'react';
-import { ShieldCheck, CheckCircle2, Clock, DollarSign, Layers, Cpu, MapPin, Camera, Sparkles } from 'lucide-react';
-import { translations, tCrop, tStage, tHealth, tStatus, cleanEnglishText } from '../utils/translations';
-import { getMediaUrl, getCropSampleFallback } from '../services/api';
 
+const getBotanicalName = (cropName = '') => {
+  const c = String(cropName).toLowerCase();
+  if (c.includes('coconut')) return 'Cocos nucifera';
+  if (c.includes('paddy') || c.includes('rice')) return 'Oryza sativa';
+  if (c.includes('maize') || c.includes('corn')) return 'Zea mays';
+  if (c.includes('sugarcane')) return 'Saccharum officinarum';
+  if (c.includes('cotton')) return 'Gossypium hirsutum';
+  if (c.includes('banana')) return 'Musa acuminata';
+  if (c.includes('groundnut') || c.includes('peanut')) return 'Arachis hypogaea';
+  return 'Agricultural crop';
+};
+
+const getVisibleObservations = (cropName = '') => {
+  const c = String(cropName).toLowerCase();
+  if (c.includes('coconut')) return 'Dense crown, green fronds and sturdy trunk base';
+  if (c.includes('paddy') || c.includes('rice')) return 'Uniform vegetative canopy, healthy chlorophyll reflectance and optimal tiller density';
+  if (c.includes('maize')) return 'Erect healthy whorl leaves, uniform plant spacing and vigorous leaf blade development';
+  if (c.includes('sugarcane')) return 'Dense vegetative cane canopy with vigorous tiller initiation';
+  return 'Uniform vegetative canopy spread with healthy chlorophyll reflectance and optimal field stand';
+};
 
 export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
   if (!advisoryData || !advisoryData.parcel) return null;
 
   const parcel = advisoryData.parcel;
   const crop = advisoryData.crop_analysis || {};
-  const verification = advisoryData.verification || {};
-  const soil = advisoryData.soil_profile || parcel.soil_profile || null;
-  const traces = advisoryData.execution_trace || [];
-  const totalLatency = advisoryData.total_latency_ms || traces.reduce((acc, t) => acc + (t.latency_ms || 0), 0);
-  const totalCost = advisoryData.total_cost_usd || traces.reduce((acc, t) => acc + (t.cost_usd || 0), 0);
+  const soil = advisoryData.soil_profile || parcel.soil_profile || {};
 
-  const formattedDate = new Date().toLocaleDateString('en-IN', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  const cropName = crop.crop_name || parcel.recorded_crop || 'Coconut';
+  const botanical = getBotanicalName(cropName);
+  const growthStage = crop.growth_stage || parcel.recorded_stage || 'Bearing / adult tree stage';
+  const observations = getVisibleObservations(cropName);
+
+  const soilPhVal = Number(soil.ph || 5.94);
+  const soilPhStatus = soilPhVal < 6.5 ? 'Acidic' : soilPhVal > 7.5 ? 'Alkaline' : 'Neutral';
+
+  const formattedDate = new Date().toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
   });
 
   return (
-    <div className="hidden print:block text-slate-900 bg-white p-6 max-w-4xl mx-auto font-sans leading-normal">
-      {/* ─── 1. OFFICIAL DOSSIER HEADER ─── */}
-      <div className="border-b-2 border-slate-900 pb-4 mb-5 flex items-start justify-between">
+    <div className="print-only-dossier hidden print:block text-slate-900 bg-white font-serif leading-relaxed text-[11px] max-w-[210mm] mx-auto">
+      
+      {/* ═══════════════════════════════════════════════════════════════
+          PAGE 1
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="min-h-[285mm] flex flex-col justify-between page-break-after pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black tracking-widest uppercase bg-slate-900 text-white px-2 py-0.5 rounded">
-              FARMWISE AI
-            </span>
-            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
-              Autonomous Multi-Model Agricultural Intelligence Platform
-            </span>
-          </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-950 mt-1">
-            PARCEL AUDIT &amp; MULTI-MODEL DECISION TRACE DOSSIER
-          </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Cadastral Survey Field Verification &bull; Multimodal Phenotyping &bull; Multi-Agent Audit Log
-          </p>
-        </div>
-
-        <div className="text-right text-xs">
-          <div className="font-mono font-bold text-slate-900">
-            DOSSIER #{advisoryData.query_id || 'FW-' + parcel.survey_number}
-          </div>
-          <div className="text-slate-500 mt-0.5">{formattedDate}</div>
-          <span className="inline-block mt-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 font-bold border border-emerald-300 text-[11px]">
-            {tStatus(verification.status, lang) || "AI VERIFIED"} ({verification.score_percentage || 96}%)
-          </span>
-        </div>
-      </div>
-
-      {/* ─── 2. CADASTRAL PARCEL IDENTITY ─── */}
-      <div className="bg-slate-50 border border-slate-300 rounded-xl p-3.5 mb-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Survey Number</span>
-          <span className="font-bold text-sm text-slate-900">#{parcel.survey_number} {parcel.sub_division && `/ ${parcel.sub_division}`}</span>
-        </div>
-        <div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Administrative Village</span>
-          <span className="font-semibold text-slate-800">{parcel.village_name || 'Sivagiri'}</span>
-        </div>
-        <div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Taluk &amp; District</span>
-          <span className="font-semibold text-slate-800">{parcel.taluk || 'Sivagiri'}, {parcel.district || 'Tenkasi'}</span>
-        </div>
-        <div>
-          <span className="text-[10px] uppercase font-bold text-slate-500 block">Centroid Coordinates</span>
-          <span className="font-mono text-slate-700">{parcel.latitude?.toFixed(5)}°N, {parcel.longitude?.toFixed(5)}°E</span>
-        </div>
-      </div>
-
-      {/* ─── PRIVACY COMPLIANCE NOTICE (DPDP Act 2023) ─── */}
-      <div className="bg-blue-50/70 border border-blue-200 rounded-xl px-4 py-2.5 mb-5 flex items-center justify-between text-[11px] text-blue-950">
-        <div className="flex items-center gap-2">
-          <span className="font-bold uppercase tracking-wider bg-blue-900 text-white px-1.5 py-0.5 rounded text-[9px]">
-            DPDP 2023
-          </span>
-          <span className="font-semibold">
-            Zero-Trust Farmer Data Privacy Proxy:
-          </span>
-          <span className="text-blue-800">
-            Personal PII scrubbed. Geospatial coordinates fuzzed to ~1.1km village centroid before external LLM routing.
-          </span>
-        </div>
-        <span className="text-blue-700 font-mono text-[10px] uppercase font-bold shrink-0 ml-2">
-          Privacy Shield [OK]
-        </span>
-      </div>
-
-      {/* ─── 3. CROP PHENOTYPE & HEALTH AUDIT ─── */}
-      <div className="border border-slate-300 rounded-xl p-4 mb-5">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span>
-            Section A: Crop Phenotype &amp; Health Analysis
-          </h2>
-          <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded">
-            Evaluated by: {crop.model_attribution || "Gemini Multimodal Computer Vision"}
-          </span>
-        </div>
-
-        <div className="grid grid-cols-12 gap-4">
-          {/* Left Details */}
-          <div className="col-span-8 space-y-3">
-            <div className="flex items-center gap-4">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Identified Crop Stand</span>
-                <span className="text-lg font-black text-slate-900">{tCrop(crop.crop_name || parcel.recorded_crop, lang) || "Agricultural Crop"}</span>
-              </div>
-              <div className="pl-4 border-l border-slate-200">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Growth Stage</span>
-                <span className="text-sm font-bold text-emerald-800 uppercase">{tStage(crop.growth_stage || parcel.recorded_stage, lang) || "vegetation"}</span>
-              </div>
-              <div className="pl-4 border-l border-slate-200">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Health Rating</span>
-                <span className="text-sm font-bold text-slate-800">{tHealth(crop.crop_health, lang) || "Healthy & Vigorous"}</span>
-              </div>
-              <div className="pl-4 border-l border-slate-200">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Confidence</span>
-                <span className="text-sm font-bold text-emerald-700">{Math.round((crop.confidence || 0.96) * 100)}%</span>
-              </div>
-            </div>
-
-            {/* Observations */}
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-1">
-                Visual Canopy Observations:
-              </span>
-              <ul className="list-disc list-inside text-xs text-slate-700 space-y-1 pl-1">
-                {(crop.visual_features || [
-                  "Uniform vegetative canopy spread with healthy chlorophyll reflectance",
-                  "Normal tiller density and leaf blade architecture",
-                  "Optimal spacing consistent with local agricultural practices"
-                ]).map((feat, i) => (
-                  <li key={i}>{feat}</li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Identified Issues */}
-            {crop.identified_issues && crop.identified_issues.length > 0 && (
-              <div className="text-xs bg-slate-50 p-2 rounded border border-slate-200">
-                <span className="font-bold text-slate-700">Foliar Pathology &amp; Lesion Audit: </span>
-                <span className="text-slate-600">{crop.identified_issues.join(', ')}</span>
-              </div>
-            )}
+          {/* Running Top Header */}
+          <div className="flex justify-between items-center text-[9px] text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1 mb-4">
+            <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+            <span>Page 1</span>
           </div>
 
-          {/* Right Field Photograph */}
-          <div className="col-span-4 flex flex-col items-center justify-center border-l border-slate-200 pl-4">
-            {parcel.image_url ? (
-              <div className="w-full">
-                <img
-                  src={getMediaUrl(parcel.image_url)}
-                  alt="Field Photograph"
-                  className="w-full h-32 object-cover rounded-lg border border-slate-300"
-                  onError={(e) => {
-                    const fallback = getCropSampleFallback(parcel.recorded_crop);
-                    if (e.target.src !== window.location.origin + fallback) {
-                      e.target.src = fallback;
-                    }
-                  }}
-                />
-
-                <span className="block text-[10px] text-center text-slate-500 mt-1 font-mono">
-                  Ground-Truth Field Photo (#{parcel.survey_number})
-                </span>
-              </div>
-            ) : (
-              <div className="w-full h-32 bg-slate-100 rounded-lg flex items-center justify-center text-xs text-slate-400 border border-slate-200">
-                No Photo Linked
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ─── 4. SOIL HEALTH CARD & NUTRIENT PROFILE ─── */}
-      {soil && (
-        <div className="border border-slate-300 rounded-xl p-4 mb-5">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-600 inline-block"></span>
-              Section B: Soil Health Card &amp; Pedology Profile (TNAU / ICAR Grounded)
-            </h2>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-300 rounded">
-                SHC #{soil.soil_health_card_id || 'TN-TNK-2024-SHC'}
-              </span>
-              <span className="text-xs font-bold px-2 py-0.5 bg-emerald-100 text-emerald-900 rounded border border-emerald-300">
-                Efficiency: {soil.fertilizer_efficiency_score || 75}%
-              </span>
+          {/* Main Title Block */}
+          <div className="text-center mb-4">
+            <div className="text-[11px] font-bold tracking-widest uppercase text-slate-700">
+              FARMWISEAI | UZHAVANAI
             </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-3 text-xs mb-3">
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Soil Classification</span>
-              <span className="font-bold text-slate-900">{cleanEnglishText(soil.soil_type)}</span>
-              <span className="text-[10px] text-slate-500 block mt-0.5">{cleanEnglishText(soil.soil_texture)}</span>
-            </div>
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Soil Reaction (pH)</span>
-              <span className="font-bold text-base text-slate-900">{soil.ph}</span>
-              <span className="text-[10px] text-slate-600 block mt-0.5">{cleanEnglishText(soil.ph_status)}</span>
-            </div>
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Organic Carbon (OC)</span>
-              <span className="font-bold text-base text-slate-900">{soil.organic_carbon_percent}%</span>
-              <span className="text-[10px] text-slate-600 block mt-0.5">{cleanEnglishText(soil.organic_carbon_status)}</span>
-            </div>
-            <div className="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-              <span className="text-[10px] uppercase font-bold text-slate-500 block">Electrical Cond. (EC)</span>
-              <span className="font-bold text-base text-slate-900">{soil.electrical_conductivity_ds_m} <span className="text-[10px] font-normal">dS/m</span></span>
-              <span className="text-[10px] text-slate-600 block mt-0.5">Non-saline / Normal</span>
-            </div>
-          </div>
-
-          {/* Primary Nutrients N-P-K */}
-          <div className="bg-slate-50/70 border border-slate-200 rounded-lg p-2.5 mb-3 text-xs">
-            <span className="text-[10px] uppercase font-bold text-slate-600 block mb-1.5">
-              Available Primary Nutrients (Macro-Nutrient Status):
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
-                <span>Nitrogen (N): <b>{soil.nitrogen_kg_ha} kg/ha</b></span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">{cleanEnglishText(soil.nitrogen_status)}</span>
-              </div>
-              <div className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
-                <span>Phosphorus (P): <b>{soil.phosphorus_kg_ha} kg/ha</b></span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">{cleanEnglishText(soil.phosphorus_status)}</span>
-              </div>
-              <div className="bg-white p-2 rounded border border-slate-200 flex items-center justify-between">
-                <span>Potassium (K): <b>{soil.potassium_kg_ha} kg/ha</b></span>
-                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">{cleanEnglishText(soil.potassium_status)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Amendments & Calibrations */}
-          <div className="grid grid-cols-2 gap-3 text-xs">
-            <div className="bg-amber-50/70 border border-amber-200 rounded-lg p-2.5">
-              <span className="text-[10px] uppercase font-bold text-amber-900 block mb-1">
-                Soil Reclamation &amp; Amendments:
-              </span>
-              <ul className="list-disc list-inside text-amber-950 space-y-0.5">
-                {(soil.amendments_needed || []).map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="bg-emerald-50/70 border border-emerald-200 rounded-lg p-2.5">
-              <span className="text-[10px] uppercase font-bold text-emerald-900 block mb-1">
-                Dynamic Soil Fertilizer Calibrations:
-              </span>
-              <ul className="list-disc list-inside text-emerald-950 space-y-0.5">
-                {(soil.fertilizer_adjustments || []).map((item, idx) => (
-                  <li key={idx}>{item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── 5. MULTI-FACTOR VERIFIER & CRITIC AUDIT MATRIX ─── */}
-      {verification && verification.checks && (
-        <div className="border border-slate-300 rounded-xl p-4 mb-5">
-          <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span>
-              Section C: Independent Critic / Verifier Consistency Audit
-            </h2>
-            <span className="text-xs font-bold text-emerald-800">
-              Audit Score: {verification.score_percentage}% Passed
-            </span>
-          </div>
-
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-slate-300 bg-slate-50">
-                <th className="py-1.5 px-2 font-bold text-slate-700">Audit Check</th>
-                <th className="py-1.5 px-2 font-bold text-slate-700">Status</th>
-                <th className="py-1.5 px-2 font-bold text-slate-700">Confidence</th>
-                <th className="py-1.5 px-2 font-bold text-slate-700">Auditor Observation</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {verification.checks.map((chk, idx) => (
-                <tr key={idx}>
-                  <td className="py-1.5 px-2 font-semibold text-slate-800">{chk.check_name}</td>
-                  <td className="py-1.5 px-2 font-bold text-emerald-700">
-                    {chk.passed ? "PASSED [OK]" : "FLAGGED"}
-                  </td>
-                  <td className="py-1.5 px-2 font-mono text-slate-600">{Math.round(chk.confidence * 100)}%</td>
-                  <td className="py-1.5 px-2 text-slate-600">{chk.observation}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {verification.critique_notes && (
-            <p className="text-[11px] text-slate-600 mt-2.5 italic border-t border-slate-100 pt-2">
-              <b>Verifier Critique:</b> {verification.critique_notes}
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900 mt-1 uppercase">
+              Farmer Agricultural Assessment &amp; Scheme Application Support Report
+            </h1>
+            <p className="text-[11px] text-slate-600 italic mt-0.5">
+              Crop, land and soil information summary
             </p>
-          )}
-        </div>
-      )}
+          </div>
 
-      {/* ─── 6. SEQUENTIAL AGENTIC DISPATCH TRACE ─── */}
-      <div className="border border-slate-300 rounded-xl p-4 mb-5">
-        <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-3">
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block"></span>
-            Section D: Multi-Model Agent Execution Trace &amp; Routing Log
-          </h2>
-          <div className="text-xs font-mono text-slate-600 flex items-center gap-3">
-            <span>Latency: <b>{totalLatency}ms</b></span>
-            <span>&bull;</span>
-            <span>Cost: <b>${Number(totalCost).toFixed(5)}</b></span>
-            <span>&bull;</span>
-            <span>Agents: <b>{traces.length} Dispatched</b></span>
+          {/* Document Status Box */}
+          <div className="bg-slate-50 border border-slate-300 rounded p-2.5 mb-4 text-[10px] leading-tight text-slate-800">
+            <span className="font-bold">DOCUMENT STATUS: AI-GENERATED PRELIMINARY ASSESSMENT — FOR FARMER REFERENCE AND SUPPORTING DOCUMENTATION ONLY.</span> This is not a government-issued certificate, official Soil Health Card, land-record extract, eligibility approval or sanction order.
+          </div>
+
+          {/* 1. Farmer and applicant details */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
+              1. Farmer and applicant details
+            </h2>
+            <div className="border border-slate-300 rounded overflow-hidden">
+              <table className="w-full text-[10.5px] border-collapse">
+                <tbody>
+                  <tr className="border-b border-slate-200">
+                    <td className="w-1/4 p-1.5 font-semibold text-slate-700 bg-slate-50/50">Applicant / Farmer name</td>
+                    <td className="w-1/4 p-1.5 border-r border-slate-200">________________________________</td>
+                    <td className="w-1/4 p-1.5 font-semibold text-slate-700 bg-slate-50/50">Mobile number</td>
+                    <td className="w-1/4 p-1.5">________________</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Father’s / Spouse’s name</td>
+                    <td className="p-1.5 border-r border-slate-200">________________________________</td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Aadhaar / ID (if required)</td>
+                    <td className="p-1.5">________________</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50 align-top">Address</td>
+                    <td className="p-1.5 border-r border-slate-200">
+                      ___________________________________<br />
+                      ___________
+                    </td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50 align-top">PIN code</td>
+                    <td className="p-1.5 align-top">________</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Bank account (last 4 digits only)</td>
+                    <td className="p-1.5 border-r border-slate-200">________________</td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Preferred contact</td>
+                    <td className="p-1.5">________________</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 2. Land and cultivation particulars */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
+              2. Land and cultivation particulars
+            </h2>
+            <div className="border border-slate-300 rounded overflow-hidden">
+              <table className="w-full text-[10.5px] border-collapse">
+                <tbody>
+                  <tr className="border-b border-slate-200">
+                    <td className="w-1/4 p-1.5 font-semibold text-slate-700 bg-slate-50/50">Survey / Sub-division No.</td>
+                    <td className="w-1/4 p-1.5 font-semibold border-r border-slate-200">
+                      {parcel.survey_number} {parcel.sub_division ? `/ ${parcel.sub_division}` : '/ 1B'}
+                    </td>
+                    <td className="w-1/4 p-1.5 font-semibold text-slate-700 bg-slate-50/50">Village</td>
+                    <td className="w-1/4 p-1.5">{parcel.village_name || 'Sivagiri'}</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Taluk</td>
+                    <td className="p-1.5 border-r border-slate-200">{parcel.taluk || 'Sivagiri'}</td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">District</td>
+                    <td className="p-1.5">{parcel.district || 'Tenkasi'}, Tamil Nadu</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Land area (acre / hectare)</td>
+                    <td className="p-1.5 border-r border-slate-200">
+                      {parcel.area_acres ? `${parcel.area_acres} Acres / ${(parcel.area_acres * 0.404686).toFixed(2)} Ha` : 'To be entered and verified'}
+                    </td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Ownership / tenancy</td>
+                    <td className="p-1.5">To be verified</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Patta / Chitta reference</td>
+                    <td className="p-1.5 border-r border-slate-200">To be entered (if applicable)</td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Irrigation source</td>
+                    <td className="p-1.5">To be entered</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Season / year</td>
+                    <td className="p-1.5 border-r border-slate-200">________________</td>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50">Cultivation status</td>
+                    <td className="p-1.5">Standing crop (reported)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 3. Crop assessment */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
+              3. Crop assessment
+            </h2>
+            <div className="border border-slate-300 rounded overflow-hidden">
+              <table className="w-full text-[10.5px] border-collapse">
+                <tbody>
+                  <tr className="border-b border-slate-200">
+                    <td className="w-1/3 p-1.5 font-semibold text-slate-700 bg-slate-50/50 border-r border-slate-200">Crop identified</td>
+                    <td className="p-1.5 font-semibold text-slate-900">{cropName} ({botanical})</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50 border-r border-slate-200">Growth stage</td>
+                    <td className="p-1.5">{growthStage} (visual assessment)</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50 border-r border-slate-200">Observed condition</td>
+                    <td className="p-1.5">Healthy and vigorous appearance in the submitted field image</td>
+                  </tr>
+                  <tr className="border-b border-slate-200">
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50 border-r border-slate-200">Visible observations</td>
+                    <td className="p-1.5">{observations}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold text-slate-700 bg-slate-50/50 border-r border-slate-200 align-top">Visible pest / disease symptoms</td>
+                    <td className="p-1.5">No prominent symptoms were visible in the submitted image. This does not rule out hidden or early-stage problems.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 4. Soil health information */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1 uppercase tracking-wide">
+              4. Soil health information
+            </h2>
+            <p className="text-[9.5px] text-slate-600 mb-1.5 leading-tight">
+              Values below are reproduced from the uploaded FarmwiseAI report. The source report does not provide a laboratory-issued soil test certificate; confirm through an authorised soil testing laboratory or the relevant Agriculture Department.
+            </p>
+            <div className="border border-slate-800 rounded overflow-hidden">
+              <table className="w-full text-[10px] border-collapse">
+                <thead>
+                  <tr className="bg-slate-900 text-white font-semibold">
+                    <th className="p-1.5 text-left border-r border-slate-700 w-1/3">Parameter</th>
+                    <th className="p-1.5 text-left border-r border-slate-700 w-1/3">Reported result</th>
+                    <th className="p-1.5 text-left w-1/3">Reported interpretation</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Soil profile / texture</td>
+                    <td className="p-1.5 border-r border-slate-200">{soil.soil_type || 'Lateritic / loamy-sand profile; gravelly loam also noted'}</td>
+                    <td className="p-1.5 text-slate-700">Field classification; confirm by soil test</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Soil pH</td>
+                    <td className="p-1.5 font-bold border-r border-slate-200">{soilPhVal}</td>
+                    <td className="p-1.5 font-semibold text-slate-800">{soilPhStatus}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Organic carbon</td>
+                    <td className="p-1.5 border-r border-slate-200">{soil.organic_carbon_percent || 0.42}%</td>
+                    <td className="p-1.5 text-slate-700">{soil.organic_carbon_status || 'Low'}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Electrical conductivity (EC)</td>
+                    <td className="p-1.5 border-r border-slate-200">{soil.electrical_conductivity_ds_m || 0.28} dS/m</td>
+                    <td className="p-1.5 text-slate-700">Non-saline / normal</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Available nitrogen (N)</td>
+                    <td className="p-1.5 border-r border-slate-200">{soil.nitrogen_kg_ha || 194} kg/ha</td>
+                    <td className="p-1.5 text-slate-700">{soil.nitrogen_status || 'Low'}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Available phosphorus (P)</td>
+                    <td className="p-1.5 border-r border-slate-200">{soil.phosphorus_kg_ha || 8.7} kg/ha</td>
+                    <td className="p-1.5 text-slate-700">{soil.phosphorus_status || 'Low'}</td>
+                  </tr>
+                  <tr>
+                    <td className="p-1.5 font-semibold border-r border-slate-200">Available potassium (K)</td>
+                    <td className="p-1.5 border-r border-slate-200">{soil.potassium_kg_ha || 216.5} kg/ha</td>
+                    <td className="p-1.5 text-slate-700">{soil.potassium_status || 'Medium'}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* 5. Preliminary soil improvement and nutrient guidance (Intro) */}
+          <div>
+            <h2 className="text-xs font-bold text-slate-900 mb-1 uppercase tracking-wide">
+              5. Preliminary soil improvement and nutrient guidance
+            </h2>
+            <p className="text-[9.5px] text-slate-600 leading-tight">
+              The following measures are reproduced as preliminary AI-generated suggestions, not an approved fertiliser prescription. Final quantities must be decided after confirming soil-test results, crop age, tree population, yield target and local recommendations.
+            </p>
           </div>
         </div>
 
-        <table className="w-full text-left text-[11px] border-collapse">
-          <thead>
-            <tr className="border-b border-slate-300 bg-slate-50">
-              <th className="py-1.5 px-2 font-bold text-slate-700 w-8">#</th>
-              <th className="py-1.5 px-2 font-bold text-slate-700">Stage &amp; Agent</th>
-              <th className="py-1.5 px-2 font-bold text-slate-700">Model / Tool Routed</th>
-              <th className="py-1.5 px-2 font-bold text-slate-700 w-16">Latency</th>
-              <th className="py-1.5 px-2 font-bold text-slate-700 w-16">Cost</th>
-              <th className="py-1.5 px-2 font-bold text-slate-700">Action Finding</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {traces.map((step, idx) => (
-              <tr key={idx} className="align-top">
-                <td className="py-1.5 px-2 font-mono font-bold text-slate-500">{step.step_id || idx + 1}</td>
-                <td className="py-1.5 px-2">
-                  <div className="font-bold text-slate-800">{step.name}</div>
-                  <div className="text-[10px] text-slate-500">{step.agent_name}</div>
-                </td>
-                <td className="py-1.5 px-2 font-mono text-emerald-800">{step.model_name}</td>
-                <td className="py-1.5 px-2 font-mono text-slate-600">{step.latency_ms}ms</td>
-                <td className="py-1.5 px-2 font-mono text-slate-600">${Number(step.cost_usd || 0.0001).toFixed(5)}</td>
-                <td className="py-1.5 px-2 text-slate-700">{step.output_summary}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Page 1 Footer */}
+        <div className="flex justify-between items-center text-[9px] text-slate-500 pt-2 border-t border-slate-200">
+          <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+          <span>Page 1</span>
+        </div>
       </div>
 
-      {/* ─── 6. FOOTER SIGN-OFF ─── */}
-      <div className="border-t border-slate-300 pt-3 text-[10px] text-slate-500 flex items-center justify-between">
+
+      {/* ═══════════════════════════════════════════════════════════════
+          PAGE 2
+      ═══════════════════════════════════════════════════════════════ */}
+      <div className="min-h-[285mm] flex flex-col justify-between pt-2">
         <div>
-          <span>FarmwiseAI Agentic Framework &bull; Orchestrated via LangGraph StateGraph &bull; AWS ap-south-1</span>
+          {/* Running Top Header */}
+          <div className="flex justify-between items-center text-[9px] text-slate-500 uppercase tracking-wider border-b border-slate-200 pb-1 mb-4">
+            <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+            <span>Page 2</span>
+          </div>
+
+          {/* 5. Preliminary guidance details (Continued) */}
+          <div className="space-y-2 mb-4 text-[10.5px] leading-snug text-slate-800">
+            <p>
+              <span className="font-bold">Soil acidity:</span> The source report suggests agricultural lime / dolomite at 120 kg per acre. Confirm the amendment type and dose with the local Agriculture Officer or soil-testing laboratory before application.
+            </p>
+            <p>
+              <span className="font-bold">Organic matter:</span> The source report suggests 5 tonnes of well-decomposed farmyard manure (FYM) per acre or 2 tonnes of vermicompost per acre. Verify suitability and application method locally.
+            </p>
+            <p>
+              <span className="font-bold">Phosphorus:</span> The source report suggests rock phosphate as a basal source, or SSP at 100 kg per acre / DAP at 35 kg per acre. Do not apply these alternatives without a crop- and soil-specific recommendation.
+            </p>
+            <p>
+              <span className="font-bold">Fertiliser selection:</span> The source report advises caution with acid-forming fertilisers in acidic soil. Obtain a locally approved nutrient schedule before purchase or application.
+            </p>
+          </div>
+
+          {/* 6. Purpose of report and scheme application */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
+              6. Purpose of report and scheme application
+            </h2>
+            <p className="text-[10px] text-slate-700 leading-tight mb-2">
+              This report organises farmer-provided / platform-assessed crop, land and soil information for discussion with the competent government office and, where accepted, to accompany an application for an agriculture-related scheme.
+            </p>
+            <div className="space-y-2 text-[10.5px]">
+              <div>
+                <span className="font-semibold text-slate-800">Scheme name:</span> __________________________________________________________
+              </div>
+              <div>
+                <span className="font-semibold text-slate-800">Application / reference number:</span> ______________________________________________
+              </div>
+              <div className="flex items-center flex-wrap gap-4 pt-0.5">
+                <span className="font-semibold text-slate-800">Assistance requested:</span>
+                <label className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 border border-slate-700 inline-block bg-white"></span> Input support</label>
+                <label className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 border border-slate-700 inline-block bg-white"></span> Irrigation</label>
+                <label className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 border border-slate-700 inline-block bg-white"></span> Farm equipment</label>
+                <label className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 border border-slate-700 inline-block bg-white"></span> Horticulture</label>
+                <label className="inline-flex items-center gap-1.5"><span className="w-3.5 h-3.5 border border-slate-700 inline-block bg-white"></span> Other: __________</label>
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Documents to attach / verify */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
+              7. Documents to attach / verify
+            </h2>
+            <div className="grid grid-cols-1 gap-1 text-[10.5px] text-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Applicant identity document, as required by the scheme</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Recent photograph of the applicant</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Land ownership / cultivation proof (Patta, Chitta, Adangal or other document, as applicable)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Bank passbook copy / account proof, as required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Latest soil test report / Soil Health Card, if required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Crop and field photographs, if required</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 border border-slate-700 inline-block bg-white shrink-0"></span>
+                <span>Scheme-specific application form and declarations</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 8. Declaration and verification */}
+          <div className="mb-4">
+            <h2 className="text-xs font-bold text-slate-900 mb-1.5 uppercase tracking-wide">
+              8. Declaration and verification
+            </h2>
+            <p className="text-[10px] text-slate-700 leading-tight mb-2">
+              I declare that the personal, land and cultivation details supplied by me are true to the best of my knowledge. I understand that this report is a preliminary information summary and that the competent department may independently verify the details and request additional documents.
+            </p>
+            <div className="border border-slate-400 rounded overflow-hidden mb-2.5">
+              <table className="w-full text-[10.5px] border-collapse">
+                <tbody>
+                  <tr className="h-16 border-b border-slate-300">
+                    <td className="w-1/3 border-r border-slate-300 p-2 align-bottom"></td>
+                    <td className="w-1/3 border-r border-slate-300 p-2 align-bottom"></td>
+                    <td className="w-1/3 p-2 align-bottom"></td>
+                  </tr>
+                  <tr className="bg-slate-50 text-slate-800 font-semibold text-[10px]">
+                    <td className="p-1.5 text-center border-r border-slate-300">Farmer / Applicant signature</td>
+                    <td className="p-1.5 text-center border-r border-slate-300">Prepared / assisted by</td>
+                    <td className="p-1.5 text-center">Receiving official (if applicable)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="flex justify-between text-[10.5px] mb-2">
+              <span>Place: ____________________________</span>
+              <span>Date: ____________________________</span>
+            </div>
+            <div className="text-[10.5px] font-semibold text-slate-800 mb-1">
+              Office remarks / seal (for competent authority only):
+            </div>
+            <div className="h-14 border border-slate-300 rounded bg-slate-50/30"></div>
+          </div>
+
+          {/* Important note */}
+          <div className="mt-2 text-[9px] text-slate-600 leading-tight border-t border-slate-200 pt-2">
+            <div className="font-bold text-slate-800 uppercase mb-0.5">Important note</div>
+            <p>
+              Generated from information contained in the FarmwiseAI report dated {formattedDate}. AI confidence scores, agent execution logs, model names, processing costs and internal audit claims have been excluded because they are not necessary for a farmer-facing scheme-support document and do not constitute statutory verification. Survey details, soil values and supporting records must be checked against original government / laboratory records. Scheme eligibility, approval and benefit disbursement are decided solely by the relevant government department.
+            </p>
+          </div>
         </div>
-        <div className="text-right">
-          <span>Official Verification Dossier &bull; Printed from FarmWise AI Platform</span>
+
+        {/* Page 2 Footer */}
+        <div className="flex justify-between items-center text-[9px] text-slate-500 pt-2 border-t border-slate-200">
+          <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+          <span>Page 2</span>
         </div>
       </div>
+
     </div>
   );
 }

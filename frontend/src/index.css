@@ -52,17 +52,17 @@
   display: none !important;
 }
 
-/* Print Styles for Structured PDF Document */
+/* Print Styles for Structured Official Government Scheme Report */
 @media print {
   @page {
-    margin: 1.2cm;
+    margin: 12mm 15mm 12mm 15mm;
     size: A4 portrait;
   }
 
   body {
     background: #ffffff !important;
     color: #0f172a !important;
-    font-size: 11pt !important;
+    font-size: 10.5pt !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
@@ -88,5 +88,15 @@
   /* Show dedicated print dossier */
   .print-only-dossier {
     display: block !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 }

@@ -68,10 +68,10 @@ export default function ParcelDashboard({ lang = 'en', advisoryData, onNewSearch
               <button
                 onClick={() => window.print()}
                 className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-xl transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold shadow-2xs hover:shadow-xs whitespace-nowrap"
-                title="Print Structured Audit & Trace PDF Document"
+                title="Print Official Government Scheme Application Support Report"
               >
                 <Printer className="w-4 h-4 text-slate-600" />
-                <span className="hidden sm:inline">{t.printTracePdf || "Print Trace & Crop PDF"}</span>
+                <span className="hidden sm:inline">{t.printTracePdf || "Print Scheme Report (PDF)"}</span>
               </button>
             </div>
           </div>
