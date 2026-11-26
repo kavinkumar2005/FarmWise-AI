@@ -551,11 +551,12 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
             <h3 className="font-bold text-base leading-tight">
               {lang === 'ta' ? 'ஃபார்ம்வைஸ் AI ஆலோசகர்' : 'FarmWise AI Advisor'}
             </h3>
-            <p className="text-xs text-emerald-100 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span>{lang === 'ta' ? 'நேரலை AI வழிகாட்டி' : 'Live Multi-Model Copilot'}</span>
-              {activeParcel && <span className="font-semibold text-white">• #{activeParcel.survey_number}</span>}
-            </p>
+            {activeParcel && (
+              <p className="text-xs text-emerald-100 flex items-center gap-1.5 mt-0.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="font-semibold text-white">#{activeParcel.survey_number}</span>
+              </p>
+            )}
           </div>
         </div>
 
