@@ -100,20 +100,11 @@ export default function WeatherCard({ weather, lang = 'en' }) {
               {isDelaySpray ? <AlertTriangle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="mb-1">
                 <span className={`font-bold text-xs sm:text-sm ${
                   isDelaySpray ? 'text-amber-950' : 'text-emerald-950'
                 }`}>
                   {t.foliarSprayAdvisory || "Foliar Spray Advisory"}
-                </span>
-                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border shrink-0 ${
-                  isDelaySpray 
-                    ? 'bg-amber-100 text-amber-800 border-amber-300' 
-                    : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                }`}>
-                  {isDelaySpray 
-                    ? (lang === 'ta' ? 'எச்சரிக்கை / தள்ளிப்போடுக' : 'Caution / Delay') 
-                    : (lang === 'ta' ? 'உகந்த நேரம்' : 'Favorable Window')}
                 </span>
               </div>
               <p className={`text-xs leading-relaxed ${
@@ -131,12 +122,9 @@ export default function WeatherCard({ weather, lang = 'en' }) {
             <Droplets className="w-4 h-4" />
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="mb-1">
               <span className="font-bold text-xs text-blue-950">
                 {t.soilMoistureTitle || "Soil Moisture & Irrigation"}
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300 shrink-0">
-                {lang === 'ta' ? 'ஈரப்பத நிலை' : 'Moisture Status'}
               </span>
             </div>
             <p className="text-xs text-blue-900 leading-relaxed">
