@@ -211,7 +211,6 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
       <div className="bg-white border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
             <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
               Admin Geographic Crop Monitoring Dashboard
             </h2>
@@ -259,9 +258,6 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
               <MapPin className="w-4 h-4 text-emerald-600" />
               <span>Geospatial Crop Distribution Map</span>
             </h3>
-            <span className="text-xs text-slate-500">
-              Showing actual crop markers with verified cadastral boundaries
-            </span>
           </div>
 
           <AdminCropMap

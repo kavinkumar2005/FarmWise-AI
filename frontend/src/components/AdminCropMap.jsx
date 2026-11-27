@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, GeoJSON, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, GeoJSON, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Layers, ZoomIn, ZoomOut, RotateCcw, Eye, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
@@ -44,6 +44,18 @@ function MapFlyTo({ center, zoom = 14 }) {
       map.flyTo(center, zoom, { duration: 1.0 });
     }
   }, [center, zoom, map]);
+  return null;
+}
+
+function MapMoveTracker({ onMove }) {
+  useMapEvents({
+    moveend: (e) => {
+      const c = e.target.getCenter();
+      if (c && typeof c.lat === 'number' && typeof c.lng === 'number') {
+        onMove([c.lat, c.lng]);
+      }
+    }
+  });
   return null;
 }
 
@@ -95,11 +107,13 @@ export default function AdminCropMap({
   onToggleMapLayer = () => {}
 }) {
   const [mapCenter, setMapCenter] = useState(center);
+  const [liveFocus, setLiveFocus] = useState(center);
   const [zoomLevel, setZoomLevel] = useState(13);
 
   useEffect(() => {
     if (center && center[0] && center[1]) {
       setMapCenter(center);
+      setLiveFocus(center);
     }
   }, [center]);
 
@@ -108,6 +122,7 @@ export default function AdminCropMap({
     onSelectRecord(marker);
     if (marker.lat && marker.lng) {
       setMapCenter([marker.lat, marker.lng]);
+      setLiveFocus([marker.lat, marker.lng]);
       setZoomLevel(16);
     }
   };
@@ -123,6 +138,7 @@ export default function AdminCropMap({
         style={{ background: '#0f172a' }}
       >
         <MapFlyTo center={mapCenter} zoom={zoomLevel} />
+        <MapMoveTracker onMove={setLiveFocus} />
 
         {/* Base Tile Layer */}
         {mapLayer === 'satellite' ? (
@@ -311,8 +327,8 @@ export default function AdminCropMap({
         <div className="w-px h-6 bg-slate-700" />
         <div>
           <span className="text-slate-400 text-[10px] uppercase font-bold block">Current Focus</span>
-          <span className="font-medium text-slate-200 text-xs">
-            {center[0] && center[1] ? `${center[0].toFixed(3)}°N, ${center[1].toFixed(3)}°E` : 'Tamil Nadu'}
+          <span className="font-medium text-slate-200 text-xs font-mono">
+            {liveFocus[0] && liveFocus[1] ? `${liveFocus[0].toFixed(3)}°N, ${liveFocus[1].toFixed(3)}°E` : 'Tamil Nadu'}
           </span>
         </div>
       </div>
