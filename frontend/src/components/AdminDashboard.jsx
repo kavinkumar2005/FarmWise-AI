@@ -10,7 +10,6 @@ import AdminCropMap from './AdminCropMap';
 import AdminStatsOverview from './AdminStatsOverview';
 import AdminRecordTable from './AdminRecordTable';
 import AdminRecordDetailModal from './AdminRecordDetailModal';
-import AdminRecommendationInsights from './AdminRecommendationInsights';
 
 export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
   // State for Filters
@@ -282,18 +281,6 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
 
           <AdminStatsOverview overviewData={overviewData} />
         </div>
-
-        {/* 4. AI Crop Recommendation & Profit Insights (Feature 2) */}
-        {recommendationAnalytics && (
-          <div className="space-y-2">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <TrendingUp className="w-4 h-4 text-emerald-600" />
-              <span>AI Seasonal Crop Recommendations &amp; Profit Projections</span>
-            </h3>
-
-            <AdminRecommendationInsights analyticsData={recommendationAnalytics} />
-          </div>
-        )}
 
         {/* 5. Crop Record Management Table */}
         <div className="space-y-2">
