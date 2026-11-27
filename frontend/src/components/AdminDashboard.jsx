@@ -208,23 +208,13 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
   return (
     <div className="min-h-screen bg-slate-50/70 pb-16 space-y-6">
       {/* Top Admin Header Bar */}
-      <div className="bg-white border-b border-slate-200/80 sticky top-16 z-40 shadow-xs">
+      <div className="bg-white border-b border-slate-200/80 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
-                  Admin Geographic Crop Monitoring Dashboard
-                </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  Tamil Nadu GIS
-                </span>
-              </div>
-              <p className="text-xs text-slate-500">
-                Live cadastral monitoring of crop distribution, growth stages, and verification audits
-              </p>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              Admin Geographic Crop Monitoring Dashboard
+            </h2>
           </div>
 
           <div className="flex items-center gap-2">
