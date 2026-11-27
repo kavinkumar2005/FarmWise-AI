@@ -290,24 +290,9 @@ export default function AdminCropMap({
         />
       </MapContainer>
 
-      {/* Map Layer Switcher & Cadastral Toggle (Top Left) */}
+      {/* Status Color Legend (Top Left) */}
       <div className="absolute top-4 left-4 z-[1000] flex items-center gap-2">
-        <button
-          onClick={onToggleMapLayer}
-          className="bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/90 px-3 py-2 flex items-center gap-2 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-all cursor-pointer"
-        >
-          <Layers className="w-4 h-4 text-emerald-600" />
-          <span>{mapLayer === 'satellite' ? 'Satellite Imagery' : 'Street Map'}</span>
-        </button>
-
-        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/90 px-3 py-2 flex items-center gap-2 text-xs text-slate-700 font-medium">
-          <span className="w-2.5 h-2.5 rounded-full bg-sky-500 animate-pulse" />
-          <span>Cadastral Boundaries Active</span>
-        </div>
-
-        {/* Status Color Legend */}
-        <div className="hidden lg:flex items-center gap-2.5 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/90 px-3 py-1.5 text-[11px] font-bold text-slate-700">
-          <span className="text-slate-400 uppercase text-[9px]">Legend:</span>
+        <div className="flex items-center gap-2.5 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg border border-slate-200/90 px-3 py-1.5 text-[11px] font-bold text-slate-700">
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-600" />Healthy</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />Moderate</span>
           <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-rose-500" />Critical</span>
