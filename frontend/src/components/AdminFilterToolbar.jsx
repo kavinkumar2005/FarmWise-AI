@@ -254,32 +254,6 @@ export default function AdminFilterToolbar({
           </select>
         </div>
       </div>
-
-      {/* Active Crop Legend Bar */}
-      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 text-xs">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Crop Legend:</span>
-        {crops.slice(0, 8).map((crop) => {
-          const meta = crop_metadata[crop] || {};
-          const isSelected = selectedFilters.crop === crop;
-          return (
-            <button
-              key={crop}
-              onClick={() => onFilterChange({ crop: isSelected ? 'ALL' : crop })}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-xl text-[11px] font-medium transition-all cursor-pointer ${
-                isSelected
-                  ? 'bg-emerald-700 text-white shadow-xs font-bold'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              <span>{meta.emoji || '🌱'}</span>
-              <span>{crop}</span>
-            </button>
-          );
-        })}
-        {crops.length > 8 && (
-          <span className="text-[11px] text-slate-400 font-medium">+{crops.length - 8} more</span>
-        )}
-      </div>
     </div>
   );
 }
