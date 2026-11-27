@@ -61,9 +61,6 @@ export default function AdminFilterToolbar({
           </div>
           <div>
             <h3 className="font-bold text-slate-900 text-sm">Geographic & Agronomic Filtering</h3>
-            <p className="text-xs text-slate-500">
-              Filter agricultural parcels by administrative jurisdiction and cultivation parameters
-            </p>
           </div>
         </div>
 
