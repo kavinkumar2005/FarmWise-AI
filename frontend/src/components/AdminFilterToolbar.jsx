@@ -89,7 +89,7 @@ export default function AdminFilterToolbar({
       </div>
 
       {/* Cascading Filter Controls Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-9 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
         {/* 1. District */}
         <div>
           <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
@@ -234,23 +234,6 @@ export default function AdminFilterToolbar({
             <option value="HIGH">🔴 HIGH Priority</option>
             <option value="MEDIUM">🟡 MEDIUM Priority</option>
             <option value="LOW">🟢 LOW Priority</option>
-          </select>
-        </div>
-
-        {/* 9. Season */}
-        <div>
-          <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
-            Season
-          </label>
-          <select
-            value={selectedFilters.season || 'ALL'}
-            onChange={(e) => onFilterChange({ season: e.target.value })}
-            className="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
-          >
-            <option value="ALL">All Seasons</option>
-            {seasons.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
           </select>
         </div>
       </div>
