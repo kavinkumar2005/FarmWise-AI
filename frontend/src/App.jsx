@@ -6,6 +6,7 @@ import ParcelDashboard from './components/ParcelDashboard';
 import ChatbotDrawer from './components/ChatbotDrawer';
 import ImageUploadModal from './components/ImageUploadModal';
 import MarketPricesModal from './components/MarketPricesModal';
+import AdminDashboard from './components/AdminDashboard';
 import { api } from './services/api';
 import { Loader2, Sparkles, CheckCircle2, ShieldCheck, Cpu } from 'lucide-react';
 
@@ -20,6 +21,7 @@ const PIPELINE_STEPS = [
 
 export default function App() {
   const [lang, setLang] = useState('en');
+  const [currentView, setCurrentView] = useState('farmer');
   const [selectedSurvey, setSelectedSurvey] = useState(null);
   const [advisoryData, setAdvisoryData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -193,12 +195,21 @@ export default function App() {
           lang={lang}
           setLang={setLang}
           onOpenChat={handleOpenChat}
-          onResetHome={handleResetHome}
+          onResetHome={() => {
+            setCurrentView('farmer');
+            handleResetHome();
+          }}
+          currentView={currentView}
+          onToggleView={() => setCurrentView(v => (v === 'farmer' ? 'admin' : 'farmer'))}
         />
       </div>
 
       {/* Main Container */}
       <main className="flex-1">
+        {currentView === 'admin' ? (
+          <AdminDashboard onBackToFarmerView={() => setCurrentView('farmer')} />
+        ) : (
+        <>
         {/* Unified Hero: Simple Clean Farmer Operations (Left) + Live Interactive AI Chatbot (Right) */}
         <div className="no-print bg-gradient-to-b from-emerald-50/80 via-white to-slate-50 border-b border-emerald-100/70 pt-6 pb-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -285,6 +296,8 @@ export default function App() {
             advisoryData={advisoryData}
             onNewSearch={loadParcelAdvisory}
           />
+        )}
+        </>
         )}
       </main>
 

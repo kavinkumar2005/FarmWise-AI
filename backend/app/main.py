@@ -333,6 +333,237 @@ Text to translate:
         "language": target_lang
     }
 
+# ─────────────────────────────────────────────────────────────
+# ADMIN GEOGRAPHIC CROP MONITORING DASHBOARD APIS
+# ─────────────────────────────────────────────────────────────
+from app.services.crop_monitoring_service import crop_monitoring_service
+from pydantic import BaseModel
+
+class CropRecordUpdatePayload(BaseModel):
+    crop_name: Optional[str] = None
+    crop_stage: Optional[str] = None
+    area_acres: Optional[float] = None
+    health_status: Optional[str] = None
+    disease_status: Optional[str] = None
+    verification_status: Optional[str] = None
+    alert_reviewed: Optional[bool] = None
+    action: Optional[str] = None
+    reason: Optional[str] = None
+
+@app.get("/api/admin/crop-monitoring/filters")
+def get_crop_monitoring_filters():
+    """Returns cascading filter options: districts, taluks, villages, crops, seasons, stages, health statuses, disease, and priority."""
+    return crop_monitoring_service.get_filter_options()
+
+@app.get("/api/admin/crop-monitoring/overview")
+def get_crop_monitoring_overview(
+    district: Optional[str] = Query(default=None),
+    taluk: Optional[str] = Query(default=None),
+    village: Optional[str] = Query(default=None),
+    crop: Optional[str] = Query(default=None),
+    season: Optional[str] = Query(default=None),
+    stage: Optional[str] = Query(default=None),
+    health: Optional[str] = Query(default=None),
+    verification: Optional[str] = Query(default=None),
+    disease: Optional[str] = Query(default=None),
+    priority: Optional[str] = Query(default=None)
+):
+    """Calculates summary cards, smart alert counts & chart distributions filtered by geographic and agronomic criteria."""
+    return crop_monitoring_service.get_overview_statistics(
+        district=district,
+        taluk=taluk,
+        village=village,
+        crop=crop,
+        season=season,
+        stage=stage,
+        health=health,
+        verification=verification,
+        disease=disease,
+        priority=priority
+    )
+
+@app.get("/api/admin/crop-monitoring/alerts")
+def get_crop_monitoring_alerts(
+    district: Optional[str] = Query(default=None),
+    taluk: Optional[str] = Query(default=None),
+    village: Optional[str] = Query(default=None),
+    crop: Optional[str] = Query(default=None)
+):
+    """Returns dynamic smart alert statistics respecting selected geographic filters."""
+    stats = crop_monitoring_service.get_overview_statistics(
+        district=district,
+        taluk=taluk,
+        village=village,
+        crop=crop
+    )
+    return {
+        "status": "success",
+        "alerts": stats.get("alerts", {}),
+        "total_records": stats.get("summary", {}).get("total_crop_records", 0)
+    }
+
+@app.get("/api/admin/crop-monitoring/markers")
+def get_crop_monitoring_markers(
+    district: Optional[str] = Query(default=None),
+    taluk: Optional[str] = Query(default=None),
+    village: Optional[str] = Query(default=None),
+    crop: Optional[str] = Query(default=None),
+    season: Optional[str] = Query(default=None),
+    stage: Optional[str] = Query(default=None),
+    health: Optional[str] = Query(default=None),
+    verification: Optional[str] = Query(default=None),
+    disease: Optional[str] = Query(default=None),
+    priority: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    limit: int = Query(default=1500, le=5000)
+):
+    """Returns geo-referenced crop cultivation markers for interactive GIS visualization with status color indicators."""
+    return crop_monitoring_service.get_map_markers(
+        district=district,
+        taluk=taluk,
+        village=village,
+        crop=crop,
+        season=season,
+        stage=stage,
+        health=health,
+        verification=verification,
+        disease=disease,
+        priority=priority,
+        search=search,
+        limit=limit
+    )
+
+@app.get("/api/admin/crop-monitoring/cadastral-boundaries")
+def get_crop_monitoring_cadastral_boundaries(
+    district: Optional[str] = Query(default=None),
+    village: Optional[str] = Query(default=None)
+):
+    """Returns Cadastral land parcel polygons for boundary overlay on the admin map."""
+    return crop_monitoring_service.get_cadastral_boundaries(district=district, village=village)
+
+@app.get("/api/admin/crop-monitoring/records")
+def get_crop_monitoring_records(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=100),
+    district: Optional[str] = Query(default=None),
+    taluk: Optional[str] = Query(default=None),
+    village: Optional[str] = Query(default=None),
+    crop: Optional[str] = Query(default=None),
+    season: Optional[str] = Query(default=None),
+    stage: Optional[str] = Query(default=None),
+    health: Optional[str] = Query(default=None),
+    verification: Optional[str] = Query(default=None),
+    disease: Optional[str] = Query(default=None),
+    priority: Optional[str] = Query(default=None),
+    search: Optional[str] = Query(default=None),
+    sort_by: Optional[str] = Query(default="priority")
+):
+    """Paginated crop cultivation records with priority-based sorting, search, and multi-filter support."""
+    return crop_monitoring_service.get_crop_records_paginated(
+        page=page,
+        page_size=page_size,
+        district=district,
+        taluk=taluk,
+        village=village,
+        crop=crop,
+        season=season,
+        stage=stage,
+        health=health,
+        verification=verification,
+        disease=disease,
+        priority=priority,
+        search=search,
+        sort_by=sort_by
+    )
+
+@app.get("/api/admin/crop-monitoring/records/{record_id}")
+def get_crop_monitoring_record_detail(record_id: str):
+    """Returns full information for a single crop cultivation record."""
+    rec = crop_monitoring_service.get_record_detail(record_id)
+    if not rec:
+        raise HTTPException(status_code=404, detail=f"Crop record '{record_id}' not found.")
+    return rec
+
+@app.put("/api/admin/crop-monitoring/records/{record_id}")
+def update_crop_monitoring_record(record_id: str, payload: CropRecordUpdatePayload):
+    """Authorizes an administrator to update or verify a crop record, logging changes to the audit history."""
+    updated = crop_monitoring_service.update_crop_record(
+        record_id=record_id,
+        update_data=payload.model_dump(exclude_unset=True),
+        admin_user="Agricultural Admin Officer"
+    )
+    if not updated:
+        raise HTTPException(status_code=404, detail=f"Crop record '{record_id}' not found.")
+    return {
+        "status": "success",
+        "message": f"Crop record {record_id} successfully verified/updated.",
+        "record": updated
+    }
+
+@app.get("/api/admin/crop-monitoring/audit-log")
+def get_crop_monitoring_audit_log(limit: int = Query(default=50, le=200)):
+    """Returns audit history of administrative adjustments and verifications."""
+    return {"audit_log": crop_monitoring_service.get_audit_logs(limit=limit)}
+
+# ─────────────────────────────────────────────────────────────
+# AI-POWERED SEASONAL CROP RECOMMENDATION & PROFIT PREDICTION APIS
+# ─────────────────────────────────────────────────────────────
+from app.services.crop_recommendation_service import crop_recommendation_service
+
+@app.get("/api/crop-recommendations")
+def get_crop_recommendations(
+    survey_number: str = Query(default="1342", description="Cadastral Survey Number"),
+    land_area: Optional[float] = Query(default=None, description="Land area in acres"),
+    season: Optional[str] = Query(default=None, description="Season filter override")
+):
+    """Generates Top 5 AI-powered crop recommendations and profit projections based on soil, weather, season, and APMC rates."""
+    return crop_recommendation_service.generate_recommendations(
+        survey_number=survey_number,
+        land_area_acres=land_area,
+        season_override=season
+    )
+
+@app.get("/api/crop-recommendations/{survey_number}/profit-analysis")
+def get_crop_profit_analysis(
+    survey_number: str,
+    crop_name: Optional[str] = Query(default=None),
+    land_area: float = Query(default=1.0, ge=0.1)
+):
+    """Detailed cost, gross revenue, net profit, and ROI breakdown for a chosen crop and acreage."""
+    recs = crop_recommendation_service.generate_recommendations(
+        survey_number=survey_number,
+        land_area_acres=land_area
+    )
+    if crop_name:
+        matched = next((c for c in recs["top_5_recommendations"] if c["crop_name"].lower() == crop_name.lower()), None)
+        if matched:
+            return {
+                "crop": matched,
+                "land_area_acres": land_area,
+                "financials": matched["financials"]
+            }
+    return {
+        "land_summary": recs["land_summary"],
+        "comparison_chart": recs["comparison_chart"],
+        "top_crops": recs["top_5_recommendations"]
+    }
+
+@app.get("/api/crop-recommendations/{survey_number}/market-trends")
+def get_crop_market_trends(survey_number: str, crop: str = Query(default="Rice (Paddy)")):
+    """Historical 6-month APMC Mandi price trends and volatility for crop recommendation decision support."""
+    return crop_recommendation_service.get_market_trends_for_crop(crop_name=crop)
+
+@app.get("/api/admin/crop-recommendations/analytics")
+def get_admin_crop_recommendation_analytics(
+    district: Optional[str] = Query(default=None),
+    village: Optional[str] = Query(default=None)
+):
+    """District-wise, village-wise, and seasonal aggregate analytics on AI crop recommendations."""
+    return crop_recommendation_service.get_admin_recommendation_analytics(
+        district=district,
+        village=village
+    )
+
 @app.get("/api/storage")
 def get_s3_storage(bucket: Optional[str] = None):
     """Returns the list of files stored in AWS S3 with temporary viewing links."""

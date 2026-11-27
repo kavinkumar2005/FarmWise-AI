@@ -52,6 +52,19 @@
   display: none !important;
 }
 
+/* Custom crop marker icon styling */
+.custom-crop-marker {
+  background: transparent !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.custom-crop-marker > div {
+  pointer-events: auto;
+}
+
 /* Print Styles for Structured Official Government Scheme Report */
 @media print {
   @page {

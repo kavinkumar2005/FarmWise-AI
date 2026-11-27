@@ -1,8 +1,15 @@
 import React from 'react';
-import { Sprout } from 'lucide-react';
+import { Sprout, LayoutDashboard, UserCheck } from 'lucide-react';
 import { translations } from '../utils/translations';
 
-export default function Navbar({ lang, setLang, onOpenChat, onResetHome }) {
+export default function Navbar({
+  lang,
+  setLang,
+  onOpenChat,
+  onResetHome,
+  currentView = 'farmer',
+  onToggleView = () => {}
+}) {
   const t = translations[lang] || translations.en;
 
   return (
@@ -29,8 +36,31 @@ export default function Navbar({ lang, setLang, onOpenChat, onResetHome }) {
             </div>
           </div>
 
-          {/* Right actions: Language toggle */}
+          {/* Right actions: View Switcher & Language toggle */}
           <div className="flex items-center gap-3">
+            {/* Admin / Farmer View Switcher Button */}
+            <button
+              onClick={onToggleView}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                currentView === 'admin'
+                  ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200'
+              }`}
+              title="Toggle between Farmer Advisory and Admin Crop Monitoring Dashboard"
+            >
+              {currentView === 'admin' ? (
+                <>
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>{lang === 'ta' ? 'விவசாயி பார்வை' : 'Farmer View'}</span>
+                </>
+              ) : (
+                <>
+                  <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{lang === 'ta' ? 'நிர்வாக GIS தளம்' : 'Admin GIS Dashboard'}</span>
+                </>
+              )}
+            </button>
+
             {/* Language Selector */}
             <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 text-xs font-medium">
               <button
