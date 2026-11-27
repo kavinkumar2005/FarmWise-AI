@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, ShieldCheck, AlertCircle, Edit3, Save, CheckCircle2, 
   MapPin, Calendar, Sprout, User, Eye, Activity, Clock 
@@ -12,6 +12,7 @@ export default function AdminRecordDetailModal({
 }) {
   if (!record) return null;
 
+  const [localRecord, setLocalRecord] = useState(record);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     crop_name: record.crop_name,
@@ -26,6 +27,18 @@ export default function AdminRecordDetailModal({
   const [rejectReason, setRejectReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMsg, setSuccessMsg] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    setLocalRecord(record);
+  }, [record]);
+
+  const activeRecord = localRecord || record;
+
+  const showToast = (text, variant = 'success') => {
+    setToast({ text, variant });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   const handleQuickAction = async (actionType, additionalData = {}) => {
     setIsSubmitting(true);
@@ -34,10 +47,25 @@ export default function AdminRecordDetailModal({
         action: actionType,
         ...additionalData
       };
-      const res = await api.updateCropRecord(record.id, payload);
-      setSuccessMsg(`Action '${actionType}' successfully applied and logged in audit history.`);
-      onRecordUpdated(res.record);
+      const res = await api.updateCropRecord(activeRecord.id, payload);
+      const updated = res?.record ? { ...activeRecord, ...res.record } : { ...activeRecord, ...additionalData };
+      setLocalRecord(updated);
+      onRecordUpdated(updated);
       setRejectReasonModal(false);
+
+      if (actionType === 'VERIFY_RECORD') {
+        showToast('Record Verified', 'success');
+        setSuccessMsg('Record Verified and logged in audit history.');
+      } else if (actionType === 'REJECT_RECORD') {
+        showToast('Record Rejected', 'error');
+        setSuccessMsg('Record Rejected and logged in audit history.');
+      } else if (actionType === 'MARK_REVIEWED') {
+        showToast('Alert Marked Reviewed', 'success');
+        setSuccessMsg('Alert marked reviewed and logged in audit history.');
+      } else {
+        showToast('Record Updated', 'success');
+        setSuccessMsg(`Action '${actionType}' successfully applied.`);
+      }
       setTimeout(() => setSuccessMsg(null), 3500);
     } catch (err) {
       console.error("Action failed:", err);
@@ -51,14 +79,17 @@ export default function AdminRecordDetailModal({
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await api.updateCropRecord(record.id, {
+      const res = await api.updateCropRecord(activeRecord.id, {
         ...formData,
         action: "UPDATE_RECORD",
         reason: formData.reason || "Manual administration adjustment"
       });
+      const updated = res?.record ? { ...activeRecord, ...res.record } : { ...activeRecord, ...formData };
+      setLocalRecord(updated);
+      showToast('Record Updated & Verified', 'success');
       setSuccessMsg("Crop record successfully updated and logged in administrative audit history.");
       setIsEditing(false);
-      onRecordUpdated(res.record);
+      onRecordUpdated(updated);
       setTimeout(() => setSuccessMsg(null), 3500);
     } catch (err) {
       console.error("Update failed:", err);
@@ -70,22 +101,40 @@ export default function AdminRecordDetailModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed top-6 left-1/2 -translate-x-1/2 z-[100] px-4 py-2.5 rounded-2xl shadow-xl border flex items-center gap-2 text-xs font-bold animate-in fade-in slide-in-from-top-2 duration-200 ${
+            toast.variant === 'error'
+              ? 'bg-rose-600 text-white border-rose-500'
+              : 'bg-emerald-600 text-white border-emerald-500'
+          }`}
+        >
+          {toast.variant === 'error' ? (
+            <AlertCircle className="w-4 h-4 shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          )}
+          <span>{toast.text}</span>
+        </div>
+      )}
+
       <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-800 to-teal-900 px-6 py-5 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-2xl">
-              {record.crop_emoji || '🌱'}
+              {activeRecord.crop_emoji || '🌱'}
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-lg">{record.crop_name} Cultivation Record</h3>
+                <h3 className="font-bold text-lg">{activeRecord.crop_name} Cultivation Record</h3>
                 <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-white/20 text-white">
-                  {record.id}
+                  {activeRecord.id}
                 </span>
               </div>
               <p className="text-xs text-emerald-200">
-                Parcel ID: {record.parcel_id} &bull; Survey #{record.survey_number} / {record.sub_division}
+                Parcel ID: {activeRecord.parcel_id} &bull; Survey #{activeRecord.survey_number} / {activeRecord.sub_division}
               </p>
             </div>
           </div>
@@ -116,10 +165,14 @@ export default function AdminRecordDetailModal({
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase font-bold">Verification</span>
                   <span className={`font-bold inline-flex items-center gap-1 mt-0.5 ${
-                    record.verification_status === 'Verified' ? 'text-emerald-700' : 'text-amber-700'
+                    activeRecord.verification_status === 'Verified'
+                      ? 'text-emerald-700'
+                      : activeRecord.verification_status === 'Rejected'
+                      ? 'text-rose-700'
+                      : 'text-amber-700'
                   }`}>
                     <ShieldCheck className="w-3.5 h-3.5" />
-                    {record.verification_status}
+                    {activeRecord.verification_status}
                   </span>
                 </div>
                 <div>
@@ -246,8 +299,8 @@ export default function AdminRecordDetailModal({
                   <button
                     type="button"
                     onClick={() => handleQuickAction('VERIFY_RECORD', { verification_status: 'Verified', reason: 'Field officer confirmed cultivation' })}
-                    disabled={isSubmitting || record.verification_status === 'Verified'}
-                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    disabled={isSubmitting || activeRecord.verification_status === 'Verified'}
+                    className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Verify Record</span>
@@ -256,8 +309,8 @@ export default function AdminRecordDetailModal({
                   <button
                     type="button"
                     onClick={() => setRejectReasonModal(true)}
-                    disabled={isSubmitting || record.verification_status === 'Rejected'}
-                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
+                    disabled={isSubmitting || activeRecord.verification_status === 'Rejected'}
+                    className="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer"
                   >
                     <X className="w-3.5 h-3.5" />
                     <span>Reject Record</span>

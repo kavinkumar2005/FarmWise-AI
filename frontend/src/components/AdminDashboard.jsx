@@ -193,10 +193,12 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
   };
 
   const handleRecordUpdated = (updatedRecord) => {
+    if (!updatedRecord) return;
+    setDetailModalRecord((prev) => (prev && prev.id === updatedRecord.id ? { ...prev, ...updatedRecord } : prev));
     // Update local state in table and markers
     setRecordsData((prev) => ({
       ...prev,
-      records: prev.records.map((r) => (r.id === updatedRecord.id ? updatedRecord : r))
+      records: prev.records.map((r) => (r.id === updatedRecord.id ? { ...r, ...updatedRecord } : r))
     }));
     setMarkersData((prev) => ({
       ...prev,
