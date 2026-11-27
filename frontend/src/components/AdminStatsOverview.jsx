@@ -114,7 +114,6 @@ export default function AdminStatsOverview({ overviewData = {} }) {
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm">Crop-wise Cultivated Area (Acres)</h4>
-                <p className="text-xs text-slate-500">Distribution of cultivated acreage across registered crops</p>
               </div>
             </div>
           </div>
@@ -171,7 +170,6 @@ export default function AdminStatsOverview({ overviewData = {} }) {
               </div>
               <div>
                 <h4 className="font-bold text-slate-900 text-sm">Crop Health Status</h4>
-                <p className="text-xs text-slate-500">Vigor and disease alerts</p>
               </div>
             </div>
           </div>
