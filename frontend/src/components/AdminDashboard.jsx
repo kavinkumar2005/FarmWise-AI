@@ -211,17 +211,6 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
       <div className="bg-white border-b border-slate-200/80 sticky top-16 z-40 shadow-xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToFarmerView}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-bold cursor-pointer"
-              title="Return to Farmer Advisory View"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="hidden sm:inline">Farmer Advisory View</span>
-            </button>
-
-            <div className="h-6 w-px bg-slate-200 hidden sm:block" />
-
             <div>
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />

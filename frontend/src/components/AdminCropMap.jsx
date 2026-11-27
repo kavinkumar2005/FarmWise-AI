@@ -117,6 +117,7 @@ export default function AdminCropMap({
       <MapContainer
         center={mapCenter}
         zoom={zoomLevel}
+        zoomControl={false}
         scrollWheelZoom={true}
         className="w-full h-full"
         style={{ background: '#0f172a' }}
