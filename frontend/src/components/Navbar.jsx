@@ -56,7 +56,7 @@ export default function Navbar({
               ) : (
                 <>
                   <LayoutDashboard className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>{lang === 'ta' ? 'நிர்வாக GIS தளம்' : 'Admin GIS Dashboard'}</span>
+                  <span>{lang === 'ta' ? 'நிர்வாக தளம்' : 'Admin Dashboard'}</span>
                 </>
               )}
             </button>
