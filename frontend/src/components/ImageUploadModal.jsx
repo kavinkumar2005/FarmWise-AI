@@ -163,33 +163,6 @@ export default function ImageUploadModal({ isOpen, onClose, onUploadComplete, la
             )}
           </div>
 
-          {/* Survey Number Input (Optional) */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              {lang === 'ta' ? 'புல எண் (விருப்பத்தேர்வு)' : 'Survey Number (Optional)'}
-            </label>
-            <input
-              type="text"
-              value={surveyNo}
-              onChange={(e) => setSurveyNo(e.target.value)}
-              placeholder={lang === 'ta' ? 'எ.கா. 1342 (அல்லது தானியங்கி)' : 'e.g. 1342 (or auto-match)'}
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-emerald-600 font-medium"
-            />
-            <p className="text-[11px] text-slate-400 mt-1">
-              {lang === 'ta' ? 'புல எண் தராவிடில் நில ஆயத்தொலைவுகள் மூலம் தானாக கண்டறியப்படும்.' : 'If omitted, system uses parcel coordinates or default sample parcel #1342.'}
-            </p>
-          </div>
-
-          {/* Cloud & Model Tag */}
-          <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 text-xs text-emerald-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>
-              {lang === 'ta' 
-                ? <>படம் <b>AWS S3 (ap-south-1)</b> இல் சேமிக்கப்பட்டு <b>Gemini 3.8 Flash Vision</b> மூலம் பகுப்பாய்வு செய்யப்படும்.</>
-                : <>Image is backed up to <b>AWS S3 (ap-south-1)</b> and analyzed by <b>Gemini 3.8 Flash Multimodal Vision</b>.</>}
-            </span>
-          </div>
-
           {/* Submit CTA */}
           <button
             onClick={handleUploadAndAnalyze}
