@@ -151,15 +151,12 @@ export default function AdminFilterToolbar({
             onChange={(e) => onFilterChange({ crop: e.target.value })}
             className="w-full py-1.5 px-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
           >
-            <option value="ALL">All Crops (🌾, 🥥, 🌽...)</option>
-            {crops.map((c) => {
-              const meta = crop_metadata[c] || {};
-              return (
-                <option key={c} value={c}>
-                  {meta.emoji || '🌱'} {c}
-                </option>
-              );
-            })}
+            <option value="ALL">All Crops</option>
+            {crops.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </div>
 
