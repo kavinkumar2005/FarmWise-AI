@@ -242,7 +242,7 @@ export default function AdminDashboard({ onBackToFarmerView = () => {} }) {
             {isLoading && (
               <span className="text-xs text-emerald-700 flex items-center gap-1.5 bg-emerald-50 px-2.5 py-1 rounded-xl border border-emerald-200 font-medium">
                 <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-600" />
-                <span>Syncing GIS Data...</span>
+                <span>Syncing...</span>
               </span>
             )}
 
