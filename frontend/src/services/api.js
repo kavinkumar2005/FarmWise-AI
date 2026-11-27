@@ -14,6 +14,21 @@ const RAW_BASE = import.meta.env.VITE_API_BASE_URL || '';
 export const BACKEND_BASE = RAW_BASE.replace(/\/$/, '');
 const API_BASE = `${BACKEND_BASE}/api`;
 
+async function axiosGetWithRetry(url, timeout = 30000, retries = 2) {
+  let lastError;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      return await axios.get(url, { timeout });
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export const getMediaUrl = (path) => {
   if (!path) return '';
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) {
@@ -1520,7 +1535,7 @@ If the question is in English, reply in English.`;
   // ─── ADMIN GEOGRAPHIC CROP MONITORING APIS ───
   async getCropMonitoringFilters() {
     try {
-      const res = await axios.get(`${API_BASE}/admin/crop-monitoring/filters`, { timeout: 6000 });
+      const res = await axiosGetWithRetry(`${API_BASE}/admin/crop-monitoring/filters`, 25000, 2);
       if (res.data) return res.data;
     } catch (e) {
       console.warn("Failed fetching crop monitoring filters:", e);
@@ -1556,7 +1571,7 @@ If the question is in English, reply in English.`;
       Object.entries(filters).forEach(([k, v]) => {
         if (v && v !== 'ALL' && v !== 'All' && v !== 'All Records') params.append(k, v);
       });
-      const res = await axios.get(`${API_BASE}/admin/crop-monitoring/overview?${params.toString()}`, { timeout: 15000 });
+      const res = await axiosGetWithRetry(`${API_BASE}/admin/crop-monitoring/overview?${params.toString()}`, 30000, 2);
       if (res.data) return res.data;
     } catch (e) {
       console.warn("Failed fetching crop monitoring overview:", e);
@@ -1614,12 +1629,12 @@ If the question is in English, reply in English.`;
           params.append(k, v);
         }
       });
-      const res = await axios.get(`${API_BASE}/admin/crop-monitoring/markers?${params.toString()}`, { timeout: 15000 });
+      const res = await axiosGetWithRetry(`${API_BASE}/admin/crop-monitoring/markers?${params.toString()}`, 30000, 2);
       if (res.data && res.data.markers) return res.data;
     } catch (e) {
       console.warn("Failed fetching crop monitoring markers from backend, falling back to mock dataset:", e);
     }
-    // Fallback: Generate representative sample markers and populate fallback table records
+    // Fallback: Generate representative organic multi-cluster Tamil Nadu markers
     const mockCrops = [
       { crop: 'Rice (Paddy)', emoji: '🌾', color: '#16a34a' },
       { crop: 'Coconut', emoji: '🥥', color: '#0d9488' },
@@ -1631,42 +1646,66 @@ If the question is in English, reply in English.`;
       { crop: 'Marigold', emoji: '🌼', color: '#f97316' },
       { crop: 'Diploid Cotton (Paruththi)', emoji: '☁️', color: '#64748b' }
     ];
+    const clusters = [
+      { village: 'Sivagiri', taluk: 'Sivagiri', district: 'Tenkasi', lat: 9.342, lng: 77.425 },
+      { village: 'Vasudevanallur', taluk: 'Sivagiri', district: 'Tenkasi', lat: 9.246, lng: 77.410 },
+      { village: 'Rayagiri', taluk: 'Sivagiri', district: 'Tenkasi', lat: 9.310, lng: 77.385 },
+      { village: 'Thenmalai', taluk: 'Sivagiri', district: 'Tenkasi', lat: 9.265, lng: 77.455 },
+      { village: 'Viswanathaperi', taluk: 'Sivagiri', district: 'Tenkasi', lat: 9.365, lng: 77.460 },
+      { village: 'Thalavaipuram', taluk: 'Sivagiri', district: 'Tenkasi', lat: 9.290, lng: 77.440 }
+    ];
+    const fallbackCount = Math.min(limit || 1500, 1500);
     const fallbackMarkers = [];
-    const baseLat = 9.2463, baseLng = 77.3798;
-    for (let i = 0; i < 40; i++) {
-      const c = mockCrops[i % mockCrops.length];
+    const baseLat = 9.289, baseLng = 77.443;
+    for (let i = 0; i < fallbackCount; i++) {
+      const cl = clusters[i % clusters.length];
+      const c = mockCrops[(i * 7 + 3) % mockCrops.length];
+      const angle = (i * 137.508) * (Math.PI / 180);
+      const radius = 0.004 + ((i * 17) % 100) * 0.00038;
+      const lat = +(cl.lat + Math.cos(angle) * radius).toFixed(6);
+      const lng = +(cl.lng + Math.sin(angle) * radius * 1.15).toFixed(6);
       const area = (0.5 + (i % 20) * 0.2).toFixed(2);
-      const isCritical = i % 5 === 0;
-      const isModerate = i % 3 === 0;
+      const isCritical = i % 7 === 0;
+      const isModerate = !isCritical && i % 3 === 0;
+      const isDisease = i % 9 === 0;
       const healthScore = isCritical ? 42 : (isModerate ? 68 : 91);
       const healthStatus = isCritical ? 'Critical' : (isModerate ? 'Moderate' : 'Healthy');
-      const priority = isCritical ? 'HIGH' : (isModerate ? 'MEDIUM' : 'LOW');
-      const verStatus = i % 4 === 0 ? 'Not Verified' : (i % 8 === 0 ? 'Verification Required' : (i % 12 === 0 ? 'Rejected' : 'Verified'));
+      const priority = isCritical || isDisease ? 'HIGH' : (isModerate ? 'MEDIUM' : 'LOW');
+      const verStatus = i % 4 === 0 ? 'Not Verified' : (i % 8 === 0 ? 'Verification Required' : (i % 15 === 0 ? 'Rejected' : 'Verified'));
+      const markerColor = isDisease
+        ? '#991b1b'
+        : isCritical
+        ? '#ef4444'
+        : verStatus !== 'Verified'
+        ? '#f97316'
+        : isModerate
+        ? '#eab308'
+        : '#10b981';
       fallbackMarkers.push({
         id: `MOCK-CR-${1000 + i}`,
         parcel_id: `TN-TNK-SIV-${100 + i}`,
-        survey_number: `${1400 + i}`,
+        survey_number: `${1100 + i}`,
         sub_division: `${(i % 3) + 1}`,
-        village: 'Sivagiri',
-        village_name: 'Sivagiri',
-        taluk: 'Sivagiri',
-        district: 'Tenkasi',
-        latitude: baseLat + ((i % 8) - 4) * 0.0035 + (Math.sin(i) * 0.001),
-        longitude: baseLng + (Math.floor(i / 8) - 2) * 0.004 + (Math.cos(i) * 0.001),
-        lat: baseLat + ((i % 8) - 4) * 0.0035 + (Math.sin(i) * 0.001),
-        lng: baseLng + (Math.floor(i / 8) - 2) * 0.004 + (Math.cos(i) * 0.001),
+        village: cl.village,
+        village_name: cl.village,
+        taluk: cl.taluk,
+        district: cl.district,
+        latitude: lat,
+        longitude: lng,
+        lat,
+        lng,
         crop: c.crop,
         crop_name: c.crop,
         crop_emoji: c.emoji,
         crop_color: c.color,
-        marker_color: isCritical ? '#ef4444' : (verStatus !== 'Verified' ? '#f97316' : (isModerate ? '#eab308' : '#10b981')),
+        marker_color: markerColor,
         crop_stage: i % 2 === 0 ? 'vegetation' : 'flowering',
         health_status: healthStatus,
         health_score: healthScore,
-        disease_status: isCritical ? 'Disease Detected' : 'No Disease Detected',
+        disease_status: isDisease ? 'Disease Detected' : 'No Disease Detected',
         area_acres: parseFloat(area),
         verification_status: verStatus,
-        priority: priority,
+        priority,
         priority_color: priority === 'HIGH' ? '#dc2626' : (priority === 'MEDIUM' ? '#d97706' : '#16a34a'),
         priority_reason: isCritical ? `Critical crop health score (${healthScore}%)` : (priority === 'MEDIUM' ? 'Cadastral verification pending' : 'Healthy crop'),
         farmer_name_masked: `K. M****`
@@ -1688,7 +1727,7 @@ If the question is in English, reply in English.`;
       const params = new URLSearchParams();
       if (district && district !== 'ALL') params.append('district', district);
       if (village && village !== 'ALL') params.append('village', village);
-      const res = await axios.get(`${API_BASE}/admin/crop-monitoring/cadastral-boundaries?${params.toString()}`, { timeout: 8000 });
+      const res = await axiosGetWithRetry(`${API_BASE}/admin/crop-monitoring/cadastral-boundaries?${params.toString()}`, 25000, 1);
       if (res.data) return res.data;
     } catch (e) {
       console.warn("Failed fetching cadastral boundaries:", e);
@@ -1704,7 +1743,7 @@ If the question is in English, reply in English.`;
       Object.entries(filters).forEach(([k, v]) => {
         if (v && v !== 'ALL' && v !== 'All' && v !== 'All Records') params.append(k, v);
       });
-      const res = await axios.get(`${API_BASE}/admin/crop-monitoring/records?${params.toString()}`, { timeout: 15000 });
+      const res = await axiosGetWithRetry(`${API_BASE}/admin/crop-monitoring/records?${params.toString()}`, 30000, 2);
       if (res.data) return res.data;
     } catch (e) {
       console.warn("Failed fetching paginated crop records:", e);
