@@ -99,9 +99,8 @@ export default function AdminRecordTable({
                   <div className="text-[10px] text-slate-400">{r.taluk}, {r.district}</div>
                 </td>
                 <td className="py-3 px-4">
-                  <span className="inline-flex items-center gap-1.5 font-bold text-slate-800">
-                    <span>{r.crop_emoji || '🌱'}</span>
-                    <span>{r.crop_name}</span>
+                  <span className="font-bold text-slate-800">
+                    {r.crop_name}
                   </span>
                 </td>
                 <td className="py-3 px-4 font-semibold text-slate-900">
