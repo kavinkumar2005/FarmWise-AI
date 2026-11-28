@@ -266,7 +266,7 @@ export default function DecisionTraceModal({ isOpen, onClose, advisoryData, lang
 
         {/* Modal Footer */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
-          <span>FarmwiseAI Multi-Model Orchestration Engine</span>
+          <span>UzhavanAI Multi-Model Orchestration Engine</span>
           <button
             onClick={onClose}
             className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-medium transition-colors cursor-pointer"

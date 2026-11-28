@@ -27,7 +27,7 @@ export default function Navbar({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">
-                  Farmwise<span className="text-emerald-600">AI</span>
+                  Uzhavan<span className="text-emerald-600">AI</span>
                 </span>
               </div>
               <p className="text-xs text-slate-500 hidden sm:block">

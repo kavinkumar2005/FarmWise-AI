@@ -1,6 +1,6 @@
 export const translations = {
   en: {
-    title: "FarmwiseAI",
+    title: "UzhavanAI",
     subtitle: "Agentic Agricultural Intelligence Platform",
     tagline: "Parcel-level crop phenotyping, micro-climate forecasting, and verified agronomic advisories.",
     searchPlaceholder: "Enter exact Survey Number (e.g. 384, 1342)",
@@ -100,7 +100,7 @@ export const translations = {
   },
 
   ta: {
-    title: "ஃபார்ம்வைஸ் AI",
+    title: "உழவன் AI",
     subtitle: "நில அளவிலான பயிர் நுண்ணறிவு தளம்",
     tagline: "நிலப் புல எண் வாரியான பயிர் ஆய்வு, வானிலை முன்னறிவிப்பு மற்றும் வேளாண் ஆலோசனைகள்.",
     searchPlaceholder: "புல எண் உள்ளிடவும் (எ.கா. 384, 1342)",

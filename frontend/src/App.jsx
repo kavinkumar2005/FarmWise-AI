@@ -326,7 +326,7 @@ export default function App() {
       <footer className="bg-white border-t border-slate-200 mt-16 py-8 text-xs text-slate-500 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-slate-800">FarmwiseAI Platform</span>
+            <span className="font-bold text-slate-800">UzhavanAI Platform</span>
             <span>&bull;</span>
             <span>{lang === 'ta' ? 'கேம்பஸ் தயாரிப்பு சவால் – பணி 1 (அணி 06)' : 'Campus Product Challenge – Task 1 (Team 06)'}</span>
           </div>

@@ -23,7 +23,7 @@ const getWelcomeMessage = (l, parcel) => ({
   sender: 'bot',
   text: l === 'ta'
     ? `வணக்கம் விவசாயி அவர்களே! நான் உங்கள் பார்ம்வைஸ் AI நேரடி வேளாண் ஆலோசகர்.${parcel?.survey_number ? ` (புல எண் #${parcel.survey_number} நில விவரங்கள் இணைக்கப்பட்டுள்ளன)` : ''}\n\nஉங்களுக்கு உதவக்கூடிய சேவைகள்:\n• உரம் & ஊட்டச்சத்து அட்டவணை (TNAU பரிந்துரைத்த யூரியா, பொட்டாஷ் அளவுகள்)\n• பூச்சி & நோய் கட்டுப்பாடு (இயற்கை NSKE & பாதுகாப்பு முறை)\n• வானிலை & மருந்து தெளிக்கும் நேரம் (மழை மற்றும் காற்றின் வேகம்)\n• நேரடி மண்டி சந்தை விலைகள் (தென்காசி, திருநெல்வேலி APMC)\n\n🎤 குறிப்பு: மைக் பொத்தானை அழுத்தி தமிழில் பேசலாம், அல்லது கீழே உள்ள பொத்தான்களை கிளிக் செய்யலாம்!`
-    : `Vanakkam Farmer! I am your FarmwiseAI Live Agricultural Advisor.${parcel?.survey_number ? ` (Survey Parcel #${parcel.survey_number} is actively linked)` : ''}\n\nI can help you with:\n• Fertilizer & Nutrient Schedules (TNAU / ICAR dosages of Urea, DAP, Potash)\n• Pest & Disease Diagnostics and Integrated Management\n• Micro-Climate & Safe Foliar Spray Windows\n• Live Mandi Commodity Market Prices (Tenkasi, Tirunelveli APMC)\n\n🎤 Tip: Click the microphone to speak in Tamil or English, or tap the quick buttons below!`,
+    : `Vanakkam Farmer! I am your UzhavanAI Live Agricultural Advisor.${parcel?.survey_number ? ` (Survey Parcel #${parcel.survey_number} is actively linked)` : ''}\n\nI can help you with:\n• Fertilizer & Nutrient Schedules (TNAU / ICAR dosages of Urea, DAP, Potash)\n• Pest & Disease Diagnostics and Integrated Management\n• Micro-Climate & Safe Foliar Spray Windows\n• Live Mandi Commodity Market Prices (Tenkasi, Tirunelveli APMC)\n\n🎤 Tip: Click the microphone to speak in Tamil or English, or tap the quick buttons below!`,
   modelUsed: 'Ministral-8B + TNAU RAG',
   confidence: 0.99,
   sources: ['TNAU Crop Guide 2024', 'ICAR-CPCRI', 'eNAM APMC Mandi'],
@@ -549,7 +549,7 @@ export default function ChatbotDrawer({ isOpen = true, onClose, activeParcel, la
           </div>
           <div>
             <h3 className="font-bold text-base leading-tight">
-              {lang === 'ta' ? 'ஃபார்ம்வைஸ் AI ஆலோசகர்' : 'FarmWise AI Advisor'}
+              {lang === 'ta' ? 'உழவன் AI ஆலோசகர்' : 'UzhavanAI Advisor'}
             </h3>
             {activeParcel && (
               <p className="text-xs text-emerald-100 flex items-center gap-1.5 mt-0.5">

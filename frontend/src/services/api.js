@@ -842,9 +842,9 @@ export function getGroundedChatReply(message, surveyNumber = null, lang = null) 
       );
     }
     if (hasSurvey) {
-      return `Hello Farmer! I am your FarmWise AI Agricultural Advisor. For Survey Parcel #${sNo} in ${parcel.village_name}, ${parcel.district}, your crop stand is verified as ${currentCrop} (${currentStage}). How can I assist you with fertilizer schedules, pest scouting, spray windows, or live mandi prices today?`;
+      return `Hello Farmer! I am your UzhavanAI Agricultural Advisor. For Survey Parcel #${sNo} in ${parcel.village_name}, ${parcel.district}, your crop stand is verified as ${currentCrop} (${currentStage}). How can I assist you with fertilizer schedules, pest scouting, spray windows, or live mandi prices today?`;
     }
-    return `Hello Farmer! I am your FarmWise AI Agricultural Advisor. I can help you with crop fertilizer schedules, pest diagnostics, spray windows, and live mandi prices. To link your specific field parcel, enter your Survey Number in the search box above!`;
+    return `Hello Farmer! I am your UzhavanAI Agricultural Advisor. I can help you with crop fertilizer schedules, pest diagnostics, spray windows, and live mandi prices. To link your specific field parcel, enter your Survey Number in the search box above!`;
   }
 
   // 2. Crop Identification Question (என்ன பயிர் / what crop / என்னிடத்தில் என்ன பயிர் உள்ளது)
@@ -1343,7 +1343,7 @@ CONFIDENCE: <0.85 to 0.99>`;
     if (geminiApiKey) {
       try {
         const systemPrompt = isTa
-          ? `நீங்கள் உழவன் AI (FarmWise AI) - தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழக (TNAU) பயிர் உற்பத்தி கையேடு மற்றும் தென்னிந்திய விவசாய நடைமுறைகளில் நிபுணத்துவம் பெற்ற முன்னணி வேளாண்மை AI ஆலோசகர்.
+          ? `நீங்கள் உழவன் AI (UzhavanAI) - தமிழ்நாடு வேளாண்மைப் பல்கலைக்கழக (TNAU) பயிர் உற்பத்தி கையேடு மற்றும் தென்னிந்திய விவசாய நடைமுறைகளில் நிபுணத்துவம் பெற்ற முன்னணி வேளாண்மை AI ஆலோசகர்.
 ${hasSurvey ? `தற்போதைய கள & நில விவரங்கள்:
 - புல எண்: #${sNo} (${villageTa}, ${districtTa})
 - தற்போதைய பயிர்: ${cropTa} (${stageTa})
@@ -1355,7 +1355,7 @@ ${hasSurvey ? `தற்போதைய கள & நில விவரங்க
 - எக்காரணத்தைக் கொண்டும் பயிர் பெயர்கள் (எ.கா: தென்னை, நெல், மக்காச்சோளம்), வளர்ச்சி நிலைகள், மண் வகைகள் அல்லது ஊர் பெயர்களை ஆங்கிலத்தில் எழுதக் கூடாது.
 - எந்த ஆங்கில வார்த்தைகளையும் (Coconut, Full Growth, Laterite Loamy Sand, Sivagiri போன்றவை) தமிழில் கலந்து எழுதக் கூடாது.
 - தேவையான தகவல்களை எளிய தமிழில் புல்லட் புள்ளிகளுடன் தெளிவாக வழங்கவும்.`
-          : `You are FarmWise AI, an expert agricultural advisory agent specialized in South Indian agriculture, TNAU crop production guidelines, and Tamil Nadu farming practices.
+          : `You are UzhavanAI, an expert agricultural advisory agent specialized in South Indian agriculture, TNAU crop production guidelines, and Tamil Nadu farming practices.
 ${hasSurvey ? `Current Field & Land Context:
 - Survey Parcel: #${sNo} (${parcel.village_name}, ${parcel.district})
 - Current Stand Crop: ${currentCrop} (${_lastUploadedCropAnalysis?.growth_stage || parcel.recorded_stage})

@@ -55,14 +55,14 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
         
         {/* Running Top Header */}
         <div className="flex justify-between items-center text-[8.5px] text-slate-500 uppercase tracking-wider border-b border-slate-300 pb-0.5 mb-2.5">
-          <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+          <span>UZHAVANAI | Preliminary scheme-support document — Not a Government Certificate</span>
           <span>Page 1</span>
         </div>
 
         {/* Main Title Block */}
         <div className="text-center mb-2.5">
           <div className="text-[10px] font-bold tracking-widest uppercase text-slate-700">
-            FARMWISEAI | UZHAVANAI
+            UZHAVANAI
           </div>
           <h1 className="text-base font-bold tracking-tight text-slate-900 mt-0.5 uppercase">
             Farmer Agricultural Assessment &amp; Scheme Application Support Report
@@ -203,7 +203,7 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
             4. Soil health information
           </h2>
           <p className="text-[9px] text-slate-600 mb-1 leading-tight">
-            Values below are reproduced from the uploaded FarmwiseAI report. The source report does not provide a laboratory-issued soil test certificate; confirm through an authorised soil testing laboratory or the relevant Agriculture Department.
+            Values below are reproduced from the uploaded UzhavanAI report. The source report does not provide a laboratory-issued soil test certificate; confirm through an authorised soil testing laboratory or the relevant Agriculture Department.
           </p>
           <div className="border border-slate-800 rounded overflow-hidden">
             <table className="w-full text-[9.5px] border-collapse">
@@ -267,7 +267,7 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
 
         {/* Page 1 Footer */}
         <div className="flex justify-between items-center text-[8.5px] text-slate-500 pt-1.5 border-t border-slate-300 mt-2">
-          <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+          <span>UZHAVANAI | Preliminary scheme-support document — Not a Government Certificate</span>
           <span>Page 1</span>
         </div>
       </div>
@@ -280,7 +280,7 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
         
         {/* Running Top Header */}
         <div className="flex justify-between items-center text-[8.5px] text-slate-500 uppercase tracking-wider border-b border-slate-300 pb-0.5 mb-2.5">
-          <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+          <span>UZHAVANAI | Preliminary scheme-support document — Not a Government Certificate</span>
           <span>Page 2</span>
         </div>
 
@@ -401,13 +401,13 @@ export default function PrintableTraceReport({ advisoryData, lang = 'en' }) {
         <div className="text-[8.5px] text-slate-600 leading-tight border-t border-slate-300 pt-1.5 mb-2">
           <div className="font-bold text-slate-800 uppercase mb-0.5">Important note</div>
           <p>
-            Generated from information contained in the FarmwiseAI report dated {formattedDate}. AI confidence scores, agent execution logs, model names, processing costs and internal audit claims have been excluded because they are not necessary for a farmer-facing scheme-support document and do not constitute statutory verification. Survey details, soil values and supporting records must be checked against original government / laboratory records. Scheme eligibility, approval and benefit disbursement are decided solely by the relevant government department.
+            Generated from information contained in the UzhavanAI report dated {formattedDate}. AI confidence scores, agent execution logs, model names, processing costs and internal audit claims have been excluded because they are not necessary for a farmer-facing scheme-support document and do not constitute statutory verification. Survey details, soil values and supporting records must be checked against original government / laboratory records. Scheme eligibility, approval and benefit disbursement are decided solely by the relevant government department.
           </p>
         </div>
 
         {/* Page 2 Footer */}
         <div className="flex justify-between items-center text-[8.5px] text-slate-500 pt-1.5 border-t border-slate-300">
-          <span>FARMWISEAI | Preliminary scheme-support document — Not a Government Certificate</span>
+          <span>UZHAVANAI | Preliminary scheme-support document — Not a Government Certificate</span>
           <span>Page 2</span>
         </div>
       </div>
